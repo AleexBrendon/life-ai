@@ -7,20 +7,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           Int      @id @default(autoincrement())
   name         String
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile Profile?
-  jobs    Job[]
+  profile      Profile?
+  jobs         Job[]
+  routineItems RoutineItem[]
 }
 
 model Profile {
-  id                 String   @id @default(uuid())
-  userId             String   @unique
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
   birthDate          DateTime?
   timezone           String   @default("America/Sao_Paulo")
   occupation         String?
@@ -34,8 +35,8 @@ model Profile {
 }
 
 model Job {
-  id        String  @id @default(uuid())
-  userId    String
+  id        Int     @id @default(autoincrement())
+  userId    Int
   name      String
   company   String?
   position  String?
@@ -52,8 +53,8 @@ model Job {
 }
 
 model WorkSchedule {
-  id         String @id @default(uuid())
-  jobId      String
+  id         Int     @id @default(autoincrement())
+  jobId      Int
   dayOfWeek  Int
   startTime  String
   endTime    String
@@ -61,6 +62,33 @@ model WorkSchedule {
   breakEnd   String?
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoutineItem {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  name      String
+  type      String
+  isActive  Boolean @default(true)
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules RoutineSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoutineSchedule {
+  id            Int     @id @default(autoincrement())
+  routineItemId Int
+  dayOfWeek     Int
+  startTime     String
+  endTime       String
+
+  routineItem RoutineItem @relation(fields: [routineItemId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
