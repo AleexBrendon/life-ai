@@ -89,21 +89,29 @@ const getCalendar = async (req, res) => {
                     },
                 ],
             },
+            include: {
+                reminderExecutions: {
+                    where: {
+                        userId,
+                        date: startOfDay,
+                    },
+                },
+            },
             orderBy: {
                 reminderTime: "asc",
             },
         });
 
         const reminderItems = reminders.map((reminder) => {
+            const execution = reminder.reminderExecutions[0];
+
             return {
                 type: "REMINDER",
                 id: reminder.id,
                 title: reminder.title,
                 startTime: reminder.reminderTime,
                 endTime: null,
-                status: reminder.isCompleted
-                    ? "COMPLETED"
-                    : "PENDING",
+                status: execution?.status ?? "PENDING",
                 priority: null,
             };
         });

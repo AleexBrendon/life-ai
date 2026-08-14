@@ -20,6 +20,7 @@ model User {
   routineExecutions RoutineExecution[]
   unexpectedEvents  UnexpectedEvent[]
   reminders         Reminder[]
+  reminderExecutions ReminderExecution[]
 }
 
 model Profile {
@@ -155,9 +156,29 @@ model Reminder {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  reminderExecutions ReminderExecution[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, date])
+}
+
+model ReminderExecution {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  reminderId  Int
+  date        DateTime
+  status      String
+  completedAt DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, reminderId, date])
   @@index([userId, date])
 }

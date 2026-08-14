@@ -10,6 +10,7 @@ const dayRoutes = require("./routes/day.routes");
 const reminderRoutes = require("./routes/reminder.routes");
 const unexpectedEventRoutes = require("./routes/unexpectedEvent.routes");
 const calendarRoutes = require("./routes/calendar.routes");
+const reminderExecutionRoutes = require("./routes/reminderExecution.routes");
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use("/api/day", dayRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/unexpected-events", unexpectedEventRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/reminder-executions", reminderExecutionRoutes);
 
 module.exports = app;
