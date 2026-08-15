@@ -6,6 +6,7 @@ const {
   getUnexpectedEventById,
   updateUnexpectedEvent,
   deleteUnexpectedEvent,
+  replanUnexpectedEvent,
 } = require("../controllers/unexpectedEvent.controller");
 
 const authMiddleware = require("../middlewares/auth.middleware");
@@ -21,5 +22,7 @@ router.get("/:id", authMiddleware, getUnexpectedEventById);
 router.put("/:id", authMiddleware, updateUnexpectedEvent);
 
 router.delete("/:id", authMiddleware, deleteUnexpectedEvent);
+
+router.post("/:id/replan", authMiddleware, replanUnexpectedEvent);
 
 module.exports = router;

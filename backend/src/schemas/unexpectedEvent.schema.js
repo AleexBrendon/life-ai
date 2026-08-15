@@ -42,16 +42,84 @@ const unexpectedEventSchema = z
             error: "Prioridade do imprevisto inválida.",
         }),
 
-        status: z.enum(["PENDING", "RESOLVED", "CANCELLED"], {
-            error: "Status do imprevisto inválido.",
-        }),
+        status: z
+            .enum(["PENDING", "RESOLVED", "CANCELLED"], {
+                error: "Status do imprevisto inválido.",
+            })
+            .optional(),
     })
     .refine((data) => data.startTime < data.endTime, {
         message: "O horário inicial deve ser anterior ao horário final.",
         path: ["startTime"],
     });
 
-const updateUnexpectedEventSchema = unexpectedEventSchema;
+const updateUnexpectedEventSchema = z
+    .object({
+        title: z
+            .string({
+                error: "O título do imprevisto deve ser um texto.",
+            })
+            .trim()
+            .min(1, "O título do imprevisto é obrigatório.")
+            .max(100, "O título deve ter no máximo 100 caracteres.")
+            .optional(),
+
+        description: z
+            .string()
+            .trim()
+            .max(500, "A descrição deve ter no máximo 500 caracteres.")
+            .optional(),
+
+        date: z
+            .coerce
+            .date({
+                error: "A data deve ser válida.",
+            })
+            .optional(),
+
+        startTime: z
+            .string({
+                error: "O horário inicial deve ser um texto.",
+            })
+            .regex(timeRegex, {
+                message: "Horário inicial inválido. Use o formato HH:mm.",
+            })
+            .optional(),
+
+        endTime: z
+            .string({
+                error: "O horário final deve ser um texto.",
+            })
+            .regex(timeRegex, {
+                message: "Horário final inválido. Use o formato HH:mm.",
+            })
+            .optional(),
+
+        priority: z
+            .enum(["LOW", "MEDIUM", "HIGH"], {
+                error: "Prioridade do imprevisto inválida.",
+            })
+            .optional(),
+
+        status: z
+            .enum(["PENDING", "RESOLVED", "CANCELLED"], {
+                error: "Status do imprevisto inválido.",
+            })
+            .optional(),
+    })
+    .refine(
+        (data) => {
+            if (data.startTime && data.endTime) {
+                return data.startTime < data.endTime;
+            }
+
+            return true;
+        },
+        {
+            message: "O horário inicial deve ser anterior ao horário final.",
+            path: ["startTime"],
+        }
+    );
 
 module.exports = {
     unexpectedEventSchema,

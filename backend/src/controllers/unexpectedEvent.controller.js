@@ -4,6 +4,14 @@ const {
     updateUnexpectedEventSchema,
 } = require("../schemas/unexpectedEvent.schema");
 
+const {
+    analyzeUnexpectedEventConflicts,
+} = require("../services/unexpectedEvent.service");
+
+const {
+    applyReplanningOption,
+} = require("../services/replanning.service");
+
 const createUnexpectedEvent = async (req, res) => {
     try {
         const validation = unexpectedEventSchema.safeParse(req.body);
@@ -37,14 +45,22 @@ const createUnexpectedEvent = async (req, res) => {
                 startTime,
                 endTime,
                 priority,
-                status,
+                status: "PENDING",
             },
+        });
+
+        const conflictAnalysis = await analyzeUnexpectedEventConflicts({
+            userId,
+            event: unexpectedEvent,
         });
 
         return res.status(201).json({
             success: true,
             message: "Imprevisto criado com sucesso.",
-            data: unexpectedEvent,
+            data: {
+                event: unexpectedEvent,
+                conflictAnalysis,
+            },
         });
     } catch (error) {
         console.error("Erro ao criar imprevisto:", error);
@@ -174,6 +190,21 @@ const updateUnexpectedEvent = async (req, res) => {
             });
         }
 
+        const newStatus = status ?? existingEvent.status;
+
+        const allowedTransitions = {
+            PENDING: ["PENDING", "RESOLVED", "CANCELLED"],
+            RESOLVED: ["RESOLVED"],
+            CANCELLED: ["CANCELLED"],
+        };
+
+        if (!allowedTransitions[existingEvent.status].includes(newStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: `Não é possível alterar o status de ${existingEvent.status} para ${newStatus}.`,
+            });
+        }
+
         const updatedEvent = await prisma.unexpectedEvent.update({
             where: {
                 id: eventId,
@@ -185,7 +216,7 @@ const updateUnexpectedEvent = async (req, res) => {
                 startTime,
                 endTime,
                 priority,
-                status,
+                status: newStatus,
             },
         });
 
@@ -250,10 +281,87 @@ const deleteUnexpectedEvent = async (req, res) => {
     }
 };
 
+const replanUnexpectedEvent = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = Number(req.params.id);
+
+        if (!Number.isInteger(eventId)) {
+            return res.status(400).json({
+                success: false,
+                message: "ID do imprevisto inválido.",
+            });
+        }
+
+        const { option } = req.body;
+
+        if (!option || typeof option !== "object") {
+            return res.status(400).json({
+                success: false,
+                message: "A opção de replanning é obrigatória.",
+            });
+        }
+
+        const event = await prisma.unexpectedEvent.findFirst({
+            where: {
+                id: eventId,
+                userId,
+            },
+        });
+
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Imprevisto não encontrado.",
+            });
+        }
+
+        const result = await applyReplanningOption({
+            userId,
+            event,
+            option,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Replanejamento aplicado com sucesso.",
+            data: result,
+        });
+    } catch (error) {
+        console.error("Erro ao aplicar replanning:", error);
+
+        const knownErrors = [
+            "Opção de replanning inválida.",
+            "Tipo de replanning não suportado.",
+            "ID do horário da rotina inválido.",
+            "Destino do replanning não informado.",
+            "Horário de destino inválido.",
+            "Horário de destino inválido. Use HH:mm.",
+            "O horário inicial deve ser anterior ao horário final.",
+            "Data de destino inválida.",
+            "Horário da rotina não encontrado.",
+            "O novo horário possui conflito com outro compromisso.",
+        ];
+
+        if (knownErrors.includes(error.message)) {
+            return res.status(409).json({
+                success: false,
+                message: error.message,
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Erro interno do servidor.",
+        });
+    }
+};
+
 module.exports = {
     createUnexpectedEvent,
     getUnexpectedEvents,
     getUnexpectedEventById,
     updateUnexpectedEvent,
     deleteUnexpectedEvent,
+    replanUnexpectedEvent,
 };
