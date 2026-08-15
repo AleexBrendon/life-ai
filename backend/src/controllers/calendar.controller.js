@@ -138,10 +138,45 @@ const getCalendar = async (req, res) => {
             };
         });
 
+        const jobs = await prisma.job.findMany({
+            where: {
+                userId,
+                isActive: true,
+            },
+            include: {
+                schedules: {
+                    where: {
+                        dayOfWeek,
+                    },
+                    orderBy: {
+                        startTime: "asc",
+                    },
+                },
+            },
+        });
+
+        const workItems = jobs.flatMap((job) => {
+            return job.schedules.map((schedule) => {
+                return {
+                    type: "WORK",
+                    id: schedule.id,
+                    jobId: job.id,
+                    title: job.name,
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime,
+                    breakStart: schedule.breakStart,
+                    breakEnd: schedule.breakEnd,
+                    status: "SCHEDULED",
+                    priority: null,
+                };
+            });
+        });
+
         const items = [
             ...routineItems,
             ...reminderItems,
             ...unexpectedEventItems,
+            ...workItems,
         ].sort((a, b) => {
             return a.startTime.localeCompare(b.startTime);
         });
