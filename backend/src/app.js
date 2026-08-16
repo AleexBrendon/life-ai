@@ -13,6 +13,8 @@ const calendarRoutes = require("./routes/calendar.routes");
 const reminderExecutionRoutes = require("./routes/reminderExecution.routes");
 const jobRoutes = require("./routes/job.routes");
 const workScheduleRoutes = require("./routes/workSchedule.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+const notificationRoutes = require("./routes/notification.routes");
 
 const app = express();
 
@@ -31,5 +33,7 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/reminder-executions", reminderExecutionRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api", workScheduleRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 module.exports = app;

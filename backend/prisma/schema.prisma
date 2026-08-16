@@ -14,13 +14,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile           Profile?
-  jobs              Job[]
-  routineItems      RoutineItem[]
-  routineExecutions RoutineExecution[]
-  unexpectedEvents  UnexpectedEvent[]
-  reminders         Reminder[]
+  profile            Profile?
+  jobs               Job[]
+  routineItems       RoutineItem[]
+  routineExecutions  RoutineExecution[]
+  unexpectedEvents   UnexpectedEvent[]
+  reminders          Reminder[]
   reminderExecutions ReminderExecution[]
+  notifications      Notification[]
 }
 
 model Profile {
@@ -166,7 +167,7 @@ model Reminder {
 }
 
 model ReminderExecution {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      Int
   reminderId  Int
   date        DateTime
@@ -181,4 +182,31 @@ model ReminderExecution {
 
   @@unique([userId, reminderId, date])
   @@index([userId, date])
+}
+
+model Notification {
+  id     Int @id @default(autoincrement())
+  userId Int
+
+  title   String
+  message String
+
+  type     String
+  priority String @default("MEDIUM")
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  entityType String?
+  entityId   Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, scheduledAt])
 }
