@@ -86,6 +86,10 @@ const run = async () => {
             date: "2026-08-16",
         });
 
+        console.dir(result, {
+            depth: null,
+        });
+
         if (!result) {
             throw new Error(
                 "O Orchestrator não retornou resultado."

@@ -1,36 +1,71 @@
 const prisma = require("../database/prisma");
 
-const executeMoveRoutine = async ({ userId, action, date }) => {
+const executeRoutineScheduleChange = async ({
+    userId,
+    action,
+    date,
+    resultType,
+}) => {
     const routineId = action.target.id;
 
-    const { newStartTime, newEndTime } = action.payload;
+    const { newStartTime, newEndTime } =
+        action.payload;
 
-    const routine = await prisma.routineItem.findFirst({
-        where: {
-            id: routineId,
-            userId,
-            isActive: true,
-        },
-        include: {
-            schedules: true,
-        },
-    });
+    if (!Number.isInteger(routineId)) {
+        throw new Error(
+            "ID da rotina inválido."
+        );
+    }
+
+    if (
+        typeof newStartTime !== "string" ||
+        typeof newEndTime !== "string"
+    ) {
+        throw new Error(
+            "Novo horário da rotina inválido."
+        );
+    }
+
+    const routine =
+        await prisma.routineItem.findFirst({
+            where: {
+                id: routineId,
+                userId,
+                isActive: true,
+            },
+            include: {
+                schedules: true,
+            },
+        });
 
     if (!routine) {
-        throw new Error("Rotina não encontrada.");
+        throw new Error(
+            "Rotina não encontrada."
+        );
     }
 
     const executionDate = date
-        ? new Date(`${date}T00:00:00.000Z`)
+        ? new Date(
+              `${date}T00:00:00.000Z`
+          )
         : new Date();
 
-    if (Number.isNaN(executionDate.getTime())) {
-        throw new Error("Data de execução inválida.");
+    if (
+        Number.isNaN(
+            executionDate.getTime()
+        )
+    ) {
+        throw new Error(
+            "Data de execução inválida."
+        );
     }
 
-    const schedule = routine.schedules.find(
-        (item) => item.dayOfWeek === executionDate.getUTCDay()
-    );
+    const schedule =
+        routine.schedules.find(
+            (item) =>
+                item.dayOfWeek ===
+                executionDate.getUTCDay()
+        );
 
     if (!schedule) {
         throw new Error(
@@ -38,38 +73,68 @@ const executeMoveRoutine = async ({ userId, action, date }) => {
         );
     }
 
-    const updatedSchedule = await prisma.routineSchedule.update({
-        where: {
-            id: schedule.id,
-        },
-        data: {
-            startTime: newStartTime,
-            endTime: newEndTime,
-        },
-    });
+    if (newStartTime >= newEndTime) {
+        throw new Error(
+            "O novo horário da rotina é inválido."
+        );
+    }
+
+    const updatedSchedule =
+        await prisma.routineSchedule.update({
+            where: {
+                id: schedule.id,
+            },
+
+            data: {
+                startTime: newStartTime,
+                endTime: newEndTime,
+            },
+        });
 
     return {
-        type: "MOVE_ROUTINE",
+        type: resultType,
+
+        executed: true,
+
         target: {
             type: "ROUTINE",
             id: routine.id,
         },
+
         changes: {
-            previousStartTime: schedule.startTime,
-            previousEndTime: schedule.endTime,
-            newStartTime: updatedSchedule.startTime,
-            newEndTime: updatedSchedule.endTime,
+            previousStartTime:
+                schedule.startTime,
+
+            previousEndTime:
+                schedule.endTime,
+
+            newStartTime:
+                updatedSchedule.startTime,
+
+            newEndTime:
+                updatedSchedule.endTime,
         },
     };
 };
 
-const executeAIAction = async ({ userId, action, date }) => {
+const executeAIAction = async ({
+    userId,
+    action,
+    date,
+}) => {
     if (!Number.isInteger(userId)) {
-        throw new Error("ID do usuário inválido.");
+        throw new Error(
+            "ID do usuário inválido."
+        );
     }
 
-    if (!action || typeof action !== "object") {
-        throw new Error("Ação da IA inválida.");
+    if (
+        !action ||
+        typeof action !== "object"
+    ) {
+        throw new Error(
+            "Ação da IA inválida."
+        );
     }
 
     switch (action.type) {
@@ -83,10 +148,21 @@ const executeAIAction = async ({ userId, action, date }) => {
             };
 
         case "MOVE_ROUTINE":
-            return executeMoveRoutine({
+            return executeRoutineScheduleChange({
                 userId,
                 action,
                 date,
+                resultType:
+                    "MOVE_ROUTINE",
+            });
+
+        case "RESCHEDULE_ROUTINE":
+            return executeRoutineScheduleChange({
+                userId,
+                action,
+                date,
+                resultType:
+                    "RESCHEDULE_ROUTINE",
             });
 
         default:

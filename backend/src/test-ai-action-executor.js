@@ -24,6 +24,7 @@ const run = async () => {
         const result = await executeAIAction({
             userId,
             action,
+            date: "2026-08-16",
         });
 
         console.log("✅ AI Action executada:");

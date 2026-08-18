@@ -18,18 +18,30 @@ const client = new OpenAI({
     },
 });
 
-const generateAIResponse = async ({ messages }) => {
+const generateAIResponse = async ({
+    messages,
+    responseFormat,
+}) => {
     if (!Array.isArray(messages) || messages.length === 0) {
         throw new Error(
             "Mensagens da IA inválidas."
         );
     }
 
-    const response = await client.chat.completions.create({
+    const request = {
         model,
         messages,
         temperature: 0.2,
-    });
+    };
+
+    if (responseFormat) {
+        request.response_format = responseFormat;
+    }
+
+    const response =
+        await client.chat.completions.create(
+            request
+        );
 
     const content =
         response.choices?.[0]?.message?.content;

@@ -18,25 +18,45 @@ const buildAIDecision = ({ output }) => {
                 type: "NONE",
                 id: null,
             },
-            reason: output.summary || "Nenhuma ação necessária.",
+            reason:
+                output.summary ||
+                "Nenhuma ação necessária.",
             confidence: 1,
             changes: {},
         };
     }
 
+    const routineId =
+        action.data?.routineId ?? null;
+
+    let targetType = "NONE";
+
+    if (routineId !== null) {
+        targetType = "ROUTINE";
+    }
+
     return {
         action: action.type,
+
         target: {
-            type: action.data?.routineId
-                ? "ROUTINE"
-                : "NONE",
-            id: action.data?.routineId ?? null,
+            type: targetType,
+            id: routineId,
         },
+
         reason: action.reason,
+
         confidence: action.confidence,
+
         changes: {
-            newStartTime: action.data?.newStartTime,
-            newEndTime: action.data?.newEndTime,
+            ...(action.data?.newStartTime !== undefined && {
+                newStartTime:
+                    action.data.newStartTime,
+            }),
+
+            ...(action.data?.newEndTime !== undefined && {
+                newEndTime:
+                    action.data.newEndTime,
+            }),
         },
     };
 };
