@@ -1,15 +1,38 @@
-    const prisma = require("../database/prisma");
+const prisma = require("../database/prisma");
 const { validateAIDecision } = require("./aiDecisionValidator.service");
 const { findScheduleConflicts } = require("./conflict.service");
 
 const validateAIDecisionSafety = async ({
     userId,
     decision,
+    date,
 }) => {
     if (!Number.isInteger(userId)) {
         return {
             safe: false,
             reason: "ID do usuário inválido.",
+        };
+    }
+
+    let executionDate;
+
+    if (date instanceof Date) {
+        executionDate = date;
+    } else if (typeof date === "string") {
+        executionDate = new Date(`${date}T00:00:00.000Z`);
+    } else if (date === undefined || date === null) {
+        executionDate = new Date();
+    } else {
+        return {
+            safe: false,
+            reason: "Data de execução inválida.",
+        };
+    }
+
+    if (Number.isNaN(executionDate.getTime())) {
+        return {
+            safe: false,
+            reason: "Data de execução inválida.",
         };
     }
 
@@ -129,42 +152,40 @@ const validateAIDecisionSafety = async ({
             /*
              * Verificamos os schedules ativos da rotina.
              */
-            const schedules =
-                await prisma.routineSchedule.findMany({
+            const dayOfWeek = executionDate.getUTCDay();
+
+            const schedule =
+                await prisma.routineSchedule.findFirst({
                     where: {
                         routineItemId: routine.id,
+                        dayOfWeek,
                     },
                 });
 
-            if (schedules.length === 0) {
+            if (!schedule) {
                 return {
                     safe: false,
                     reason:
-                        "A rotina não possui horário programado.",
+                        "A rotina não possui horário programado para este dia.",
                 };
             }
 
-            /*
-             * Cada schedule precisa ser validado contra
-             * trabalho e demais elementos da agenda.
-             */
-            for (const schedule of schedules) {
-                const conflicts =
-                    await findScheduleConflicts({
-                        userId,
-                        date: new Date(),
-                        startTime: newStartTime,
-                        endTime: newEndTime,
-                    });
+            const conflicts =
+                await findScheduleConflicts({
+                    userId,
+                    date: executionDate,
+                    startTime: newStartTime,
+                    endTime: newEndTime,
+                    excludeRoutineScheduleId: schedule.id,
+                });
 
-                if (conflicts.length > 0) {
-                    return {
-                        safe: false,
-                        reason:
-                            "O novo horário possui conflitos na agenda.",
-                        conflicts,
-                    };
-                }
+            if (conflicts.length > 0) {
+                return {
+                    safe: false,
+                    reason:
+                        "O novo horário possui conflitos na agenda.",
+                    conflicts,
+                };
             }
         }
     }

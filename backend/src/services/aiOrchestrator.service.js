@@ -71,6 +71,7 @@ const runAI = async ({ userId, date }) => {
     const safety = await validateAIDecisionSafety({
         userId,
         decision: validatedDecision.data,
+        date,
     });
 
     if (!safety.safe) {

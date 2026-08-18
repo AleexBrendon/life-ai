@@ -44,11 +44,21 @@ const executeRoutineScheduleChange = async ({
         );
     }
 
-    const executionDate = date
-        ? new Date(
-              `${date}T00:00:00.000Z`
-          )
-        : new Date();
+    let executionDate;
+
+    if (date instanceof Date) {
+        executionDate = date;
+    } else if (typeof date === "string") {
+        executionDate = new Date(
+            `${date}T00:00:00.000Z`
+        );
+    } else if (date === undefined || date === null) {
+        executionDate = new Date();
+    } else {
+        throw new Error(
+            "Data de execução inválida."
+        );
+    }
 
     if (
         Number.isNaN(
