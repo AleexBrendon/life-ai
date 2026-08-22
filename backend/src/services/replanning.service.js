@@ -132,7 +132,7 @@ const generateReplanningOptions = async ({
             }
         }
 
-        if (conflict.type === "JOB") {
+        if (conflict.type === "WORK") {
             options.push({
                 type: "PRESERVE_JOB",
 
@@ -255,12 +255,7 @@ const applyReplanningOption = async ({
         );
     }
 
-    /*
-     * Verifica se existe outro compromisso no novo horário.
-     *
-     * O próprio RoutineSchedule que está sendo movido
-     * precisa ser ignorado.
-     */
+
     const conflicts =
         await findScheduleConflicts({
             userId,

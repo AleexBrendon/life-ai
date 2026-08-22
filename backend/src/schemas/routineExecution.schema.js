@@ -20,12 +20,14 @@ const routineExecutionSchema = z
       error: "A data deve ser válida.",
     }),
 
-    status: z.enum(
-      ["PENDING", "COMPLETED", "SKIPPED", "MISSED"],
-      {
-        error: "Status de execução inválido.",
-      }
-    ),
+    status: z
+      .enum(
+        ["PENDING", "COMPLETED", "SKIPPED", "MISSED"],
+        {
+          error: "Status de execução inválido.",
+        }
+      )
+      .default("PENDING"),
 
     completedAt: z.coerce.date().optional(),
 
@@ -35,11 +37,13 @@ const routineExecutionSchema = z
       })
       .trim()
       .min(1, "A justificativa não pode ser vazia.")
-      .max(500, "A justificativa deve ter no máximo 500 caracteres.")
+      .max(
+        500,
+        "A justificativa deve ter no máximo 500 caracteres."
+      )
       .optional(),
   })
   .superRefine((data, ctx) => {
-    // completedAt só pode existir em COMPLETED
     if (
       data.status !== "COMPLETED" &&
       data.completedAt !== undefined
@@ -52,7 +56,6 @@ const routineExecutionSchema = z
       });
     }
 
-    // skipReason só pode existir em SKIPPED
     if (
       data.status !== "SKIPPED" &&
       data.skipReason !== undefined
@@ -65,10 +68,10 @@ const routineExecutionSchema = z
       });
     }
 
-    // SKIPPED obrigatoriamente precisa de justificativa
     if (
       data.status === "SKIPPED" &&
-      (!data.skipReason || data.skipReason.trim() === "")
+      (!data.skipReason ||
+        data.skipReason.trim() === "")
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -78,6 +81,7 @@ const routineExecutionSchema = z
       });
     }
   });
+
 const skipRoutineExecutionSchema = z.object({
   skipReason: z
     .string({
@@ -85,7 +89,10 @@ const skipRoutineExecutionSchema = z.object({
     })
     .trim()
     .min(1, "A justificativa é obrigatória.")
-    .max(500, "A justificativa deve ter no máximo 500 caracteres."),
+    .max(
+      500,
+      "A justificativa deve ter no máximo 500 caracteres."
+    ),
 });
 
 module.exports = {

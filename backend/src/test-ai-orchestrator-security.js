@@ -13,9 +13,9 @@ const runTest = async (name, callback) => {
 const run = async () => {
     console.log("=== AI ORCHESTRATOR — SECURITY TESTS ===\n");
 
-    // ==========================================
-    // 1. USER ID INVÁLIDO
-    // ==========================================
+
+
+
 
     await runTest("USER ID INVÁLIDO", async () => {
         try {
@@ -34,9 +34,9 @@ const run = async () => {
         }
     });
 
-    // ==========================================
-    // 2. USER INEXISTENTE
-    // ==========================================
+
+
+
 
     await runTest("USUÁRIO INEXISTENTE", async () => {
         try {
@@ -55,9 +55,9 @@ const run = async () => {
         }
     });
 
-    // ==========================================
-    // 3. DATA INVÁLIDA
-    // ==========================================
+
+
+
 
     await runTest("DATA INVÁLIDA", async () => {
         try {
@@ -76,9 +76,9 @@ const run = async () => {
         }
     });
 
-    // ==========================================
-    // 4. EXECUÇÃO NORMAL
-    // ==========================================
+
+
+
 
     await runTest("PIPELINE VÁLIDO", async () => {
         const result = await runAI({

@@ -46,7 +46,7 @@ const reminderSchema = z
         isActive: z.boolean().optional(),
     })
     .superRefine((data, ctx) => {
-        // Lembrete único
+
         if (data.recurrence === "NONE") {
             if (!data.date) {
                 ctx.addIssue({
@@ -67,7 +67,7 @@ const reminderSchema = z
             }
         }
 
-        // Lembrete diário
+
         if (data.recurrence === "DAILY") {
             if (data.date !== undefined) {
                 ctx.addIssue({
@@ -88,7 +88,7 @@ const reminderSchema = z
             }
         }
 
-        // Lembrete semanal
+
         if (data.recurrence === "WEEKLY") {
             if (data.dayOfWeek === undefined) {
                 ctx.addIssue({
@@ -109,7 +109,7 @@ const reminderSchema = z
             }
         }
 
-        // isCompleted não deve ser definido na criação
+
         if (data.isCompleted !== undefined) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,

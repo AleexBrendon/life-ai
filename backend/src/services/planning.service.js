@@ -99,8 +99,8 @@ const findAvailableSlots = async ({
 
     const slots = [];
 
-    // Por enquanto vamos trabalhar com uma janela
-    // padrão de planejamento das 06:00 às 23:00.
+
+
     const DAY_START = 6 * 60;
     const DAY_END = 23 * 60;
 
@@ -111,7 +111,7 @@ const findAvailableSlots = async ({
 
         const busyPeriods = [];
 
-        // Trabalho
+
         for (const job of context.jobs) {
             for (const schedule of job.schedules) {
                 if (schedule.dayOfWeek === dayOfWeek) {
@@ -124,7 +124,7 @@ const findAvailableSlots = async ({
             }
         }
 
-        // Rotinas
+
         for (const routine of context.routines) {
             for (const schedule of routine.schedules) {
                 if (schedule.dayOfWeek === dayOfWeek) {
@@ -137,7 +137,7 @@ const findAvailableSlots = async ({
             }
         }
 
-        // Imprevistos
+
         for (const event of context.unexpectedEvents) {
             const eventDate = new Date(event.date);
 

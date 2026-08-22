@@ -55,9 +55,7 @@ const run = async () => {
             confidence: 0.95,
         };
 
-        /*
-         * 1. SAFETY
-         */
+
 
         const safety =
             await validateAIDecisionSafety({
@@ -98,19 +96,12 @@ const run = async () => {
             "\n✅ SAFETY BLOQUEOU A AÇÃO"
         );
 
-        /*
-         * 2. EXECUTOR NÃO DEVE SER CHAMADO
-         */
+
 
         let executorCalled = false;
 
         try {
-            /*
-             * Simulamos o comportamento correto
-             * do Orchestrator:
-             *
-             * Safety bloqueou → Executor não executa.
-             */
+
             if (safety.safe) {
                 executorCalled = true;
 
@@ -138,9 +129,7 @@ const run = async () => {
             "✅ EXECUTOR NÃO FOI CHAMADO"
         );
 
-        /*
-         * 3. BANCO DE DADOS
-         */
+
 
         const after =
             await prisma.routineSchedule.findUnique({

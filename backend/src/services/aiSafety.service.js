@@ -1,12 +1,22 @@
 const prisma = require("../database/prisma");
-const { validateAIDecision } = require("./aiDecisionValidator.service");
-const { findScheduleConflicts } = require("./conflict.service");
+
+const {
+    validateAIDecision,
+} = require("./aiDecisionValidator.service");
+
+const {
+    findScheduleConflicts,
+} = require("./conflict.service");
 
 const validateAIDecisionSafety = async ({
     userId,
     decision,
     date,
 }) => {
+
+
+
+
     if (!Number.isInteger(userId)) {
         return {
             safe: false,
@@ -14,13 +24,22 @@ const validateAIDecisionSafety = async ({
         };
     }
 
+
+
+
+
     let executionDate;
 
     if (date instanceof Date) {
         executionDate = date;
     } else if (typeof date === "string") {
-        executionDate = new Date(`${date}T00:00:00.000Z`);
-    } else if (date === undefined || date === null) {
+        executionDate = new Date(
+            `${date}T00:00:00.000Z`
+        );
+    } else if (
+        date === undefined ||
+        date === null
+    ) {
         executionDate = new Date();
     } else {
         return {
@@ -36,7 +55,39 @@ const validateAIDecisionSafety = async ({
         };
     }
 
-    const validation = validateAIDecision(decision);
+
+
+
+
+
+
+
+
+
+
+    if (
+        decision &&
+        typeof decision === "object" &&
+        decision.target?.type === "WORK_SCHEDULE" &&
+        [
+            "MOVE_ROUTINE",
+            "RESCHEDULE_ROUTINE",
+            "SKIP_ROUTINE",
+        ].includes(decision.action)
+    ) {
+        return {
+            safe: false,
+            reason:
+                "A IA não possui permissão para alterar horários de trabalho.",
+        };
+    }
+
+
+
+
+
+    const validation =
+        validateAIDecision(decision);
 
     if (!validation.valid) {
         return {
@@ -48,9 +99,32 @@ const validateAIDecisionSafety = async ({
 
     const data = validation.data;
 
-    /*
-     * NO_ACTION não possui alteração para executar.
-     */
+
+
+
+
+
+
+
+    if (
+        data.target.type === "WORK_SCHEDULE" &&
+        [
+            "MOVE_ROUTINE",
+            "RESCHEDULE_ROUTINE",
+            "SKIP_ROUTINE",
+        ].includes(data.action)
+    ) {
+        return {
+            safe: false,
+            reason:
+                "A IA não possui permissão para alterar horários de trabalho.",
+        };
+    }
+
+
+
+
+
     if (data.action === "NO_ACTION") {
         return {
             safe: true,
@@ -58,14 +132,10 @@ const validateAIDecisionSafety = async ({
         };
     }
 
-    /*
-     * CREATE_REMINDER e CREATE_EVENT ainda não possuem
-     * execução automática nesta camada.
-     *
-     * A decisão pode ser válida, mas não será liberada
-     * para execução automática enquanto não existir
-     * um executor específico.
-     */
+
+
+
+
     if (
         data.action === "CREATE_REMINDER" ||
         data.action === "CREATE_EVENT"
@@ -77,18 +147,19 @@ const validateAIDecisionSafety = async ({
         };
     }
 
-    /*
-     * A partir daqui trabalhamos com entidades existentes.
-     */
+
+
+
 
     if (data.target.type === "ROUTINE") {
-        const routine = await prisma.routineItem.findFirst({
-            where: {
-                id: data.target.id,
-                userId,
-                isActive: true,
-            },
-        });
+        const routine =
+            await prisma.routineItem.findFirst({
+                where: {
+                    id: data.target.id,
+                    userId,
+                    isActive: true,
+                },
+            });
 
         if (!routine) {
             return {
@@ -98,15 +169,19 @@ const validateAIDecisionSafety = async ({
             };
         }
 
-        /*
-         * Para movimentações, precisamos validar o novo horário.
-         */
+
+
+
+
         if (
             data.action === "MOVE_ROUTINE" ||
             data.action === "RESCHEDULE_ROUTINE"
         ) {
-            const newStartTime = data.changes?.newStartTime;
-            const newEndTime = data.changes?.newEndTime;
+            const newStartTime =
+                data.changes?.newStartTime;
+
+            const newEndTime =
+                data.changes?.newEndTime;
 
             if (!newStartTime || !newEndTime) {
                 return {
@@ -116,7 +191,8 @@ const validateAIDecisionSafety = async ({
                 };
             }
 
-            const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+            const timeRegex =
+                /^([01]\d|2[0-3]):[0-5]\d$/;
 
             if (
                 !timeRegex.test(newStartTime) ||
@@ -130,10 +206,14 @@ const validateAIDecisionSafety = async ({
             }
 
             const [startHour, startMinute] =
-                newStartTime.split(":").map(Number);
+                newStartTime
+                    .split(":")
+                    .map(Number);
 
             const [endHour, endMinute] =
-                newEndTime.split(":").map(Number);
+                newEndTime
+                    .split(":")
+                    .map(Number);
 
             const startMinutes =
                 startHour * 60 + startMinute;
@@ -149,10 +229,12 @@ const validateAIDecisionSafety = async ({
                 };
             }
 
-            /*
-             * Verificamos os schedules ativos da rotina.
-             */
-            const dayOfWeek = executionDate.getUTCDay();
+
+
+
+
+            const dayOfWeek =
+                executionDate.getUTCDay();
 
             const schedule =
                 await prisma.routineSchedule.findFirst({
@@ -170,13 +252,18 @@ const validateAIDecisionSafety = async ({
                 };
             }
 
+
+
+
+
             const conflicts =
                 await findScheduleConflicts({
                     userId,
                     date: executionDate,
                     startTime: newStartTime,
                     endTime: newEndTime,
-                    excludeRoutineScheduleId: schedule.id,
+                    excludeRoutineScheduleId:
+                        schedule.id,
                 });
 
             if (conflicts.length > 0) {
@@ -190,10 +277,10 @@ const validateAIDecisionSafety = async ({
         }
     }
 
-    /*
-     * A IA nunca pode alterar diretamente
-     * um horário de trabalho.
-     */
+
+
+
+
     if (data.target.type === "WORK_SCHEDULE") {
         return {
             safe: false,
@@ -201,6 +288,10 @@ const validateAIDecisionSafety = async ({
                 "A IA não possui permissão para alterar horários de trabalho.",
         };
     }
+
+
+
+
 
     return {
         safe: true,

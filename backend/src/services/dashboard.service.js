@@ -2,7 +2,7 @@ const prisma = require("../database/prisma");
 
 const getDashboard = async ({ userId, date }) => {
     const targetDate = date
-        ? new Date(`${date}T00:00:00`)
+        ? new Date(`${date}T00:00:00.000Z`)
         : new Date();
 
     if (Number.isNaN(targetDate.getTime())) {
@@ -10,12 +10,12 @@ const getDashboard = async ({ userId, date }) => {
     }
 
     const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-    const dayOfWeek = targetDate.getDay();
+    const dayOfWeek = targetDate.getUTCDay();
 
     const [
         routines,
@@ -25,7 +25,7 @@ const getDashboard = async ({ userId, date }) => {
         workSchedules,
         unexpectedEvents,
     ] = await Promise.all([
-        // ROTINAS PROGRAMADAS PARA O DIA
+
         prisma.routineItem.findMany({
             where: {
                 userId,
@@ -51,7 +51,6 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
 
-        // EXECUÇÕES DE ROTINAS DO DIA
         prisma.routineExecution.findMany({
             where: {
                 userId,
@@ -69,19 +68,26 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
 
-        // LEMBRETES PROGRAMADOS PARA O DIA
         prisma.reminder.findMany({
             where: {
                 userId,
                 isActive: true,
+
                 OR: [
                     {
+                        recurrence: "NONE",
                         date: {
                             gte: startOfDay,
                             lte: endOfDay,
                         },
                     },
+
                     {
+                        recurrence: "DAILY",
+                    },
+
+                    {
+                        recurrence: "WEEKLY",
                         dayOfWeek,
                     },
                 ],
@@ -91,7 +97,6 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
 
-        // EXECUÇÕES DE LEMBRETES DO DIA
         prisma.reminderExecution.findMany({
             where: {
                 userId,
@@ -108,7 +113,6 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
 
-        // HORÁRIOS DE TRABALHO DO DIA
         prisma.workSchedule.findMany({
             where: {
                 dayOfWeek,
@@ -125,7 +129,6 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
 
-        // IMPREVISTOS DO DIA
         prisma.unexpectedEvent.findMany({
             where: {
                 userId,
@@ -139,10 +142,6 @@ const getDashboard = async ({ userId, date }) => {
             },
         }),
     ]);
-
-    // =========================
-    // ROTINE EXECUTIONS
-    // =========================
 
     const completedRoutineExecutions = routineExecutions.filter(
         (execution) => execution.status === "COMPLETED"
@@ -160,10 +159,6 @@ const getDashboard = async ({ userId, date }) => {
         (execution) => execution.status === "SKIPPED"
     );
 
-    // =========================
-    // REMINDER EXECUTIONS
-    // =========================
-
     const completedReminderExecutions = reminderExecutions.filter(
         (execution) => execution.status === "COMPLETED"
     );
@@ -175,10 +170,6 @@ const getDashboard = async ({ userId, date }) => {
     const missedReminderExecutions = reminderExecutions.filter(
         (execution) => execution.status === "MISSED"
     );
-
-    // =========================
-    // SUMMARY
-    // =========================
 
     const totalScheduledRoutines = routines.reduce(
         (total, routine) => total + routine.schedules.length,

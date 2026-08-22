@@ -12,42 +12,42 @@ const runAI = async ({ userId, date }) => {
         throw new Error("ID do usuário inválido.");
     }
 
-    // ==========================================
-    // 1. CONTEXT
-    // ==========================================
+
+
+
 
     const context = await buildAIContext({
         userId,
         date,
     });
 
-    // ==========================================
-    // 2. INPUT
-    // ==========================================
+
+
+
 
     const input = await buildAIInput({
         context,
     });
 
-    // ==========================================
-    // 3. AI OUTPUT
-    // ==========================================
+
+
+
 
     const output = await generateAIOutput({
         input,
     });
 
-    // ==========================================
-    // 4. DECISION
-    // ==========================================
+
+
+
 
     const decision = buildAIDecision({
         output,
     });
 
-    // ==========================================
-    // 5. VALIDATE DECISION
-    // ==========================================
+
+
+
 
     const validatedDecision = validateAIDecision(
         decision
@@ -64,9 +64,9 @@ const runAI = async ({ userId, date }) => {
         );
     }
 
-    // ==========================================
-    // 6. SAFETY
-    // ==========================================
+
+
+
 
     const safety = await validateAIDecisionSafety({
         userId,
@@ -81,17 +81,17 @@ const runAI = async ({ userId, date }) => {
         );
     }
 
-    // ==========================================
-    // 7. ACTION
-    // ==========================================
+
+
+
 
     const action = buildAIAction({
         decision: validatedDecision.data,
     });
 
-    // ==========================================
-    // 8. EXECUTION
-    // ==========================================
+
+
+
 
     const execution = await executeAIAction({
         userId,
@@ -99,9 +99,9 @@ const runAI = async ({ userId, date }) => {
         date,
     });
 
-    // ==========================================
-    // RESULT
-    // ==========================================
+
+
+
 
     return {
         context,

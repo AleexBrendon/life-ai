@@ -41,9 +41,9 @@ const run = async () => {
         "=== AI ACTION EXECUTOR — SECURITY TESTS ===\n"
     );
 
-    // ==========================================
-    // 1. USER ID INVÁLIDO
-    // ==========================================
+
+
+
 
     await runTest(
         "USER ID INVÁLIDO",
@@ -67,9 +67,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 2. ACTION INVÁLIDA
-    // ==========================================
+
+
+
 
     await runTest(
         "AÇÃO INVÁLIDA",
@@ -82,9 +82,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 3. ROUTINE ID INVÁLIDO
-    // ==========================================
+
+
+
 
     await runTest(
         "ROUTINE ID INVÁLIDO",
@@ -107,9 +107,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 4. ROTINA INEXISTENTE
-    // ==========================================
+
+
+
 
     await runTest(
         "ROTINA INEXISTENTE",
@@ -132,9 +132,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 5. HORÁRIO AUSENTE
-    // ==========================================
+
+
+
 
     await runTest(
         "HORÁRIO AUSENTE",
@@ -154,9 +154,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 6. HORÁRIO INVÁLIDO
-    // ==========================================
+
+
+
 
     await runTest(
         "HORÁRIO INVÁLIDO",
@@ -179,9 +179,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 7. DATA INVÁLIDA
-    // ==========================================
+
+
+
 
     await runTest(
         "DATA INVÁLIDA",
@@ -205,9 +205,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 8. SCHEDULE INEXISTENTE PARA O DIA
-    // ==========================================
+
+
+
 
     await runTest(
         "SCHEDULE INEXISTENTE PARA O DIA",
@@ -231,9 +231,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 9. AÇÃO NÃO SUPORTADA
-    // ==========================================
+
+
+
 
     await runTest(
         "AÇÃO NÃO SUPORTADA",
@@ -253,9 +253,9 @@ const run = async () => {
         }
     );
 
-    // ==========================================
-    // 10. ROTINA DE OUTRO USUÁRIO
-    // ==========================================
+
+
+
 
     const otherUserRoutine =
         await prisma.routineItem.findFirst({
@@ -296,9 +296,9 @@ const run = async () => {
         );
     }
 
-    // ==========================================
-    // RESULTADO
-    // ==========================================
+
+
+
 
     console.log(
         "\n=========================================="

@@ -23,9 +23,9 @@ const run = async () => {
     );
 
     try {
-        // ==========================================
-        // 1. HORÁRIO ATUAL
-        // ==========================================
+
+
+
 
         const before =
             await prisma.routineSchedule.findFirst({
@@ -44,9 +44,9 @@ const run = async () => {
         console.log("Horário inicial:");
         console.dir(before, { depth: null });
 
-        // ==========================================
-        // 2. TESTE — RESCHEDULE SEGURO
-        // ==========================================
+
+
+
 
         await runTest(
             "RESCHEDULE SEGURO — SAFETY DEVE PERMITIR",
@@ -143,9 +143,9 @@ const run = async () => {
             }
         );
 
-        // ==========================================
-        // 3. TESTE — RESCHEDULE COM CONFLITO
-        // ==========================================
+
+
+
 
         await runTest(
             "RESCHEDULE COM CONFLITO — SAFETY DEVE BLOQUEAR",
@@ -197,11 +197,7 @@ const run = async () => {
                     );
                 }
 
-                /*
-                 * IMPORTANTE:
-                 * Como a Safety bloqueou a decisão,
-                 * o executor NÃO deve ser chamado.
-                 */
+
 
                 const after =
                     await prisma.routineSchedule.findUnique({
@@ -210,10 +206,7 @@ const run = async () => {
                         },
                     });
 
-                /*
-                 * O horário deve continuar sendo
-                 * o horário seguro definido no teste anterior.
-                 */
+
 
                 if (
                     after.startTime !== "19:00" ||
@@ -226,9 +219,9 @@ const run = async () => {
             }
         );
 
-        // ==========================================
-        // RESULTADO
-        // ==========================================
+
+
+
 
         console.log(
             "\n=========================================="

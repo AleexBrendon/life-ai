@@ -12,7 +12,10 @@ const validateAIDecision = (decision) => {
 
     const data = validation.data;
 
-    // A IA nunca pode alterar um horário de trabalho.
+
+
+
+
     if (
         data.target.type === "WORK_SCHEDULE" &&
         [
@@ -30,7 +33,10 @@ const validateAIDecision = (decision) => {
         };
     }
 
-    // Confiança mínima para ações que alteram a agenda.
+
+
+
+
     if (
         data.action !== "NO_ACTION" &&
         data.confidence < 0.7
@@ -44,7 +50,10 @@ const validateAIDecision = (decision) => {
         };
     }
 
-    // Ações que alteram uma entidade precisam de ID.
+
+
+
+
     if (
         data.action !== "CREATE_REMINDER" &&
         data.action !== "CREATE_EVENT" &&

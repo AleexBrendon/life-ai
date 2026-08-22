@@ -20,9 +20,9 @@ router.get("/", authMiddleware, getAll);
 
 router.get("/:id", authMiddleware, getById);
 
-router.put("/read-all", authMiddleware, markAllAsRead);
+router.patch("/read-all", authMiddleware, markAllAsRead);
 
-router.put("/:id/read", authMiddleware, markAsRead);
+router.patch("/:id/read", authMiddleware, markAsRead);
 
 router.put("/:id", authMiddleware, update);
 

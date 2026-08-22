@@ -12,10 +12,7 @@ const run = async () => {
     console.log("=== AI OUTPUT AI TEST ===");
 
     try {
-        /*
-         * Contexto mínimo artificial apenas para testar
-         * a camada de geração da IA.
-         */
+
 
         const context = {
             user: {
