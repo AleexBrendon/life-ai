@@ -162,7 +162,7 @@ describe("AI Action Executor Service", () => {
     });
 
     describe("MOVE_ROUTINE", () => {
-        it("deve alterar o schedule da rotina no dia informado", async () => {
+        it("deve criar uma execução pontual sem alterar o schedule da rotina", async () => {
             const user =
                 await createAuthenticatedUser({
                     email: `executor-move-${Date.now()}@example.com`,
@@ -215,20 +215,33 @@ describe("AI Action Executor Service", () => {
                 },
             });
 
-            const updated =
+            const unchangedSchedule =
                 await prisma.routineSchedule.findUnique({
                     where: {
                         id: schedule.id,
                     },
                 });
 
-            expect(updated.startTime).toBe(
-                "10:00"
-            );
+            expect(unchangedSchedule).toMatchObject({
+                startTime: "08:00",
+                endTime: "09:00",
+            });
 
-            expect(updated.endTime).toBe(
-                "11:00"
-            );
+            const execution = await prisma.routineExecution.findUnique({
+                where: {
+                    userId_routineScheduleId_date: {
+                        userId: user.user.id,
+                        routineScheduleId: schedule.id,
+                        date: new Date("2026-08-16T00:00:00.000Z"),
+                    },
+                },
+            });
+
+            expect(execution).toMatchObject({
+                startTime: "10:00",
+                endTime: "11:00",
+                status: "PENDING",
+            });
         });
 
         it("deve aceitar Date como data", async () => {
@@ -616,7 +629,7 @@ describe("AI Action Executor Service", () => {
                     date: "2026-08-16",
                 })
             ).rejects.toThrow(
-                "Horário da rotina não encontrado para o dia atual."
+                "Horário da rotina não encontrado para esta data."
             );
         });
     });

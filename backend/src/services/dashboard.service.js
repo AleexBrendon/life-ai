@@ -24,6 +24,7 @@ const getDashboard = async ({ userId, date }) => {
         reminderExecutions,
         workSchedules,
         unexpectedEvents,
+        goalSessions,
     ] = await Promise.all([
 
         prisma.routineItem.findMany({
@@ -141,6 +142,18 @@ const getDashboard = async ({ userId, date }) => {
                 startTime: "asc",
             },
         }),
+
+        prisma.goalPlanSession.findMany({
+            where: {
+                date: {
+                    gte: startOfDay,
+                    lte: endOfDay,
+                },
+                goal: { userId },
+            },
+            include: { goal: true },
+            orderBy: { startTime: "asc" },
+        }),
     ]);
 
     const completedRoutineExecutions = routineExecutions.filter(
@@ -218,6 +231,7 @@ const getDashboard = async ({ userId, date }) => {
 
             totalWorkSchedules: workSchedules.length,
             totalUnexpectedEvents: unexpectedEvents.length,
+            totalGoalSessions: goalSessions.length,
 
             totalConflicts: 0,
         },
@@ -235,6 +249,10 @@ const getDashboard = async ({ userId, date }) => {
         work: workSchedules,
 
         unexpectedEvents,
+
+        goals: {
+            sessions: goalSessions,
+        },
 
         schedule: [],
 

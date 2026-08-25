@@ -1,22 +1,21 @@
 const OpenAI = require("openai");
 
-const apiKey = process.env.OPENROUTER_API_KEY;
-const model = process.env.OPENROUTER_MODEL || "openrouter/free";
+const getClient = () => {
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-if (!apiKey) {
-    throw new Error(
-        "OPENROUTER_API_KEY não configurada."
-    );
-}
+    if (!apiKey) {
+        throw new Error("OPENROUTER_API_KEY não configurada.");
+    }
 
-const client = new OpenAI({
-    apiKey,
-    baseURL: "https://openrouter.ai/api/v1",
-    defaultHeaders: {
-        "HTTP-Referer": "http://localhost:3000",
-        "X-Title": "LifeAI",
-    },
-});
+    return new OpenAI({
+        apiKey,
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultHeaders: {
+            "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "LifeAI",
+        },
+    });
+};
 
 const generateAIResponse = async ({
     messages,
@@ -29,7 +28,7 @@ const generateAIResponse = async ({
     }
 
     const request = {
-        model,
+        model: process.env.OPENROUTER_MODEL || "openrouter/free",
         messages,
         temperature: 0.2,
     };
@@ -39,7 +38,7 @@ const generateAIResponse = async ({
     }
 
     const response =
-        await client.chat.completions.create(
+        await getClient().chat.completions.create(
             request
         );
 

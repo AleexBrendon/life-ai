@@ -15,6 +15,8 @@ const jobRoutes = require("./routes/job.routes");
 const workScheduleRoutes = require("./routes/workSchedule.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const aiRoutes = require("./routes/ai.routes");
+const goalRoutes = require("./routes/goal.routes");
 
 const app = express();
 
@@ -35,5 +37,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api", workScheduleRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/goals", goalRoutes);
 
 module.exports = app;

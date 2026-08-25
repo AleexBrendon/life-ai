@@ -64,8 +64,8 @@ const getCalendar = async (req, res) => {
                 type: "ROUTINE",
                 id: schedule.routineItemId,
                 title: schedule.routineItem.name,
-                startTime: schedule.startTime,
-                endTime: schedule.endTime,
+                startTime: execution?.startTime ?? schedule.startTime,
+                endTime: execution?.endTime ?? schedule.endTime,
                 status: execution?.status ?? "PENDING",
                 priority: null,
             };
@@ -172,11 +172,29 @@ const getCalendar = async (req, res) => {
             });
         });
 
+        const goalSessions = await prisma.goalPlanSession.findMany({
+            where: { date: startOfDay, goal: { userId } },
+            include: { goal: true },
+            orderBy: { startTime: "asc" },
+        });
+
+        const goalItems = goalSessions.map((session) => ({
+            type: "GOAL_SESSION",
+            id: session.id,
+            goalId: session.goalId,
+            title: session.goal.title,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            status: session.status,
+            priority: session.goal.priority,
+        }));
+
         const items = [
             ...routineItems,
             ...reminderItems,
             ...unexpectedEventItems,
             ...workItems,
+            ...goalItems,
         ].sort((a, b) => {
             return a.startTime.localeCompare(b.startTime);
         });

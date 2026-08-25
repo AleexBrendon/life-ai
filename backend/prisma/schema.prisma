@@ -22,6 +22,8 @@ model User {
   reminders          Reminder[]
   reminderExecutions ReminderExecution[]
   notifications      Notification[]
+  aiRecommendations  AiRecommendation[]
+  goals              Goal[]
 }
 
 model Profile {
@@ -209,4 +211,64 @@ model Notification {
   @@index([userId])
   @@index([userId, isRead])
   @@index([userId, scheduledAt])
+}
+
+model AiRecommendation {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  date       DateTime
+  action     String
+  targetType String
+  targetId   Int?
+  reason     String
+  confidence Float
+  changes    Json
+  status     String   @default("PENDING")
+  approvedAt DateTime?
+  rejectedAt DateTime?
+  executedAt DateTime?
+  result     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, date])
+  @@map("AIRecommendation")
+}
+
+model Goal {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  title           String
+  description     String?
+  targetDate      DateTime?
+  weeklyFrequency Int      @default(3)
+  sessionMinutes  Int      @default(60)
+  priority        String   @default("MEDIUM")
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions GoalPlanSession[]
+
+  @@index([userId, status])
+}
+
+model GoalPlanSession {
+  id        Int      @id @default(autoincrement())
+  goalId    Int
+  date      DateTime
+  startTime String
+  endTime   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId, date])
+  @@unique([goalId, date, startTime])
 }

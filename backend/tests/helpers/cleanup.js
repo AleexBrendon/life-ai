@@ -1,6 +1,9 @@
 const { prisma } = require("./database");
 
 const cleanupDatabase = async () => {
+    await prisma.goalPlanSession.deleteMany();
+    await prisma.goal.deleteMany();
+    await prisma.aiRecommendation.deleteMany();
     await prisma.notification.deleteMany();
     await prisma.reminderExecution.deleteMany();
     await prisma.reminder.deleteMany();

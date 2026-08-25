@@ -1,7 +1,8 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const request = require("../helpers/request");
 const { cleanupDatabase, prisma } = require("../helpers/cleanup");
+const originalFetch = global.fetch;
 
 describe("E2E — fluxo completo do LifeAI", () => {
     const date = "2026-08-23"; 
@@ -9,11 +10,14 @@ describe("E2E — fluxo completo do LifeAI", () => {
 
     beforeEach(async () => {
         await cleanupDatabase();
+        process.env.OPENROUTER_API_KEY = "e2e-test-key";
+        global.fetch = vi.fn();
     });
 
     afterAll(async () => {
         await cleanupDatabase();
         await prisma.$disconnect();
+        global.fetch = originalFetch;
     });
 
     it("permite ao usuário organizar, acompanhar e concluir seu dia", async () => {
@@ -203,5 +207,60 @@ describe("E2E — fluxo completo do LifeAI", () => {
         const logout = await request.post("/api/auth/logout").set(headers);
         expect(logout.status).toBe(200);
         expect(logout.body.success).toBe(true);
+    });
+
+    it("gera uma recomendação de IA e só aplica o ajuste pontual após aprovação", async () => {
+        const email = `e2e-ai-${Date.now()}@example.com`;
+        const password = "Test@123456";
+        const register = await request.post("/api/auth/register").send({ name: "Usuário IA", email, password });
+        const login = await request.post("/api/auth/login").send({ email, password });
+        const headers = authHeader(login.body.data.token);
+
+        const routineResponse = await request.post("/api/routines").set(headers).send({
+            name: "Estudar IA", type: "STUDY",
+        });
+        const routine = routineResponse.body.data;
+        const scheduleResponse = await request.post(`/api/routines/${routine.id}/schedules`).set(headers).send({
+            dayOfWeek: 0, startTime: "08:00", endTime: "09:00",
+        });
+        const schedule = scheduleResponse.body.data;
+
+        global.fetch.mockResolvedValue(new Response(JSON.stringify({
+            choices: [{ message: { content: JSON.stringify({
+                success: true,
+                summary: "Mover a rotina para evitar conflito.",
+                actions: [{
+                    type: "MOVE_ROUTINE",
+                    reason: "Evita conflito na agenda.",
+                    confidence: 0.9,
+                    data: { routineId: routine.id, newStartTime: "10:00", newEndTime: "11:00" },
+                }],
+                warnings: [],
+            }) } }],
+            model: "test-model",
+        }), { status: 200, headers: { "Content-Type": "application/json" } }));
+
+        const recommendationResponse = await request.post("/api/ai/recommendations").set(headers).send({ date: "2026-08-23" });
+        expect(recommendationResponse.status).toBe(201);
+        const recommendation = recommendationResponse.body.data;
+        expect(recommendation).toMatchObject({ status: "PENDING", action: "MOVE_ROUTINE", targetId: routine.id });
+
+        const scheduleBeforeApproval = await request.get(`/api/routines/${routine.id}/schedules/${schedule.id}`).set(headers);
+        expect(scheduleBeforeApproval.body.data).toMatchObject({ startTime: "08:00", endTime: "09:00" });
+
+        const approved = await request.post(`/api/ai/recommendations/${recommendation.id}/approve`).set(headers);
+        expect(approved.status).toBe(200);
+        expect(approved.body.data.recommendation.status).toBe("APPROVED");
+        expect(approved.body.data.execution.changes).toMatchObject({ newStartTime: "10:00", newEndTime: "11:00" });
+
+        const scheduleAfterApproval = await request.get(`/api/routines/${routine.id}/schedules/${schedule.id}`).set(headers);
+        expect(scheduleAfterApproval.body.data).toMatchObject({ startTime: "08:00", endTime: "09:00" });
+
+        const calendar = await request.get("/api/calendar?date=2026-08-23").set(headers);
+        expect(calendar.body.data.items).toEqual(expect.arrayContaining([
+            expect.objectContaining({ type: "ROUTINE", title: "Estudar IA", startTime: "10:00", endTime: "11:00", status: "PENDING" }),
+        ]));
+
+        expect(register.status).toBe(201);
     });
 });
