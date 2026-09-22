@@ -1,5 +1,24 @@
 services:
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lifeai-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://lifeai:lifeai@postgres:5432/lifeai?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: "${JWT_SECRET}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      OPENROUTER_MODEL: "${OPENROUTER_MODEL}"
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
   postgres:
     image: postgres:17
     container_name: lifeai-postgres
