@@ -57,6 +57,22 @@ export const lifeApi = {
     api.get("/calendar", {
       params: date ? { date } : undefined,
     }),
+
+  jobs: () => api.get("/jobs"),
+  createJob: (payload) => api.post("/jobs", payload),
+  updateJob: (id, payload) => api.patch(`/jobs/${id}`, payload),
+  deleteJob: (id) => api.delete(`/jobs/${id}`),
+
+  tasks: (jobId) => api.get(`/jobs/${jobId}/tasks`),
+
+  createTask: (jobId, payload) =>
+    api.post(`/jobs/${jobId}/tasks`, payload),
+
+  updateTask: (jobId, taskId, payload) =>
+    api.patch(`/jobs/${jobId}/tasks/${taskId}`, payload),
+
+  deleteTask: (jobId, taskId) =>
+    api.delete(`/jobs/${jobId}/tasks/${taskId}`),
 };
 
 export default api;

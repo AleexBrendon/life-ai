@@ -1,24 +1,17 @@
 import {
     Bell,
     CalendarDays,
-    Camera,
     CheckCircle2,
     ChevronRight,
     Circle,
     Clock3,
-    Download,
-    Globe2,
     Mail,
-    Monitor,
-    Moon,
     MoreHorizontal,
     Plus,
     Puzzle,
     ShieldCheck,
     SlidersHorizontal,
-    Sparkles,
     Star,
-    Sun,
     Target,
     Trash2,
     UserRound,
@@ -43,40 +36,59 @@ function Heading({ title, text, action }) {
     );
 }
 
+
 function MiniStats({ data }) {
     return (
         <div className="other-stats">
-            {data.map(([title, note, value], index) => (
-                <article
-                    className={tones[index % tones.length]}
-                    key={title}
-                >
-                    <h2>
-                        {title}
-                        <ChevronRight />
-                    </h2>
+            {data.map(([title, note, value, percentage = 0], index) => {
+                const progress = Math.max(
+                    0,
+                    Math.min(100, Number(percentage) || 0)
+                );
 
-                    <div>
-                        <i>
-                            <Target />
-                        </i>
+                return (
+                    <article
+                        className={tones[index % tones.length]}
+                        key={title}
+                    >
+                        <h2>
+                            {title}
+                            <ChevronRight />
+                        </h2>
 
-                        <strong>
-                            {value}
-                            <span>{note}</span>
-                        </strong>
-                    </div>
+                        <div>
+                            <i>
+                                <Target />
+                            </i>
 
-                    <em>
-                        <i />
-                    </em>
+                            <strong>
+                                {value}
+                                <span>{note}</span>
+                            </strong>
+                        </div>
 
-                    <p>
-                        {note}
-                        <b>100%</b>
-                    </p>
-                </article>
-            ))}
+                        <em
+                            role="progressbar"
+                            aria-label={`Progresso: ${title}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={progress}
+                        >
+                            <i
+                                style={{
+                                    width: `${progress}%`,
+                                    transition: "width 0.3s ease",
+                                }}
+                            />
+                        </em>
+
+                        <p>
+                            {note}
+                            <b>{progress}%</b>
+                        </p>
+                    </article>
+                );
+            })}
         </div>
     );
 }
@@ -1125,14 +1137,91 @@ export function Reminders() {
    SHARED COMPONENTS — RECUPERADOS
 ========================================================= */
 
-function Chart({ title }) {
+
+function Chart({ title, jobs = [] }) {
+    console.log(
+        "STATUS RECEBIDOS PELO GRÁFICO:",
+        jobs.map((job) => ({
+            id: job.id,
+            title: job.title,
+            status: job.status,
+        }))
+    );
+
+    const allJobs = Array.isArray(jobs) ? jobs : [];
+
+    const completed = allJobs.filter(
+        (job) => job.status === "COMPLETED"
+    ).length;
+
+    const inProgress = allJobs.filter(
+        (job) => job.status === "IN_PROGRESS"
+    ).length;
+
+    const pending = allJobs.filter(
+        (job) => job.status === "TODO"
+    ).length;
+
+    const total = allJobs.length;
+
+    const progress = total > 0
+        ? Math.round((completed / total) * 100)
+        : 0;
+
     return (
-        <article>
+        <article className="daily-progress-chart">
             <h2>{title}</h2>
 
-            <div className="line-chart">
-                ﹏﹏﹏﹏﹏﹏
+            <div className="daily-progress-chart__summary">
+                <div>
+                    <strong>{progress}%</strong>
+                    <span>das tarefas concluídas</span>
+                </div>
+
+                <span>
+                    {completed} de {total} tarefas
+                </span>
             </div>
+
+            <div
+                className="daily-progress-chart__track"
+                role="progressbar"
+                aria-label="Progresso das tarefas"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+            >
+                <div
+                    className="daily-progress-chart__fill"
+                    style={{ width: `${progress}%` }}
+                />
+            </div>
+
+            <div className="daily-progress-chart__legend">
+                <div>
+                    <span className="daily-progress-chart__dot pending" />
+                    <span>A fazer</span>
+                    <strong>{pending}</strong>
+                </div>
+
+                <div>
+                    <span className="daily-progress-chart__dot in-progress" />
+                    <span>Em andamento</span>
+                    <strong>{inProgress}</strong>
+                </div>
+
+                <div>
+                    <span className="daily-progress-chart__dot completed" />
+                    <span>Concluídas</span>
+                    <strong>{completed}</strong>
+                </div>
+            </div>
+
+            {total === 0 && (
+                <p className="daily-progress-chart__empty">
+                    Nenhuma tarefa encontrada.
+                </p>
+            )}
         </article>
     );
 }
@@ -1161,239 +1250,1239 @@ function Insight({ title }) {
 ========================================================= */
 
 export function Insights() {
+    const [dashboard, setDashboard] = useState(null);
+    const [today, setToday] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        Promise.all([lifeApi.dashboard(), lifeApi.today()])
+            .then(([dashboardResponse, todayResponse]) => {
+                if (!mounted) return;
+                setDashboard(dashboardResponse?.data || dashboardResponse || null);
+                setToday(todayResponse?.data || todayResponse || null);
+            })
+            .catch((err) => {
+                console.error("Erro ao carregar insights:", err);
+                if (mounted) setError(err?.response?.data?.message || "Não foi possível carregar seus dados.");
+            })
+            .finally(() => mounted && setLoading(false));
+        return () => { mounted = false; };
+    }, []);
+
+
+    const metrics = useMemo(() => {
+        const allJobs = Array.isArray(jobs) ? jobs : [];
+
+        const completed = allJobs.filter(
+            (job) => job.status === "COMPLETED"
+        ).length;
+
+        const inProgress = allJobs.filter(
+            (job) => job.status === "IN_PROGRESS"
+        ).length;
+
+        const pending = allJobs.filter(
+            (job) => job.status === "TODO"
+        ).length;
+
+        const total = allJobs.length;
+
+        const completion = total
+            ? Math.round((completed / total) * 100)
+            : 0;
+
+        return [
+            ["Resumo do dia", "tarefas concluídas", String(completed)],
+            ["Progresso", "taxa de conclusão", `${completion}%`],
+            ["Pendentes", "tarefas a fazer", String(pending)],
+            ["Total", "tarefas acompanhadas", String(total)],
+        ];
+    }, [jobs]);
+
+
     return (
         <section className="planner-page">
-            <Heading
-                title="Insights"
-                text="Entenda seus padrões. Decida melhor."
-            />
-
-            <MiniStats
-                data={[
-                    [
-                        "Resumo da semana",
-                        "das metas avançadas",
-                        "78%",
-                    ],
-                    [
-                        "Produtividade",
-                        "acima da média",
-                        "15%",
-                    ],
-                    [
-                        "Tempo de foco",
-                        "média diária",
-                        "8h 32m",
-                    ],
-                    [
-                        "Consistência",
-                        "dias seguidos",
-                        "6",
-                    ],
-                ]}
-            />
-
-            <div className="insight-charts">
-                <Chart title="Ritmo de produtividade" />
-
-                <article>
-                    <h2>Conclusão por categoria</h2>
-
-                    <div className="donut">
-                        35%
+            <Heading title="Insights" text="Entenda seus padrões. Decida melhor." />
+            {loading ? <div className="empty-state"><p>Carregando seus dados...</p></div> :
+                error ? <div className="empty-state"><p>{error}</p></div> : <>
+                    <MiniStats data={metrics} />
+                    <div className="insight-charts">
+                        <Chart title="Resumo da produtividade" />
+                        <article><h2>Distribuição do dia</h2><div className="donut">{metrics[1][2]}</div>
+                            <p>● Concluídos {metrics[0][2]}</p><p>● Pendentes {metrics[2][2]}</p></article>
+                        <article><h2>Dados disponíveis</h2><div className="focus-map">
+                            {Array.from({ length: 49 }, (_, i) => <i className={`heat-${i % 6}`} key={i} />)}
+                        </div></article>
                     </div>
-
-                    <p>● Trabalho 35%</p>
-                    <p>
-                        ● Desenvolvimento 25%
-                    </p>
-                    <p>● Saúde 20%</p>
-                </article>
-
-                <article>
-                    <h2>Mapa de foco</h2>
-
-                    <div className="focus-map">
-                        {Array.from(
-                            { length: 49 },
-                            (_, i) => (
-                                <i
-                                    className={`heat-${i % 6}`}
-                                    key={i}
-                                />
-                            )
-                        )}
+                    <div className="insight-bottom">
+                        <article><h2>Resumo baseado nos seus dados</h2><div>
+                            <Insight title={`Você concluiu ${metrics[0][2]} item(ns)`} />
+                            <Insight title={`${metrics[2][2]} item(ns) ainda estão pendentes`} />
+                        </div></article>
+                        <article><h2>Dados do dia</h2><p>Indicadores carregados diretamente da sua agenda e do seu dashboard.</p></article>
                     </div>
-                </article>
-            </div>
-
-            <div className="insight-bottom">
-                <article>
-                    <h2>
-                        Principais insights para você
-                    </h2>
-
-                    <div>
-                        <Insight
-                            title="Seu melhor dia é quarta-feira"
-                        />
-
-                        <Insight
-                            title="Rotinas matinais aumentam sua conclusão em 18%"
-                        />
-                    </div>
-                </article>
-
-                <article>
-                    <h2>Pergunte aos seus dados</h2>
-
-                    <p>
-                        Faça perguntas em linguagem natural
-                        e receba insights personalizados
-                        sobre sua produtividade.
-                    </p>
-
-                    <div className="insight-ask">
-                        Ex.: Quando sou mais produtivo?
-
-                        <button>
-                            <Sparkles />
-                            Analisar
-                        </button>
-                    </div>
-                </article>
-            </div>
+                </>}
         </section>
     );
 }
 
-/* =========================================================
-   WORK
-========================================================= */
+function unwrapApiPayload(response) {
+    return response?.data?.data ??
+        response?.data ??
+        response;
+}
+
+function getApiErrorMessage(error, fallback) {
+    return (
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        fallback
+    );
+}
+
+
+const JOB_STATUSES = ["TODO", "IN_PROGRESS", "COMPLETED"];
 
 export function Work() {
-    const task = [
-        "Planejar apresentação",
-        "Enviar relatório mensal",
-        "Reunião com produto",
+    const [jobs, setJobs] = useState([]);
+    const [today, setToday] = useState(null);
+    const [calendar, setCalendar] = useState(null);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [creating, setCreating] = useState(false);
+    const [createError, setCreateError] = useState("");
+
+    const [draggedJobId, setDraggedJobId] = useState(null);
+    const [dragOverStatus, setDragOverStatus] = useState(null);
+
+    const [movingJobIds, setMovingJobIds] = useState([]);
+
+    const [editingJob, setEditingJob] = useState(null);
+    const [updatingJob, setUpdatingJob] = useState(false);
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deletingJob, setDeletingJob] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
+
+    const [form, setForm] = useState({
+        name: "",
+        company: "",
+        position: "",
+        workType: "",
+        location: "",
+    });
+
+    const loadWork = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            // Usa a data local para evitar diferenças de fuso horário.
+            const now = new Date();
+            const date = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, "0"),
+                String(now.getDate()).padStart(2, "0"),
+            ].join("-");
+
+            const [jobsResponse, todayResponse, calendarResponse] =
+                await Promise.all([
+                    lifeApi.jobs(),
+                    lifeApi.today(),
+                    lifeApi.calendar(date),
+                ]);
+
+            const loadedJobs = unwrapApiPayload(jobsResponse);
+            const todayData = unwrapApiPayload(todayResponse);
+            const calendarData = unwrapApiPayload(calendarResponse);
+
+            if (!Array.isArray(loadedJobs)) {
+                throw new Error(
+                    "A API retornou um formato inválido para os trabalhos."
+                );
+            }
+
+            setJobs(
+                loadedJobs.map((job) => ({
+                    ...job,
+                    status: JOB_STATUSES.includes(job.status)
+                        ? job.status
+                        : "TODO",
+                }))
+            );
+
+            setToday(todayData ?? null);
+            setCalendar(calendarData ?? null);
+        } catch (err) {
+            console.error("Erro ao carregar trabalho:", err);
+
+            setError(
+                getApiErrorMessage(
+                    err,
+                    "Não foi possível carregar seus dados de trabalho."
+                )
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadWork();
+    }, []);
+
+
+    const tasks = useMemo(() => {
+        const source = today || {};
+        const cal = calendar || {};
+
+        const found = [
+            cal.items,
+            cal.events,
+            source.tasks,
+            source.items,
+            source.activities,
+            source.schedule,
+        ].find(Array.isArray);
+
+        const calendarTasks = Array.isArray(found)
+            ? found.map((item, index) => ({
+                id: `activity-${item.id ?? index}`,
+                title:
+                    item.title ||
+                    item.name ||
+                    item.description ||
+                    `Atividade ${index + 1}`,
+                completed:
+                    item.isCompleted === true ||
+                    item.completed === true ||
+                    ["COMPLETED", "DONE"].includes(
+                        String(item.status || "").toUpperCase()
+                    ),
+                status: item.status || null,
+                time:
+                    item.startTime ||
+                    item.reminderTime ||
+                    item.time ||
+                    "",
+                type: "activity",
+            }))
+            : [];
+
+        const jobTasks = jobs.map((job) => ({
+            id: `job-${job.id}`,
+            title: job.name,
+            completed: job.status === "COMPLETED",
+            status: job.status || "TODO",
+            time: "",
+            type: "job",
+        }));
+
+        return [...jobTasks, ...calendarTasks];
+    }, [jobs, today, calendar]);
+
+
+    const completed = tasks.filter(
+        (task) => task.completed
+    );
+
+    const pending = tasks.filter(
+        (task) => !task.completed
+    );
+
+    const jobColumns = {
+        TODO: jobs.filter(
+            (job) =>
+                (job.status || "TODO") === "TODO"
+        ),
+
+        IN_PROGRESS: jobs.filter(
+            (job) =>
+                job.status === "IN_PROGRESS"
+        ),
+
+        COMPLETED: jobs.filter(
+            (job) =>
+                job.status === "COMPLETED"
+        ),
+    };
+
+
+    const totalJobs = jobs.length;
+
+    const getPercentage = (count) =>
+        totalJobs > 0
+            ? Math.round((count / totalJobs) * 100)
+            : 0;
+
+    const stats = [
+        [
+            "Trabalhos",
+            "cadastrados",
+            String(totalJobs),
+            totalJobs > 0 ? 100 : 0,
+        ],
+        [
+            "A fazer",
+            "trabalhos pendentes",
+            String(jobColumns.TODO.length),
+            getPercentage(jobColumns.TODO.length),
+        ],
+        [
+            "Em andamento",
+            "trabalhos em andamento",
+            String(jobColumns.IN_PROGRESS.length),
+            getPercentage(jobColumns.IN_PROGRESS.length),
+        ],
+        [
+            "Concluídos",
+            "trabalhos concluídos",
+            String(jobColumns.COMPLETED.length),
+            getPercentage(jobColumns.COMPLETED.length),
+        ],
     ];
+
+
+    const resetCreateForm = () => {
+        setForm({
+            name: "",
+            company: "",
+            position: "",
+            workType: "",
+            location: "",
+        });
+
+        setCreateError("");
+    };
+
+    const openCreateModal = () => {
+        setEditingJob(null);
+        resetCreateForm();
+        setShowCreateModal(true);
+    };
+
+    const openEditModal = (job) => {
+        setEditingJob(job);
+
+        setForm({
+            name: job.name ?? "",
+            company: job.company ?? "",
+            position: job.position ?? "",
+            workType: job.workType ?? "",
+            location: job.location ?? "",
+        });
+
+        setCreateError("");
+        setShowCreateModal(true);
+    };
+
+    const closeCreateModal = () => {
+        if (creating) {
+            return;
+        }
+
+        setShowCreateModal(false);
+        setEditingJob(null);
+        resetCreateForm();
+    };
+
+    const handleCreateChange = (event) => {
+        const {
+            name,
+            value,
+        } = event.target;
+
+        setForm((current) => ({
+            ...current,
+            [name]: value,
+        }));
+    };
+
+    const handleCreateJob = async (event) => {
+        event.preventDefault();
+
+        if (!form.name.trim()) {
+            setCreateError("Informe o nome do trabalho.");
+            return;
+        }
+
+        try {
+            setCreating(true);
+            setCreateError("");
+
+            const payload = {
+                name: form.name.trim(),
+                company: form.company.trim() || undefined,
+                position: form.position.trim() || undefined,
+                workType: form.workType.trim() || undefined,
+                location: form.location.trim() || undefined,
+                isActive: true,
+                status: "TODO",
+            };
+
+            const response = await lifeApi.createJob(payload);
+            const createdJob = unwrapApiPayload(response);
+
+            if (
+                createdJob &&
+                typeof createdJob === "object" &&
+                createdJob.id != null
+            ) {
+                setJobs((current) => [
+                    ...current,
+                    {
+                        ...createdJob,
+                        status: JOB_STATUSES.includes(createdJob.status)
+                            ? createdJob.status
+                            : "TODO",
+                    },
+                ]);
+            } else {
+                await loadWork();
+            }
+
+            setShowCreateModal(false);
+            resetCreateForm();
+        } catch (err) {
+            console.error("Erro ao criar trabalho:", err);
+
+            setCreateError(
+                getApiErrorMessage(
+                    err,
+                    "Não foi possível criar o trabalho."
+                )
+            );
+        } finally {
+            setCreating(false);
+        }
+    };
+
+
+    const handleUpdateJob = async (event) => {
+        event.preventDefault();
+
+        if (!editingJob) return;
+
+        if (!form.name.trim()) {
+            setCreateError("Informe o nome do trabalho.");
+            return;
+        }
+
+        try {
+            setUpdatingJob(true);
+            setCreateError("");
+
+            const payload = {
+                name: form.name.trim(),
+                company: form.company.trim(),
+                position: form.position.trim(),
+                workType: form.workType.trim(),
+                location: form.location.trim(),
+            };
+
+            const response = await lifeApi.updateJob(
+                editingJob.id,
+                payload
+            );
+
+            const result = unwrapApiPayload(response);
+
+            const updatedJob =
+                result?.id != null
+                    ? result
+                    : result?.data?.id != null
+                        ? result.data
+                        : null;
+
+            if (!updatedJob) {
+                throw new Error(
+                    "O trabalho foi enviado, mas não foi possível confirmar os dados atualizados."
+                );
+            }
+
+            setJobs((current) =>
+                current.map((job) =>
+                    String(job.id) === String(editingJob.id)
+                        ? { ...job, ...updatedJob }
+                        : job
+                )
+            );
+
+            setShowCreateModal(false);
+            setEditingJob(null);
+            resetCreateForm();
+        } catch (error) {
+            console.error("Erro ao atualizar trabalho:", error);
+
+            setCreateError(
+                getApiErrorMessage(
+                    error,
+                    "Não foi possível atualizar o trabalho."
+                )
+            );
+        } finally {
+            setUpdatingJob(false);
+        }
+    };
+
+
+    const openDeleteConfirm = () => {
+        setDeleteError("");
+        setShowCreateModal(false);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteJob = async () => {
+        if (!editingJob) return;
+
+        try {
+            setDeletingJob(true);
+            setDeleteError("");
+
+            await lifeApi.deleteJob(editingJob.id);
+
+            setJobs((current) =>
+                current.filter(
+                    (job) =>
+                        String(job.id) !== String(editingJob.id)
+                )
+            );
+
+            setShowDeleteConfirm(false);
+            setEditingJob(null);
+            resetCreateForm();
+        } catch (error) {
+            console.error("Erro ao excluir trabalho:", error);
+
+            setDeleteError(
+                getApiErrorMessage(
+                    error,
+                    "Não foi possível excluir o trabalho."
+                )
+            );
+        } finally {
+            setDeletingJob(false);
+        }
+    };
+
+    const moveJob = async (jobId, newStatus) => {
+        if (!JOB_STATUSES.includes(newStatus)) {
+            setError("A coluna de destino é inválida.");
+            return;
+        }
+
+        const currentJob = jobs.find(
+            (job) => String(job.id) === String(jobId)
+        );
+
+        if (!currentJob) {
+            setError("Não foi possível encontrar esse trabalho.");
+            return;
+        }
+
+        const currentStatus = currentJob.status || "TODO";
+
+        if (
+            currentStatus === newStatus ||
+            movingJobIds.some((id) => String(id) === String(jobId))
+        ) {
+            return;
+        }
+
+        try {
+            setError("");
+
+            setMovingJobIds((current) => [...current, jobId]);
+
+            // Aguarda a confirmação do backend antes de mover o cartão.
+            const response = await lifeApi.updateJob(jobId, {
+                status: newStatus,
+            });
+
+            const updatedJob = unwrapApiPayload(response);
+
+            if (
+                updatedJob?.status &&
+                !JOB_STATUSES.includes(updatedJob.status)
+            ) {
+                throw new Error(
+                    "O servidor retornou um status de trabalho inválido."
+                );
+            }
+
+            const confirmedStatus =
+                updatedJob?.status || newStatus;
+
+            setJobs((current) =>
+                current.map((job) =>
+                    String(job.id) === String(jobId)
+                        ? {
+                            ...job,
+                            ...(updatedJob &&
+                                typeof updatedJob === "object"
+                                ? updatedJob
+                                : {}),
+                            status: confirmedStatus,
+                        }
+                        : job
+                )
+            );
+        } catch (err) {
+            console.error(
+                "Erro ao atualizar status do trabalho:",
+                err
+            );
+
+            setError(
+                getApiErrorMessage(
+                    err,
+                    "Não foi possível mover o trabalho. A alteração não foi aplicada."
+                )
+            );
+        } finally {
+            setMovingJobIds((current) =>
+                current.filter(
+                    (id) => String(id) !== String(jobId)
+                )
+            );
+
+            setDraggedJobId(null);
+            setDragOverStatus(null);
+        }
+    };
+
+
+    const handleDragStart = (event, jobId) => {
+        if (movingJobIds.some((id) => String(id) === String(jobId))) {
+            event.preventDefault();
+            return;
+        }
+
+        setDraggedJobId(jobId);
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(jobId));
+    };
+
+    const handleDragEnd = () => {
+        setDraggedJobId(null);
+        setDragOverStatus(null);
+    };
+
+    const handleDragOver = (event, status) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        setDragOverStatus(status);
+    };
+
+    const handleDragLeave = (event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+            setDragOverStatus(null);
+        }
+    };
+
+    const handleDrop = async (event, status) => {
+        event.preventDefault();
+        setDragOverStatus(null);
+
+        const rawJobId = event.dataTransfer.getData("text/plain");
+        const jobId = Number(rawJobId);
+
+        if (!rawJobId || !Number.isSafeInteger(jobId) || jobId <= 0) {
+            setDraggedJobId(null);
+            return;
+        }
+
+        await moveJob(jobId, status);
+    };
 
     return (
         <section className="planner-page">
             <Heading
                 title="Trabalho"
                 text="Organize suas entregas com clareza."
+                action={
+                    <button
+                        className="primary-button"
+                        type="button"
+                        onClick={
+                            openCreateModal
+                        }
+                    >
+                        <Plus />
+                        Novo trabalho
+                    </button>
+                }
             />
 
-            <MiniStats
-                data={[
-                    [
-                        "A fazer",
-                        "tarefas a fazer",
-                        "8",
-                    ],
-                    [
-                        "Em andamento",
-                        "em andamento",
-                        "5",
-                    ],
-                    [
-                        "Concluídas",
-                        "concluídas",
-                        "12",
-                    ],
-                    [
-                        "Atrasadas",
-                        "atrasadas",
-                        "2",
-                    ],
-                ]}
-            />
+            {loading ? (
+                <div className="empty-state">
+                    <p>
+                        Carregando sua agenda...
+                    </p>
+                </div>
+            ) : error ? (
+                <div className="empty-state">
+                    <p>{error}</p>
 
-            <div className="work-layout">
-                <article className="kanban">
-                    {[
-                        "A fazer",
-                        "Em andamento",
-                        "Concluído",
-                    ].map((col, i) => (
-                        <div
-                            className="kanban-col"
-                            key={col}
-                        >
-                            <h2>
-                                {col}{" "}
-                                <span>
-                                    {i
-                                        ? i === 1
-                                            ? 5
-                                            : 12
-                                        : 8}
-                                </span>
-                            </h2>
+                    <button
+                        type="button"
+                        onClick={loadWork}
+                    >
+                        Tentar novamente
+                    </button>
+                </div>
+            ) : (
+                <>
+                    <MiniStats
+                        data={stats}
+                    />
 
-                            {task.map((x, k) => (
-                                <div
-                                    className="work-task"
-                                    key={k}
-                                >
-                                    <Circle />
+                    {jobs.length > 0 && (
+                        <article className="work-jobs-list">
+                            <div className="planner-section-heading">
+                                <div>
+                                    <h2>
+                                        Meus trabalhos
+                                    </h2>
 
-                                    <strong>
-                                        {i ? " " : x}
-                                    </strong>
-
-                                    {!i && (
-                                        <small>
-                                            Trabalho ▣{" "}
-                                            {k === 0
-                                                ? "Hoje"
-                                                : "Amanhã"}
-                                        </small>
-                                    )}
+                                    <p>
+                                        Trabalhos cadastrados
+                                        na sua agenda.
+                                    </p>
                                 </div>
-                            ))}
+                            </div>
 
-                            <button>
-                                <Plus />
-                                Nova tarefa
+                            <div className="work-job-cards">
+                                {jobs.map(
+                                    (job) => (
+
+                                        <div
+                                            className="work-job-card"
+                                            key={job.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => openEditModal(job)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === "Enter" || event.key === " ") {
+                                                    event.preventDefault();
+                                                    openEditModal(job);
+                                                }
+                                            }}
+                                        >
+                                            <div>
+                                                <strong>
+                                                    {
+                                                        job.name
+                                                    }
+                                                </strong>
+
+                                                {job.company && (
+                                                    <span>
+                                                        {
+                                                            job.company
+                                                        }
+                                                    </span>
+                                                )}
+
+                                                {job.position && (
+                                                    <small>
+                                                        {
+                                                            job.position
+                                                        }
+                                                    </small>
+                                                )}
+                                            </div>
+
+                                            <b>
+                                                {job.isActive ===
+                                                    false
+                                                    ? "Inativo"
+                                                    : "Ativo"}
+                                            </b>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </article>
+                    )}
+
+                    <div className="work-layout">
+                        <article className="kanban">
+                            {[
+                                [
+                                    "A fazer",
+                                    "TODO",
+                                ],
+                                [
+                                    "Em andamento",
+                                    "IN_PROGRESS",
+                                ],
+                                [
+                                    "Concluído",
+                                    "COMPLETED",
+                                ],
+                            ].map(
+                                ([
+                                    column,
+                                    status,
+                                ]) => {
+                                    const columnJobs =
+                                        jobColumns[
+                                        status
+                                        ];
+
+                                    return (
+                                        <div
+                                            className={`kanban-col ${dragOverStatus ===
+                                                status
+                                                ? "drag-over"
+                                                : ""
+                                                }`}
+                                            key={
+                                                status
+                                            }
+                                            onDragOver={(
+                                                event
+                                            ) =>
+                                                handleDragOver(
+                                                    event,
+                                                    status
+                                                )
+                                            }
+                                            onDragLeave={
+                                                handleDragLeave
+                                            }
+                                            onDrop={(
+                                                event
+                                            ) =>
+                                                handleDrop(
+                                                    event,
+                                                    status
+                                                )
+                                            }
+                                        >
+                                            <h2>
+                                                {
+                                                    column
+                                                }
+
+                                                <span>
+                                                    {
+                                                        columnJobs.length
+                                                    }
+                                                </span>
+                                            </h2>
+
+                                            {columnJobs.map(
+                                                (
+                                                    job
+                                                ) => {
+                                                    const currentStatus =
+                                                        job.status ||
+                                                        "TODO";
+                                                    const isMoving = movingJobIds.some(
+                                                        (id) => String(id) === String(job.id)
+                                                    );
+                                                    return (
+
+                                                        <div
+                                                            className={`work-task ${String(draggedJobId) === String(job.id) ? "dragging" : ""
+                                                                } ${isMoving ? "moving" : ""}`}
+                                                            key={job.id}
+                                                            draggable={!isMoving}
+                                                            aria-busy={isMoving}
+                                                            title={
+                                                                isMoving
+                                                                    ? "Salvando alteração..."
+                                                                    : "Arraste para mudar o status"
+                                                            }
+                                                            onDragStart={(event) => handleDragStart(event, job.id)}
+                                                            onDragEnd={handleDragEnd}
+                                                        >
+                                                            {currentStatus ===
+                                                                "COMPLETED" ? (
+                                                                <CheckCircle2 />
+                                                            ) : (
+                                                                <Circle />
+                                                            )}
+
+                                                            <div>
+                                                                <strong>
+                                                                    {
+                                                                        job.name
+                                                                    }
+                                                                </strong>
+
+                                                                {job.company && (
+                                                                    <small>
+                                                                        {
+                                                                            job.company
+                                                                        }
+                                                                    </small>
+                                                                )}
+
+                                                                {job.position && (
+                                                                    <small>
+                                                                        {
+                                                                            job.position
+                                                                        }
+                                                                    </small>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                            )}
+
+                                            {!columnJobs.length && (
+                                                <div className="empty-state">
+                                                    <p>
+                                                        {dragOverStatus ===
+                                                            status
+                                                            ? "Solte o trabalho aqui."
+                                                            : "Nenhum trabalho aqui."}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }
+                            )}
+                        </article>
+
+                        <aside className="work-side">
+                            <article>
+                                <h2>
+                                    Atividades do dia
+                                </h2>
+
+                                {!tasks.length ? (
+                                    <p>
+                                        Nenhuma atividade
+                                        encontrada.
+                                    </p>
+                                ) : (
+                                    tasks
+                                        .slice(
+                                            0,
+                                            5
+                                        )
+                                        .map(
+                                            (
+                                                task
+                                            ) => (
+                                                <p
+                                                    key={
+                                                        task.id
+                                                    }
+                                                >
+                                                    {task.completed
+                                                        ? "✓"
+                                                        : "↑"}{" "}
+                                                    {
+                                                        task.title
+                                                    }
+
+                                                    {task.time && (
+                                                        <b>
+                                                            {
+                                                                task.time
+                                                            }
+                                                        </b>
+                                                    )}
+                                                </p>
+                                            )
+                                        )
+                                )}
+                            </article>
+
+
+                            <Chart
+                                title="Progresso das tarefas"
+                                jobs={jobs}
+                            />
+
+                        </aside>
+                    </div>
+                </>
+            )}
+
+            {showCreateModal && (
+                <div
+                    className="modal-overlay"
+                    onClick={
+                        closeCreateModal
+                    }
+                >
+                    <div
+                        className="modal-card reminder-create-modal"
+                        onClick={(
+                            event
+                        ) =>
+                            event.stopPropagation()
+                        }
+                    >
+                        <div className="modal-header">
+                            <div>
+                                <h2>{editingJob ? "Editar trabalho" : "Novo trabalho"}</h2>
+
+                                <p>
+                                    {editingJob
+                                        ? "Atualize os dados deste trabalho."
+                                        : "Cadastre um trabalho para organizar sua agenda."}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    closeCreateModal
+                                }
+                                disabled={creating || updatingJob}
+                            >
+                                <X />
                             </button>
                         </div>
-                    ))}
-                </article>
 
-                <aside className="work-side">
-                    <article>
-                        <h2>Prazos próximos</h2>
+                        <form
+                            className="reminder-create-form"
+                            onSubmit={editingJob ? handleUpdateJob : handleCreateJob}
+                        >
+                            <label>
+                                <span>
+                                    Nome do trabalho
+                                </span>
 
-                        {task.map((x) => (
-                            <p key={x}>
-                                ↑ {x}
-                                <b>Hoje</b>
-                            </p>
-                        ))}
-                    </article>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={
+                                        form.name
+                                    }
+                                    onChange={
+                                        handleCreateChange
+                                    }
+                                    placeholder="Ex.: Trabalho principal"
+                                    maxLength={
+                                        100
+                                    }
+                                    autoFocus
+                                />
+                            </label>
 
-                    <article>
-                        <h2>◴ Sessão de foco</h2>
+                            <div className="reminder-form-grid">
+                                <label>
+                                    <span>
+                                        Empresa
+                                    </span>
 
-                        <strong className="focus-time">
-                            25:00
-                        </strong>
+                                    <input
+                                        type="text"
+                                        name="company"
+                                        value={
+                                            form.company
+                                        }
+                                        onChange={
+                                            handleCreateChange
+                                        }
+                                        placeholder="Ex.: Minha Empresa"
+                                        maxLength={
+                                            100
+                                        }
+                                    />
+                                </label>
 
-                        <p>
-                            Tempo sugerido para foco
-                            profundo
-                        </p>
+                                <label>
+                                    <span>
+                                        Cargo
+                                    </span>
 
-                        <button>
-                            ▷ Iniciar foco
-                        </button>
-                    </article>
+                                    <input
+                                        type="text"
+                                        name="position"
+                                        value={
+                                            form.position
+                                        }
+                                        onChange={
+                                            handleCreateChange
+                                        }
+                                        placeholder="Ex.: Desenvolvedor"
+                                        maxLength={
+                                            100
+                                        }
+                                    />
+                                </label>
+                            </div>
 
-                    <Chart title="Carga da semana" />
-                </aside>
-            </div>
+                            <div className="reminder-form-grid">
+                                <label>
+                                    <span>
+                                        Tipo de trabalho
+                                    </span>
+
+                                    <input
+                                        type="text"
+                                        name="workType"
+                                        value={
+                                            form.workType
+                                        }
+                                        onChange={
+                                            handleCreateChange
+                                        }
+                                        placeholder="Ex.: CLT, Freelancer"
+                                        maxLength={
+                                            50
+                                        }
+                                    />
+                                </label>
+
+                                <label>
+                                    <span>
+                                        Local
+                                    </span>
+
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={
+                                            form.location
+                                        }
+                                        onChange={
+                                            handleCreateChange
+                                        }
+                                        placeholder="Ex.: Remoto"
+                                        maxLength={
+                                            200
+                                        }
+                                    />
+                                </label>
+                            </div>
+
+                            {createError && (
+                                <div className="reminder-form-error">
+                                    {
+                                        createError
+                                    }
+                                </div>
+                            )}
+
+
+                            <div className="reminder-create-actions">
+                                <button
+                                    type="button"
+                                    onClick={closeCreateModal}
+                                    disabled={creating || updatingJob}
+                                >
+                                    Cancelar
+                                </button>
+
+                                {editingJob && (
+                                    <button
+                                        type="button"
+                                        onClick={openDeleteConfirm}
+                                        disabled={creating || updatingJob}
+                                    >
+                                        Excluir trabalho
+                                    </button>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="primary"
+                                    disabled={creating || updatingJob}
+                                >
+                                    {editingJob
+                                        ? updatingJob
+                                            ? "Salvando..."
+                                            : "Editar trabalho"
+                                        : creating
+                                            ? "Criando..."
+                                            : "Criar trabalho"}
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            )}
+
+
+            {showDeleteConfirm && (
+                <div
+                    className="modal-overlay"
+                    onClick={() => {
+                        if (deletingJob) return;
+
+                        setShowDeleteConfirm(false);
+                        setShowCreateModal(true);
+                    }}
+                >
+                    <div
+                        className="modal-card reminder-create-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="modal-header">
+                            <div>
+                                <h2>Excluir trabalho?</h2>
+                                <p>
+                                    Tem certeza de que deseja excluir
+                                    {" "}
+                                    <strong>{editingJob?.name}</strong>?
+                                    Essa ação não poderá ser desfeita.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                disabled={deletingJob}
+                                onClick={() => {
+                                    setShowDeleteConfirm(false);
+                                    setShowCreateModal(true);
+                                }}
+                            >
+                                <X />
+                            </button>
+                        </div>
+
+                        {deleteError && (
+                            <div className="reminder-form-error">
+                                {deleteError}
+                            </div>
+                        )}
+
+                        <div className="reminder-create-actions">
+                            <button
+                                type="button"
+                                disabled={deletingJob}
+                                onClick={() => {
+                                    setShowDeleteConfirm(false);
+                                    setShowCreateModal(true);
+                                }}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={deletingJob}
+                                onClick={handleDeleteJob}
+                            >
+                                {deletingJob
+                                    ? "Excluindo..."
+                                    : "Confirmar exclusão"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </section>
     );
 }
@@ -1430,94 +2519,45 @@ function Notice({ title, idx }) {
 }
 
 export function Notifications() {
-    const current = [
-        "Sua rotina começa em 15 minutos",
-        "A meta Crescimento Profissional avançou",
-        "Conflito detectado na agenda",
-    ];
+    const [notifications, setNotifications] = useState([]);
+    const [activeTab, setActiveTab] = useState("all");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    const old = [
-        "Meta semanal concluída",
-        "Resumo semanal disponível",
-        "Insight da IA disponível",
-    ];
+    const loadNotifications = async () => {
+        try {
+            setLoading(true);
+            const response = await lifeApi.notifications();
+            const data = response?.data || response || [];
+            setNotifications(Array.isArray(data) ? data : data.notifications || data.items || []);
+        } catch (err) {
+            console.error("Erro ao carregar notificações:", err);
+            setError(err?.response?.data?.message || "Não foi possível carregar suas notificações.");
+        } finally { setLoading(false); }
+    };
 
-    return (
-        <section className="planner-page notifications-page">
-            <Heading
-                title="Notificações 🔴"
-                text=""
-            />
+    useEffect(() => { loadNotifications(); }, []);
 
-            <div className="notification-layout">
-                <main>
-                    <div className="notification-tabs">
-                        <button>
-                            Todas 3
-                        </button>
+    const unread = notifications.filter((item) => item.isRead === false || item.read === false || item.status === "UNREAD");
+    const visible = activeTab === "unread" ? unread : notifications;
 
-                        <button>
-                            Não lidas 3
-                        </button>
-
-                        <button>
-                            Ações necessárias 2
-                        </button>
-                    </div>
-
-                    <h2>Hoje</h2>
-
-                    {current.map((x, i) => (
-                        <Notice
-                            key={x}
-                            title={x}
-                            idx={i}
-                        />
-                    ))}
-
-                    <h2>Anteriores</h2>
-
-                    {old.map((x, i) => (
-                        <Notice
-                            key={x}
-                            title={x}
-                            idx={i + 1}
-                        />
-                    ))}
-                </main>
-
-                <aside className="notification-prefs">
-                    <h2>
-                        Preferências de notificação
-                    </h2>
-
-                    {[
-                        "Notificações por e-mail",
-                        "Notificações no navegador",
-                        "Resumo diário",
-                    ].map((x) => (
-                        <div key={x}>
-                            <Bell />
-
-                            <span>
-                                <strong>{x}</strong>
-
-                                <small>
-                                    Receber resumos e alertas
-                                </small>
-                            </span>
-
-                            <i />
-                        </div>
-                    ))}
-
-                    <button>
-                        Gerenciar preferências ›
-                    </button>
-                </aside>
+    return <section className="planner-page notifications-page">
+        <Heading title="Notificações" text="Acompanhe o que acontece na sua agenda." />
+        <div className="notification-layout"><main>
+            <div className="notification-tabs">
+                <button className={activeTab === "all" ? "active" : ""} onClick={() => setActiveTab("all")} type="button">Todas {notifications.length}</button>
+                <button className={activeTab === "unread" ? "active" : ""} onClick={() => setActiveTab("unread")} type="button">Não lidas {unread.length}</button>
             </div>
-        </section>
-    );
+            {loading && <div className="empty-state"><p>Carregando notificações...</p></div>}
+            {!loading && error && <div className="empty-state"><p>{error}</p><button type="button" onClick={loadNotifications}>Tentar novamente</button></div>}
+            {!loading && !error && !visible.length && <div className="empty-state"><Bell /><strong>Nenhuma notificação</strong><p>Você está em dia.</p></div>}
+            {!loading && !error && visible.map((notification, index) =>
+                <Notice key={notification.id ?? index} title={notification.title || notification.message || "Nova notificação"} idx={index} />
+            )}
+        </main>
+            <aside className="notification-prefs"><h2>Resumo</h2><div><Bell /><span><strong>{unread.length}</strong><small>notificações não lidas</small></span></div></aside>
+        </div>
+    </section>;
 }
 
 /* =========================================================
@@ -1525,244 +2565,74 @@ export function Notifications() {
 ========================================================= */
 
 export function Settings() {
-    const links = [
-        [
-            Bell,
-            "Preferências de notificações",
-            "Gerencie como e quando você deseja receber notificações.",
-        ],
-        [
-            ShieldCheck,
-            "Privacidade e dados",
-            "Gerencie suas preferências de privacidade e dados.",
-        ],
-        [
-            Puzzle,
-            "Integrações",
-            "Conecte com outras ferramentas e serviços.",
-        ],
-    ];
+    const [profile, setProfile] = useState(null);
+    const [form, setForm] = useState({ name: "", email: "" });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
 
-    return (
-        <section className="settings-page">
-            <h1>Perfil e Configurações</h1>
+    const loadProfile = async () => {
+        try {
+            setLoading(true);
+            const response = await lifeApi.profile();
+            const data = response?.data || response || {};
+            setProfile(data);
+            setForm({ name: data.name || data.fullName || "", email: data.email || "" });
+        } catch (err) {
+            console.error("Erro ao carregar perfil:", err);
+            setError(err?.response?.data?.message || "Não foi possível carregar seu perfil.");
+        } finally { setLoading(false); }
+    };
 
-            <div className="settings-layout">
-                <aside className="settings-nav">
-                    <button className="active">
-                        <UserRound />
-                        Perfil
-                    </button>
+    useEffect(() => { loadProfile(); }, []);
 
-                    <button>
-                        <SlidersHorizontal />
-                        Preferências
-                    </button>
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setForm((current) => ({ ...current, [name]: value }));
+        setMessage("");
+    };
 
-                    <button>
-                        <Bell />
-                        Notificações
-                    </button>
+    const handleSave = async (event) => {
+        event.preventDefault();
+        try {
+            setSaving(true); setMessage(""); setError("");
+            const response = await lifeApi.updateProfile({ name: form.name.trim() });
+            const updated = response?.data || response || {};
+            setProfile((current) => ({ ...(current || {}), ...updated, name: updated.name || form.name }));
+            setMessage("Perfil atualizado com sucesso.");
+        } catch (err) {
+            console.error("Erro ao salvar perfil:", err);
+            setError(err?.response?.data?.message || "Não foi possível salvar as alterações.");
+        } finally { setSaving(false); }
+    };
 
-                    <button>
-                        <ShieldCheck />
-                        Privacidade e dados
-                    </button>
-
-                    <button>
-                        <Puzzle />
-                        Integrações
-                    </button>
-                </aside>
-
-                <main>
-                    <article className="settings-profile">
-                        <div className="settings-avatar">
-                            H
-
-                            <span>
-                                <Camera />
-                            </span>
-                        </div>
-
-                        <div>
-                            <h2>Hudson</h2>
-
-                            <dl>
-                                <dt>Nome</dt>
-                                <dd>Hudson</dd>
-
-                                <dt>E-mail</dt>
-                                <dd>
-                                    hudson@email.com
-                                </dd>
-                            </dl>
-                        </div>
-
-                        <button>
-                            <Camera />
-                            Alterar foto
-                        </button>
-                    </article>
-
-                    <article className="settings-row">
-                        <label>
-                            <span>
-                                <Globe2 />
-                                Idioma
-                            </span>
-
-                            <select>
-                                <option>
-                                    Português (Brasil)
-                                </option>
-                            </select>
-                        </label>
-
-                        <label>
-                            <span>
-                                <Clock3 />
-                                Fuso horário
-                            </span>
-
-                            <select>
-                                <option>
-                                    América/São Paulo
-                                </option>
-                            </select>
-                        </label>
-                    </article>
-
-                    <article className="settings-theme">
-                        <span>
-                            <Sun />
-                            Tema
-                        </span>
-
-                        <div>
-                            <button className="selected">
-                                <Sun />
-                                Claro
-                            </button>
-
-                            <button>
-                                <Moon />
-                                Escuro
-                            </button>
-
-                            <button>
-                                <Monitor />
-                                Sistema
-                            </button>
-                        </div>
-                    </article>
-
-                    <article className="settings-work">
-                        <span>
-                            <Clock3 />
-                            Horário de trabalho
-                        </span>
-
-                        <div className="settings-times">
-                            <label>
-                                Início do expediente
-
-                                <select>
-                                    <option>
-                                        08:00
-                                    </option>
-                                </select>
-                            </label>
-
-                            <label>
-                                Fim do expediente
-
-                                <select>
-                                    <option>
-                                        18:00
-                                    </option>
-                                </select>
-                            </label>
-                        </div>
-
-                        <div className="settings-days">
-                            <b>Dias de trabalho</b>
-
-                            {[
-                                "Seg",
-                                "Ter",
-                                "Qua",
-                                "Qui",
-                                "Sex",
-                                "Sáb",
-                                "Dom",
-                            ].map((day, index) => (
-                                <button
-                                    className={
-                                        index < 5
-                                            ? "selected"
-                                            : ""
-                                    }
-                                    key={day}
-                                >
-                                    {day}
-                                </button>
-                            ))}
-                        </div>
-                    </article>
-
-                    {links.map(
-                        ([
-                            Icon,
-                            title,
-                            description,
-                        ]) => (
-                            <article
-                                className="settings-link"
-                                key={title}
-                            >
-                                <Icon />
-
-                                <div>
-                                    <strong>
-                                        {title}
-                                    </strong>
-
-                                    <span>
-                                        {description}
-                                    </span>
-                                </div>
-
-                                <ChevronRight />
-                            </article>
-                        )
-                    )}
-
-                    <article className="danger">
-                        <strong>
-                            Zona de perigo
-                        </strong>
-
-                        <div>
-                            <button>
-                                <Download />
-                                Exportar meus dados
-                            </button>
-
-                            <button>
-                                <Trash2 />
-                                Excluir conta
-                            </button>
-                        </div>
-                    </article>
-
-                    <button className="settings-save">
-                        Salvar alterações
-                    </button>
-                </main>
-            </div>
-        </section>
-    );
+    return <section className="settings-page"><h1>Perfil e Configurações</h1>
+        {loading ? <div className="empty-state"><p>Carregando suas configurações...</p></div> :
+            error && !profile ? <div className="empty-state"><p>{error}</p><button type="button" onClick={loadProfile}>Tentar novamente</button></div> :
+                <div className="settings-layout">
+                    <aside className="settings-nav">
+                        <button className="active" type="button"><UserRound />Perfil</button>
+                        <button type="button"><SlidersHorizontal />Preferências</button>
+                        <button type="button"><Bell />Notificações</button>
+                        <button type="button"><ShieldCheck />Privacidade e dados</button>
+                        <button type="button"><Puzzle />Integrações</button>
+                    </aside>
+                    <main><form onSubmit={handleSave}>
+                        <article className="settings-profile">
+                            <div className="settings-avatar">{(form.name || "U").charAt(0).toUpperCase()}</div>
+                            <div><h2>{form.name || "Usuário"}</h2><dl><dt>Nome</dt><dd>{form.name || "Não informado"}</dd><dt>E-mail</dt><dd>{form.email || "Não informado"}</dd></dl></div>
+                        </article>
+                        <article className="settings-row">
+                            <label><span><UserRound />Nome</span><input name="name" value={form.name} onChange={handleChange} placeholder="Seu nome" /></label>
+                            <label><span><Mail />E-mail</span><input value={form.email} disabled readOnly /></label>
+                        </article>
+                        {error && <div className="reminder-form-error">{error}</div>}
+                        {message && <div className="reminder-form-info"><CheckCircle2 /><span>{message}</span></div>}
+                        <button className="settings-save" type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar alterações"}</button>
+                    </form></main>
+                </div>}
+    </section>;
 }
 
 /* =========================================================

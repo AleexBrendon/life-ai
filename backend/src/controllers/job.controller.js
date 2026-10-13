@@ -1,5 +1,8 @@
 const prisma = require("../database/prisma");
-const { createJobSchema } = require("../schemas/job.schema");
+const {
+  createJobSchema,
+  updateJobSchema,
+} = require("../schemas/job.schema");
 
 const createJob = async (req, res) => {
   try {
@@ -20,6 +23,7 @@ const createJob = async (req, res) => {
       workType,
       location,
       isActive,
+      status,
     } = validation.data;
 
     const job = await prisma.job.create({
@@ -31,6 +35,7 @@ const createJob = async (req, res) => {
         workType,
         location,
         ...(isActive !== undefined && { isActive }),
+        ...(status !== undefined && { status }),
       },
     });
 
@@ -124,7 +129,7 @@ const updateJob = async (req, res) => {
       });
     }
 
-    const validation = createJobSchema.safeParse(req.body);
+    const validation = updateJobSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
@@ -134,20 +139,8 @@ const updateJob = async (req, res) => {
       });
     }
 
-    const {
-      name,
-      company,
-      position,
-      workType,
-      location,
-      isActive,
-    } = validation.data;
-
     const job = await prisma.job.findFirst({
-      where: {
-        id,
-        userId: req.user.id,
-      },
+      where: { id, userId: req.user.id },
     });
 
     if (!job) {
@@ -158,17 +151,8 @@ const updateJob = async (req, res) => {
     }
 
     const updatedJob = await prisma.job.update({
-      where: {
-        id: job.id,
-      },
-      data: {
-        name,
-        company,
-        position,
-        workType,
-        location,
-        ...(isActive !== undefined && { isActive }),
-      },
+      where: { id: job.id },
+      data: validation.data,
     });
 
     return res.status(200).json({
