@@ -1,60 +1,13 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
 import AppShell from "../components/layout/AppShell";
 import Dashboard from "../components/dashboard/Dashboard";
-import MyDay from "../components/day/MyDay";
-import Replanning from "../components/day/Replanning";
 import Calendar from "../components/planner/Calendar";
-import Routines from "../components/planner/Routines";
-import Goals from "../components/planner/Goals";
-import RoutineDetail from "../components/planner/RoutineDetail";
-import GoalDetail from "../components/planner/GoalDetail";
-import GoalPlanning from "../components/planner/GoalPlanning";
-import {
-  Incidents,
-  Insights,
-  Notifications,
-  Reminders,
-  Settings,
-  Work,
-} from "../components/planner/OtherPages";
+import Planning from "../components/planner/Planning";
 import Login from "../components/auth/Login";
 import { authApi } from "../lib/api";
-
-function DashboardPage() {
-  return <Dashboard />;
-}
-
-function MeuDiaPage() {
-  return <MyDay />;
-}
-
-function CalendarioPage() {
-  return <Calendar />;
-}
-
-function RotinasPage() {
-  return <Routines />;
-}
-
-function MetasPage() {
-  return <Goals />;
-}
-
-function LembretesPage() {
-  return <Reminders />;
-}
-
-function TrabalhoPage() {
-  return <Work />;
-}
-
-function InsightsPage() {
-  return <Insights />;
-}
-
 function AppRoutes() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
 
@@ -79,6 +32,18 @@ function AppRoutes() {
       });
   }, []);
 
+  async function handleLogout() {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.warn("Não foi possível confirmar a revogação da sessão no servidor.", error.response?.status);
+    } finally {
+      localStorage.removeItem("lifeai_token");
+      setUser(null);
+      navigate("/dashboard", { replace: true });
+    }
+  }
+
   if (checkingSession) {
     return <div className="app-loading">Carregando sua sessão...</div>;
   }
@@ -89,48 +54,24 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route element={<AppShell />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/meu-dia" element={<MeuDiaPage />} />
-        <Route path="/replanejamento" element={<Replanning />} />
-
-        <Route
-          path="/rotinas/treino-da-manha"
-          element={<RoutineDetail />}
-        />
-
-        <Route
-          path="/metas/crescimento-profissional"
-          element={<GoalDetail />}
-        />
-
-        <Route
-          path="/metas/crescimento-profissional/planejamento"
-          element={<GoalPlanning />}
-        />
-
-        <Route path="/imprevistos" element={<Incidents />} />
-        <Route path="/notificacoes" element={<Notifications />} />
-        <Route path="/configuracoes" element={<Settings />} />
-        <Route path="/calendario" element={<CalendarioPage />} />
-        <Route path="/rotinas" element={<RotinasPage />} />
-        <Route path="/metas" element={<MetasPage />} />
-        <Route path="/lembretes" element={<LembretesPage />} />
-        <Route path="/trabalho" element={<TrabalhoPage />} />
-        <Route path="/insights" element={<InsightsPage />} />
-
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" replace />}
-        />
-
-        <Route
-          path="*"
-          element={<Navigate to="/dashboard" replace />}
-        />
+      <Route element={<AppShell onLogout={handleLogout} />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/agenda" element={<Calendar />} />
+        <Route path="/planejamento" element={<Planning />} />
+        <Route path="/meu-dia" element={<Navigate to="/agenda" replace />} />
+        <Route path="/calendario" element={<Navigate to="/agenda" replace />} />
+        {["rotinas", "metas", "trabalho", "lembretes"].map(tab => (
+          <Route key={tab} path={`/${tab}/*`} element={<Navigate to={`/planejamento?aba=${tab}`} replace />} />
+        ))}
+        <Route path="/configuracoes" element={<Navigate to="/planejamento?aba=perfil" replace />} />
+        <Route path="/notificacoes" element={<Navigate to="/planejamento?aba=notificacoes" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   );
 }
 
 export default AppRoutes;
+
+
+

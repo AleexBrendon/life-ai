@@ -1,0 +1,301 @@
+/* Shared visual system for the authenticated application. */
+.app-shell {
+  --color-brand: #28745b;
+  --color-brand-dark: #1e5945;
+  --color-brand-soft: #edf5f0;
+  --color-text-primary: #243a32;
+  --color-border: #e1e8e3;
+  background: #f5f7f4;
+  color: #243a32;
+}
+.app-shell .app-main { margin-left: 232px; background: #f5f7f4; }
+.app-shell .sidebar { width: 232px; background: #fff; border-right: 1px solid #e1e8e3; color: #627369; }
+.app-shell .sidebar-inner { padding: 30px 18px 20px; }
+.app-shell .sidebar-brand { padding: 0 8px 32px; }
+.app-shell .sidebar-brand-mark { background: #28745b; color: white; border-radius: 13px; box-shadow: none; }
+.app-shell .sidebar-brand-text strong { color: #243a32; font-size: 21px; letter-spacing: -.6px; }
+.app-shell .sidebar-brand-text span { color: #87948c; font-size: 11px; }
+.app-shell .sidebar-section-label { color: #96a198; font-size: 10px; letter-spacing: .14em; }
+.app-shell .sidebar-navigation-list { gap: 7px; }
+.app-shell .sidebar-nav-item { min-height: 46px; color: #6d7b72; border-radius: 10px; font-size: 13px; font-weight: 550; }
+.app-shell .sidebar-nav-item:hover { background: #f3f6f2; color: #28745b; }
+.app-shell .sidebar-nav-item-active { background: #edf5f0; color: #226348; box-shadow: inset 3px 0 #28745b; }
+.app-shell .sidebar-user { border-color: #e1e8e3; }
+.app-shell .sidebar-user-info strong { color: #33483e; }
+.app-shell .sidebar-user-info span { color: #8c988f; }
+.app-shell .sidebar-user-avatar { background: #edf5f0; color: #28745b; }
+.app-shell .app-header { height: 70px; background: #ffffffeb; border-color: #e1e8e3; padding: 0 36px; }
+.app-shell .app-header > strong { font-size: 13px; font-weight: 550; color: #7a877e; }
+.app-shell .header-icon-button { display: grid; place-items: center; border: 1px solid #e1e8e3; background: white; border-radius: 10px; width: 36px; height: 36px; color: #64766b; }
+.app-shell .header-icon-button:hover { background: #edf5f0; color: #28745b; }
+.app-shell .app-content { width: 100%; max-width: 1320px; margin: 0 auto; padding: 36px; }
+.app-shell .simple-intro, .app-shell .day-page-intro { margin: 0 0 28px; }
+.app-shell .simple-intro > span, .app-shell .page-eyebrow { display: block; color: #6d8a78; font-size: 10px; font-weight: 700; letter-spacing: .15em; margin-bottom: 10px; }
+.app-shell .simple-intro h1, .app-shell .day-page-intro h1 { margin: 0; color: #243a32; font-size: clamp(27px, 3vw, 34px); font-weight: 650; letter-spacing: -.045em; line-height: 1.2; }
+.app-shell .simple-intro p, .app-shell .day-page-intro p { margin: 10px 0 0; color: #7c8980; font-size: 14px; line-height: 1.6; }
+.app-shell h2 { color: #2e4337; }
+.app-shell .simple-tabs { display: flex; gap: 24px; padding: 0; margin: 0 0 28px; border: 0; border-bottom: 1px solid #dce5de; border-radius: 0; background: transparent; overflow-x: auto; }
+.app-shell .simple-tabs button { position: relative; flex: none; min-height: 46px; padding: 0 2px 14px; background: transparent; border-radius: 0; color: #849087; font-size: 13px; }
+.app-shell .simple-tabs button[aria-current="page"] { background: transparent; color: #28745b; }
+.app-shell .simple-tabs button[aria-current="page"]::after { position: absolute; content: ''; bottom: 0; left: 0; right: 0; height: 3px; border-radius: 3px; background: #28745b; }
+.app-shell .planner-page, .app-shell .my-day-page { max-width: none; width: 100%; padding: 0; margin: 0; }
+.app-shell .planner-heading { align-items: center; gap: 16px; margin-bottom: 24px; }
+.app-shell .planner-heading h1, .app-shell .settings-page > h1 { font-size: 20px; font-weight: 650; color: #2e4337; letter-spacing: -.025em; }
+.app-shell .planner-heading p { color: #7c8980; font-size: 13px; }
+.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary) { min-height: 40px; padding: 0 18px; border-radius: 9px; border: 1px solid #28745b; background: #28745b; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 2px 3px #204f3910; }
+.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary):hover { background: #1e5945; border-color: #1e5945; transform: none; }
+.app-shell :is(.routine-card, .goal-row, .routines-summary, .goal-stat, .other-stats > article, .my-day-progress, .my-day-focus, .day-main-schedule, .day-tip, .simple-stat, .simple-agenda, .reminder-card, .work-card, .settings-profile, .settings-row) { border: 1px solid #e1e8e3; border-radius: 14px; background: #fff; box-shadow: 0 2px 4px #213a2a03; }
+.app-shell .routine-card { padding: 22px; }
+.app-shell .routine-card-top h2 { font-size: 16px; font-weight: 650; }
+.app-shell .routine-card:hover { border-color: #b9cdbf; box-shadow: 0 5px 16px #233f2c08; transform: none; }
+.app-shell .routines-summary { padding: 20px 24px; }
+.app-shell .routine-grid { gap: 18px; }
+.app-shell .other-stats { gap: 16px; }
+.app-shell :is(.planner-filter, .planner-tabs) { gap: 8px; }
+.app-shell :is(.planner-filter, .planner-tabs) button { font-size: 12px; border-radius: 8px; }
+.app-shell :is(.planner-filter, .planner-tabs) button.active { color: #28745b; background: #edf5f0; border-color: #d6e7dc; }
+.app-shell :is(input, select, textarea) { accent-color: #28745b; }
+.app-shell :is(input, select, textarea):focus { outline-color: #28745b; border-color: #79a58a; }
+.app-shell :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #28745b; outline-offset: 3px; }
+.app-shell .simple-dashboard-grid { gap: 18px; margin-bottom: 26px; }
+.app-shell .simple-stat { padding: 22px 24px; }
+.app-shell .simple-stat > span { font-size: 12px; font-weight: 550; }
+.app-shell .simple-stat strong { font-size: 38px; font-weight: 600; letter-spacing: -.05em; margin: 16px 0 6px; color: #243a32; }
+.app-shell .simple-stat p { font-size: 12px; margin: 0; color: #8a968e; }
+.app-shell .simple-stat:first-child { background: #edf5f0; border-color: #d8e7dc; }
+.app-shell .simple-agenda { padding: 24px; }
+.app-shell .simple-agenda > header { padding-bottom: 12px; }
+.app-shell .simple-agenda h2 { margin: 0; font-size: 16px; font-weight: 650; }
+.app-shell .simple-agenda-row { gap: 22px; padding: 20px 0; border-color: #eef2ed; align-items: center; }
+.app-shell .simple-agenda-row time { font-size: 12px; padding: 8px; background: #f3f7f1; border-radius: 7px; font-variant-numeric: tabular-nums; }
+.app-shell .simple-agenda-row strong { font-size: 14px; font-weight: 550; }
+.app-shell .simple-agenda-row small { font-size: 11px; color: #87938a; }
+.app-shell .dashboard-welcome { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+.app-shell .dashboard-date { padding: 10px 14px; border: 1px solid #e1e8e3; border-radius: 9px; background: white; color: #748278; font-size: 12px; white-space: nowrap; }
+.app-shell .dashboard-empty { display: flex; flex-direction: column; align-items: center; padding: 46px 20px; gap: 12px; color: #859288; text-align: center; font-size: 14px; }
+.app-shell .dashboard-empty svg { color: #70957d; padding: 12px; background: #edf5f0; border-radius: 14px; box-sizing: content-box; }
+.app-shell .dashboard-empty a { font-weight: 600; }
+.app-shell .my-day-overview { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; }
+.app-shell .my-day-progress { min-height: 210px; padding: 24px; gap: 22px; flex-wrap: wrap; }
+.app-shell .day-progress-ring { width: 90px; height: 90px; flex-basis: 90px; }
+.app-shell .day-progress-ring::before { width: 74px; height: 74px; }
+.app-shell .day-progress-ring span { font-size: 21px; }
+.app-shell .my-day-priorities { width: 100%; margin: 0; padding: 16px 0 0; border-left: 0; border-top: 1px solid #eef2ed; }
+.app-shell .my-day-focus { padding: 24px; }
+.app-shell .my-day-content { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; margin-top: 24px; }
+.app-shell .day-main-schedule { min-width: 0; padding: 24px; }
+.app-shell .day-task { border-color: #e1e8e3; box-shadow: none; }
+.app-shell .agenda-help { padding: 22px; border: 1px solid #e1e8e3; border-radius: 14px; background: white; align-self: start; }
+.app-shell .agenda-help h2 { margin: 0 0 10px; font-size: 15px; font-weight: 650; }
+.app-shell .agenda-help p { font-size: 13px; line-height: 1.7; color: #7c8980; margin: 0 0 20px; }
+.app-shell .agenda-help a { display: block; padding: 12px 0; border-top: 1px solid #eef2ed; font-size: 13px; color: #28745b; }
+.app-shell .goal-stat-grid { gap: 16px; }
+.app-shell .empty-state { padding: 40px 22px; border-radius: 14px; color: #7c8980; }
+@media (max-width: 1100px) {
+ .app-shell .app-main { margin-left: 210px; }
+ .app-shell .sidebar { width: 210px; }
+ .app-shell .app-content { padding: 26px; }
+ .app-shell .my-day-overview, .app-shell .my-day-content { grid-template-columns: 1fr; }
+ .app-shell .my-day-progress { flex-wrap: wrap; }
+}
+@media (max-width: 800px) {
+ .app-shell .sidebar { display: none; }
+ .app-shell .app-main { margin-left: 0; }
+ .app-shell .app-header { padding: 0 20px; height: 60px; }
+ .app-shell .app-content { padding: 24px 18px 100px; }
+ .app-shell .mobile-navigation { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; inset: auto 0 0; z-index: 40; background: #fffffff5; border-top: 1px solid #e1e8e3; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); backdrop-filter: blur(12px); }
+ .app-shell .mobile-navigation-item { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px; color: #8a978e; font-size: 10px; border-radius: 9px; }
+ .app-shell .mobile-navigation-item-active { background: #edf5f0; color: #28745b; }
+ .app-shell .simple-tabs { gap: 24px; }
+ .app-shell .dashboard-date { display: none; }
+}
+@media (max-width: 550px) {
+ .app-shell .simple-dashboard-grid { grid-template-columns: 1fr; gap: 10px; }
+ .app-shell .simple-stat { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 18px; }
+ .app-shell .simple-stat strong { grid-column: 2; grid-row: 1 / 3; margin: 0 0 0 16px; font-size: 32px; }
+ .app-shell .simple-stat p { grid-column: 1; margin-top: 6px; }
+ .app-shell .planner-heading { flex-wrap: wrap; }
+ .app-shell .routine-grid, .app-shell .goal-stat-grid, .app-shell .other-stats { grid-template-columns: 1fr; }
+ .app-shell .simple-agenda, .app-shell .day-main-schedule { padding: 18px; }
+ .app-shell .simple-agenda > header { align-items: start; flex-direction: column; gap: 8px; }
+ .app-shell .my-day-progress, .app-shell .my-day-focus { padding: 20px; }
+}
+
+/* Forms and dialogs use the same spacing and controls across every planner tab. */
+.app-shell :is(.modal-overlay, .routine-modal-overlay, .goal-modal-overlay) {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgb(20 38 29 / 42%);
+  backdrop-filter: blur(5px);
+  overscroll-behavior: contain;
+  animation: dialog-backdrop 160ms ease-out;
+}
+.app-shell :is(.modal-card, .routine-modal, .goal-modal) {
+  width: min(580px, 100%);
+  max-height: calc(100dvh - 48px);
+  min-width: 0;
+  margin: auto;
+  overflow-y: auto;
+  border: 1px solid #e1e8e3;
+  border-radius: 20px;
+  background: #fff;
+  color: #243a32;
+  box-shadow: 0 28px 90px #14261d30, 0 4px 12px #14261d14;
+  scrollbar-width: thin;
+  scrollbar-color: #c9d7cd transparent;
+  animation: dialog-enter 180ms ease-out;
+}
+.app-shell :is(.modal-header, .routine-modal-header, .goal-modal-header) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 28px 22px;
+  background: #fbfdfb;
+  border-bottom: 1px solid #e9eeea;
+  border-radius: 20px 20px 0 0;
+}
+.app-shell :is(.modal-header, .routine-modal-header, .goal-modal-header) h2 { margin: 0; color: #243a32; font-size: 21px; line-height: 1.35; font-weight: 650; letter-spacing: -.04em; }
+.app-shell :is(.modal-header, .routine-modal-header, .goal-modal-header) p { margin: 7px 0 0; max-width: 390px; color: #809085; font-size: 13px; line-height: 1.6; }
+.app-shell :is(.modal-header > button, .routine-modal-close, .goal-modal-close) {
+  display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; min-height: 32px;
+  padding: 0; border: 1px solid #e1e8e3; border-radius: 10px; background: white; color: #7a8b7f; font-size: 23px; line-height: 1; transition: background 140ms, color 140ms;
+}
+.app-shell :is(.modal-header > button, .routine-modal-close, .goal-modal-close):hover { background: #edf5f0; color: #28745b; }
+.app-shell :is(.modal-header > button, .routine-modal-close, .goal-modal-close) svg { width: 16px; height: 16px; }
+.app-shell :is(.routine-modal-body, .reminder-create-form, .goal-modal > form) { padding: 26px 28px; }
+.app-shell .routine-modal-body { display: grid; gap: 20px; }
+.app-shell .goal-form-field { margin-bottom: 20px; gap: 8px; }
+.app-shell :is(.goal-form-field label, .routine-modal-body label > span, .reminder-create-form label > span, .settings-row label > span) { color: #455e4f; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.app-shell :is(.modal-card, .routine-modal, .goal-modal, .settings-row) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  width: 100%; min-width: 0; border: 1px solid #dce5de; border-radius: 10px; background: #fcfdfb; color: #2e4337;
+  font: inherit; font-size: 13px; box-shadow: none; transition: border-color 140ms, box-shadow 140ms;
+}
+.app-shell :is(.modal-card, .routine-modal, .goal-modal, .settings-row) :is(input:not([type="checkbox"]):not([type="radio"]), select) { height: 44px; padding: 0 13px; }
+.app-shell :is(.modal-card, .routine-modal, .goal-modal) textarea { min-height: 96px; padding: 12px 13px; line-height: 1.65; resize: vertical; }
+.app-shell :is(.modal-card, .routine-modal, .goal-modal, .settings-row) :is(input, select, textarea):focus { outline: none; border-color: #74a387; background: #fff; box-shadow: 0 0 0 3px #28745b12; }
+.app-shell :is(.modal-card, .routine-modal, .goal-modal) :is(input, textarea)::placeholder { color: #a0ada3; }
+.app-shell :is(.modal-card, .routine-modal, .goal-modal) :is(input, select, textarea):disabled { background: #f0f3ef; color: #95a097; cursor: not-allowed; }
+.app-shell :is(.goal-form-grid, .reminder-form-grid) { gap: 16px; }
+.app-shell :is(.modal-actions, .routine-modal-footer, .goal-modal-footer, .reminder-create-actions) {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 20px 28px; margin: 0; border-top: 1px solid #e9eeea; background: #fbfdfb;
+}
+.app-shell :is(.goal-modal > form .goal-modal-footer, .reminder-create-form .reminder-create-actions) { margin: 8px -28px -26px; }
+.app-shell :is(.modal-actions button, .routine-modal-footer button, .goal-modal-footer button, .reminder-create-actions button) { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 0 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: none; }
+.app-shell :is(.goal-modal-submit, .reminder-create-actions .primary) { background: #28745b; border: 1px solid #28745b; color: #fff; }
+.app-shell :is(.goal-modal-submit, .reminder-create-actions .primary):hover { background: #1e5945; }
+.app-shell :is(.routine-modal-secondary, .goal-modal-cancel, .reminder-create-actions button:not(.primary), .modal-actions button:not(.danger)) { background: white; color: #607568; border: 1px solid #dce5de; }
+.app-shell :is(.routine-modal-secondary, .goal-modal-cancel, .reminder-create-actions button:not(.primary)):hover { background: #f0f5ef; }
+.app-shell :is(.modal-actions .danger, .goal-modal-delete) { background: #b84343; color: white; border: 1px solid #b84343; }
+.app-shell button:disabled { opacity: .5; cursor: not-allowed; }
+.app-shell .routine-schedules { padding: 18px; border: 1px solid #e1e8e3; border-radius: 12px; background: #f7faf6; }
+.app-shell .routine-schedules-heading { align-items: center; gap: 12px; }
+.app-shell .routine-schedules-heading h2 { font-size: 14px; }
+.app-shell .routine-schedule-row { padding: 14px 0; gap: 10px; border-bottom: 1px solid #e1e8e3; }
+.app-shell :is(.routine-modal-error, .reminder-form-error) { padding: 12px 14px; border: 1px solid #efd6d6; border-radius: 10px; background: #fff5f4; color: #a34545; font-size: 12px; line-height: 1.6; }
+.app-shell .reminder-form-info { border: 1px solid #dce8df; border-radius: 10px; background: #eff7f0; color: #4c735c; padding: 12px 14px; font-size: 12px; }
+.app-shell :is(.goal-delete-modal, .modal-card:has(.modal-description)) { max-width: 460px; }
+.app-shell .modal-description { padding: 24px 28px; margin: 0; color: #75877b; font-size: 14px; line-height: 1.7; }
+.app-shell .planner-heading { padding-bottom: 20px; border-bottom: 1px solid #e1e8e3; }
+.app-shell .simple-agenda-row { transition: background 140ms; border-radius: 8px; padding-inline: 10px; }
+.app-shell .simple-agenda-row:hover { background: #f8fbf7; }
+.app-shell :is(.routine-card, .simple-stat, .goal-row, .reminder-card, .work-card) { transition: border-color 160ms, box-shadow 160ms; }
+.app-shell :is(.goal-row, .reminder-card, .work-card):hover { border-color: #bdd2c2; box-shadow: 0 5px 18px #223e2b08; }
+.app-shell .simple-stat { position: relative; overflow: hidden; }
+.app-shell .simple-stat::after { content: ''; position: absolute; width: 70px; height: 70px; border: 14px solid #28745b07; border-radius: 50%; right: -12px; bottom: -15px; pointer-events: none; }
+.app-shell .routine-card-top > i { border-radius: 12px; }
+.app-shell .settings-row { padding: 24px; }
+@keyframes dialog-backdrop { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-enter { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 600px) {
+ .app-shell :is(.modal-overlay, .routine-modal-overlay, .goal-modal-overlay) { padding: 12px; }
+ .app-shell :is(.modal-card, .routine-modal, .goal-modal) { max-height: calc(100dvh - 24px); border-radius: 16px; }
+ .app-shell :is(.modal-header, .routine-modal-header, .goal-modal-header) { padding: 20px; border-radius: 16px 16px 0 0; }
+ .app-shell :is(.routine-modal-body, .reminder-create-form, .goal-modal > form) { padding: 20px; }
+ .app-shell :is(.modal-actions, .routine-modal-footer, .goal-modal-footer, .reminder-create-actions) { padding: 16px 20px; flex-wrap: wrap; }
+ .app-shell :is(.goal-modal > form .goal-modal-footer, .reminder-create-form .reminder-create-actions) { margin: 8px -20px -20px; }
+ .app-shell :is(.goal-form-grid, .reminder-form-grid) { grid-template-columns: 1fr; gap: 12px; }
+ .app-shell .routine-schedule-row { grid-template-columns: 1fr 1fr; }
+ .app-shell .routine-schedules { padding: 12px; }
+ .app-shell .routine-schedules-heading { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .app-shell *, .app-shell *::before, .app-shell *::after { animation: none; transition: none; }
+}
+
+/* Reminder status filters and search stay separate from creation actions. */
+.app-shell .reminders-page .reminder-list { overflow: hidden; background: white; border: 1px solid #e1e8e3; border-radius: 14px; box-shadow: none; }
+.app-shell .reminder-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px 22px; border-bottom: 1px solid #edf1eb; }
+.app-shell .reminder-status-filters { display: flex; gap: 4px; padding: 4px; background: #f3f6f1; border: 1px solid #e7ede5; border-radius: 11px; max-width: 100%; overflow-x: auto; }
+.app-shell .reminder-status-filters button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 13px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #7c8b7f; font-size: 12px; font-weight: 550; white-space: nowrap; transition: background 140ms, color 140ms; }
+.app-shell .reminder-status-filters button:hover { color: #28745b; }
+.app-shell .reminder-status-filters button[aria-pressed="true"] { background: white; color: #246448; border-color: #dce8de; box-shadow: 0 1px 3px #264d3110; }
+.app-shell .reminder-status-filters button span { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 6px; background: #e9eee6; color: #83917f; font-size: 10px; }
+.app-shell .reminder-status-filters button[aria-pressed="true"] span { background: #e7f2e9; color: #28745b; }
+.app-shell .reminder-search { flex: 0 1 240px; min-width: 150px; }
+.app-shell .reminder-search-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.app-shell .reminder-search input { width: 100%; height: 40px; padding: 0 13px; border: 1px solid #e1e8e3; border-radius: 9px; background: #fcfdfb; color: #2e4337; font-size: 12px; }
+.app-shell .reminder-search input::placeholder { color: #98a498; }
+.app-shell .reminder-result-count { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px 0; color: #91a08f; font-size: 11px; }
+.app-shell .reminder-result-count button { border: 0; background: transparent; padding: 4px; color: #28745b; font-size: 11px; }
+.app-shell .reminders-page .reminder-group { padding: 22px 24px; }
+.app-shell .reminders-page .reminder-group > h2 { color: #86967f; font-size: 10px; font-weight: 650; letter-spacing: .1em; margin-bottom: 14px; }
+.app-shell .reminders-page .reminder-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 12px; border: 1px solid #edf1eb; border-radius: 10px; min-height: 72px; }
+.app-shell .reminders-page .reminder-row + .reminder-row { margin-top: 10px; }
+.app-shell .reminders-page .reminder-row > b { width: auto; background: #f0f5ed; color: #527450; padding: 7px 9px; border-radius: 7px; font-size: 12px; }
+.app-shell .reminders-page .reminder-row > strong { font-size: 13px; font-weight: 550; color: #344d39; }
+.app-shell .reminders-page .reminder-row > em { background: #f0f4ed; color: #7d9178; font-size: 10px; font-weight: 500; }
+.app-shell .reminders-page .reminder-row > button { margin-left: auto; border: 1px solid #e6ece2; background: white; border-radius: 8px; }
+.app-shell .reminders-page .reminder-description { color: #96a18f; font-size: 12px; }
+@media (max-width: 650px) {
+ .app-shell .reminder-toolbar { align-items: stretch; padding: 16px; gap: 12px; }
+ .app-shell .reminder-status-filters { width: 100%; }
+ .app-shell .reminder-status-filters button { flex: 1; padding: 9px; }
+ .app-shell .reminder-search { flex: 1 1 100%; }
+ .app-shell .reminders-page .reminder-group { padding: 18px 16px; }
+ .app-shell .reminder-result-count { padding-inline: 16px; }
+ .app-shell .reminders-page .reminder-description { flex-basis: 100%; max-width: none; order: 2; }
+}
+
+.app-shell .assistant-trigger { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: 1px solid #dce8df; border-radius: 10px; background: #edf5f0; color: #28745b; font-size: 12px; font-weight: 600; }
+.workspace-panel { position: fixed; inset: 0 0 0 auto; width: min(760px, 100%); max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-left: 1px solid #dce5de; background: #f7f9f5; color: #243a32; box-shadow: -12px 0 60px #213b2720; }
+.workspace-panel::backdrop { background: #14261d66; backdrop-filter: blur(4px); }
+.workspace-panel-heading { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 2; padding: 22px 26px; background: white; border-bottom: 1px solid #e1e8e3; }
+.workspace-panel-heading h2 { margin: 0; font-size: 18px; font-weight: 650; }
+.workspace-panel-heading button { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #e1e8e3; border-radius: 9px; background: white; color: #75877b; }
+.workspace-panel-content { padding: 26px; }
+.workspace-panel .settings-layout, .workspace-panel .notification-layout { grid-template-columns: 1fr; }
+.workspace-panel .settings-nav { display: none; }
+.workspace-panel .settings-page > h1 { display: none; }
+.workspace-panel .planner-heading h1 { font-size: 18px; }
+.assistant-chat { display: flex; flex-direction: column; gap: 18px; }
+.assistant-messages { display: flex; flex-direction: column; gap: 16px; min-height: 220px; }
+.assistant-welcome { text-align: center; padding: 32px 20px; color: #718778; }
+.assistant-welcome > svg { color: #28745b; }
+.assistant-welcome h2 { margin: 16px 0 10px; font-size: 22px; }
+.assistant-welcome p { font-size: 14px; line-height: 1.7; }
+.assistant-welcome button { padding: 10px 16px; margin-top: 20px; border: 1px solid #d8e6dc; border-radius: 10px; background: #edf5f0; color: #28745b; font-size: 12px; }
+.assistant-message { padding: 18px; border-radius: 14px; border: 1px solid #e1e8e3; background: white; max-width: 92%; }
+.assistant-message.user { align-self: flex-end; background: #eaf3ec; border-color: #dae8dd; }
+.assistant-message small { color: #708a77; font-size: 11px; font-weight: 650; }
+.assistant-message p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; font-size: 14px; }
+.assistant-composer { display: flex; flex-direction: column; gap: 10px; padding: 18px; background: white; border: 1px solid #dce5de; border-radius: 14px; }
+.assistant-composer label { font-size: 12px; color: #708a77; }
+.assistant-composer textarea { padding: 10px; border: 1px solid #e1e8e3; border-radius: 9px; background: #fcfdfb; font: inherit; font-size: 14px; resize: vertical; }
+.assistant-composer button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; align-self: flex-end; padding: 10px 18px; background: #28745b; color: white; border: 0; border-radius: 9px; }
+.assistant-note { color: #8b998d; line-height: 1.6; font-size: 11px; }
+@media(max-width: 600px) { .workspace-panel-content { padding: 18px; } .workspace-panel-heading { padding: 18px; } .app-shell .assistant-trigger span { display: none; } }
+
+.app-shell .logout-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 1px solid #e1e8e3; border-radius: 10px; background: #fff; color: #6b7d70; font-size: 12px; font-weight: 550; }
+.app-shell .logout-button:hover { background: #fff5f4; border-color: #efd6d6; color: #a34545; }
+@media (max-width: 480px) { .app-shell .header-actions { gap: 6px; } .app-shell .logout-button { padding-inline: 8px; } }

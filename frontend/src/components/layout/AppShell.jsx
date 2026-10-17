@@ -4,13 +4,13 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import MobileNavigation from "./MobileNavigation";
 
-function AppShell() {
+function AppShell({ onLogout }) {
   return (
     <div className="app-shell">
       <Sidebar />
 
       <div className="app-main">
-        <Header />
+        <Header onLogout={onLogout} />
 
         <main className="app-content">
           <Outlet />

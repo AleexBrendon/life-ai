@@ -23,6 +23,7 @@ export const authApi = {
   login: (payload) => api.post("/auth/login", payload),
   register: (payload) => api.post("/auth/register", payload),
   me: () => api.get("/auth/me"),
+  logout: () => api.post("/auth/logout", {}, { timeout: 5000 }),
 };
 
 export const lifeApi = {
@@ -30,8 +31,27 @@ export const lifeApi = {
   today: () => api.get("/day/today"),
   profile: () => api.get("/users/me"),
   updateProfile: (payload) => api.put("/users/me", payload),
+
   routines: () => api.get("/routines"),
   createRoutine: (payload) => api.post("/routines", payload),
+
+  routineSchedules: (routineId) =>
+    api.get(`/routines/${routineId}/schedules`),
+
+  createRoutineSchedule: (routineId, payload) =>
+    api.post(`/routines/${routineId}/schedules`, payload),
+
+
+  routineSchedules: (routineId) =>
+    api.get(`/routines/${routineId}/schedules`),
+
+  createRoutineSchedule: (routineId, payload) =>
+    api.post(`/routines/${routineId}/schedules`, payload),
+
+
+  deleteRoutine: (routineId) =>
+    api.delete(`/routines/${routineId}`),
+
   goals: () => api.get("/goals"),
   goal: (id) => api.get(`/goals/${id}`),
   createGoal: (payload) => api.post("/goals", payload),
@@ -73,6 +93,13 @@ export const lifeApi = {
 
   deleteTask: (jobId, taskId) =>
     api.delete(`/jobs/${jobId}/tasks/${taskId}`),
+
+  completeRoutineSchedule: (routineScheduleId, date) =>
+    api.post(
+      `/routine-executions/schedule/${routineScheduleId}/complete`,
+      { date }
+    ),
 };
 
 export default api;
+

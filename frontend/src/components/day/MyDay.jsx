@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   CheckCircle2,
   CirclePlus,
-  Frown,
-  Meh,
-  Plus,
-  Smile,
   Sparkles,
   Star,
   TrendingUp,
@@ -16,9 +13,11 @@ import { lifeApi } from "../../lib/api";
 
 function MyDay() {
   const [day, setDay] = useState(null);
-  const [newTask, setNewTask] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [completingScheduleIds, setCompletingScheduleIds] = useState([]);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -53,7 +52,63 @@ function MyDay() {
     };
   }, []);
 
+  async function handleCompleteRoutine(task) {
+    const scheduleId = task.routineScheduleId;
+
+    if (!scheduleId || completingScheduleIds.includes(scheduleId)) {
+      return;
+    }
+
+    if (!day?.date) {
+      setActionError("Não foi possível identificar a data da rotina.");
+      return;
+    }
+
+    try {
+      setActionError("");
+
+      setCompletingScheduleIds((current) =>
+        current.includes(scheduleId)
+          ? current
+          : [...current, scheduleId],
+      );
+
+      // Preserva a data enviada pelo backend, sem conversão
+      // pelo fuso horário do navegador.
+      const date =
+        typeof day.date === "string"
+          ? day.date.slice(0, 10)
+          : new Date(day.date).toISOString().slice(0, 10);
+
+      await lifeApi.completeRoutineSchedule(scheduleId, date);
+
+      const response = await lifeApi.today();
+      setDay(response.data);
+    } catch (err) {
+      console.error("Erro ao concluir rotina:", err);
+
+      setActionError(
+        err.response?.data?.message ??
+        "Não foi possível concluir a rotina. Tente novamente.",
+      );
+    } finally {
+      setCompletingScheduleIds((current) =>
+        current.filter((id) => id !== scheduleId),
+      );
+    }
+  }
+
   const items = day?.items ?? [];
+
+  console.log("Meu Dia — data:", day?.date);
+  console.table(
+    items.map((item) => ({
+      name: item.name,
+      routineScheduleId: item.routineScheduleId,
+      status: item.status,
+      startTime: item.startTime,
+    })),
+  );
 
   const completedItems = useMemo(
     () => items.filter((item) => item.status === "COMPLETED"),
@@ -81,7 +136,7 @@ function MyDay() {
     return (
       <section className="my-day-page">
         <div className="day-page-intro">
-          <h1>Meu Dia</h1>
+          <span className="page-eyebrow">UM DIA DE CADA VEZ</span><h1>Minha agenda</h1>
           <p>Carregando seu dia...</p>
         </div>
       </section>
@@ -92,7 +147,7 @@ function MyDay() {
     return (
       <section className="my-day-page">
         <div className="day-page-intro">
-          <h1>Meu Dia</h1>
+          <span className="page-eyebrow">UM DIA DE CADA VEZ</span><h1>Minha agenda</h1>
           <p>{error}</p>
         </div>
       </section>
@@ -102,13 +157,13 @@ function MyDay() {
   return (
     <section className="my-day-page">
       <div className="day-page-intro">
-        <h1>Meu Dia</h1>
+        <span className="page-eyebrow">UM DIA DE CADA VEZ</span><h1>Minha agenda</h1>
         <p>{dateLabel}</p>
       </div>
 
       <div className="my-day-overview">
         <article className="my-day-progress">
-          <div className="day-progress-ring">
+          <div className="day-progress-ring" style={{ background: `conic-gradient(#28745b ${progress}%, #e8f0eb 0)` }}>
             <span>{progress}%</span>
           </div>
 
@@ -193,67 +248,25 @@ function MyDay() {
 
       <div className="my-day-content">
         <article className="day-main-schedule">
-          <DaySchedule items={items} />
+          {actionError && (
+            <p role="alert" className="day-action-error">
+              {actionError}
+            </p>
+          )}
+
+          <DaySchedule
+            items={items}
+            onComplete={handleCompleteRoutine}
+            completingIds={completingScheduleIds}
+          />
         </article>
 
-        <aside className="my-day-side">
-          <article className="day-add-task">
-            <h2>Adicionar tarefa</h2>
-
-            <div>
-              <input
-                type="text"
-                value={newTask}
-                onChange={(event) => setNewTask(event.target.value)}
-                placeholder="O que você quer realizar?"
-                aria-label="Nova tarefa"
-              />
-
-              <button
-                type="button"
-                aria-label="Adicionar tarefa"
-                onClick={() => {
-                  if (!newTask.trim()) return;
-
-                  console.log("Nova tarefa:", newTask);
-
-                  setNewTask("");
-                }}
-              >
-                <Plus size={24} />
-              </button>
-            </div>
-          </article>
-
-          <article className="day-energy">
-            <h2>Como está sua energia?</h2>
-
-            <p>Isso nos ajuda a personalizar seu dia</p>
-
-            <div className="day-energy-options">
-              <Energy icon={Frown} label="Muito baixa" />
-              <Energy icon={Frown} label="Baixa" />
-              <Energy icon={Meh} label="Média" />
-              <Energy icon={Smile} label="Alta" />
-              <Energy icon={Smile} label="Muito alta" />
-            </div>
-          </article>
-
-          <article className="day-tip">
-            <span>
-              <TrendingUp size={23} />
-            </span>
-
-            <div>
-              <strong>Dica do dia</strong>
-
-              <p>
-                Pequenos passos constantes geram grandes resultados.
-                <br />
-                Mantenha o foco no que importa!
-              </p>
-            </div>
-          </article>
+        <aside className="agenda-help">
+          <h2>Seu tempo, bem cuidado.</h2>
+          <p>Organize as próximas atividades no planejamento e acompanhe suas rotinas por aqui.</p>
+          <Link to="/planejamento?aba=rotinas">Organizar rotinas →</Link>
+          <Link to="/planejamento?aba=lembretes">Criar um lembrete →</Link>
+          <Link to="/planejamento?aba=metas">Revisar minhas metas →</Link>
         </aside>
       </div>
     </section>
@@ -277,13 +290,6 @@ function Priority({ tone, text, tag }) {
   );
 }
 
-function Energy({ icon: Icon, label }) {
-  return (
-    <button type="button">
-      <Icon size={39} />
-      <span>{label}</span>
-    </button>
-  );
-}
 
 export default MyDay;
+

@@ -31,3 +31,35 @@ Para incluí-la em um E2E futuro, é necessário expor um endpoint para a opera�
 ## Limpeza de comentários
 
 Também foram removidos os comentários de sintaxe dos arquivos JavaScript em `src` e `tests`. A remoção preservou strings e expressões regulares, e não alterou o comportamento executável da aplicação.
+
+## Dados de demonstração
+
+Com PostgreSQL disponível e o schema aplicado, execute no diretório `backend`:
+
+```bash
+npm run seed
+```
+
+Também disponível por `npx prisma db seed`.
+
+Acesse com `demo@lifeai.com` e senha `LifeAI123!`.
+O seed usa a data atual em `America/Sao_Paulo` e cria rotinas para todos os dias, histórico e próximas execuções, trabalho com tarefas, metas com sessões, lembretes, um imprevisto e notificações.
+Pode ser executado novamente: preserva registros existentes e não duplica os exemplos para a mesma data. Não redefine atividades que você concluiu durante os testes. Não executa com `NODE_ENV=production`.
+
+## Guia do usuário
+
+Veja [como usar as telas, os formulários, o calendário e o Kanban](../docs/GUIA-DE-USO.md).
+
+O frontend usa `/api/planner/:kind` para salvar os cadastros completos de forma transacional. Recursos: `rotinas`, `metas`, `trabalho`, `lembretes` e `imprevistos`. As listas de horários, tarefas e sessões representam o estado completo do formulário: retirar uma linha e salvar remove o vínculo correspondente.
+
+Validação dos novos fluxos:
+
+```bash
+npx vitest run tests/integration/planner/planner.integration.test.js
+```
+
+Os testes usam usuários próprios no banco de testes e removem apenas esses usuários ao terminar.
+
+## Tutorial passo a passo
+
+Para aprender usando exemplos, consulte o [Tutorial do sistema](docs/tutorial-do-sistema.md), separado da documentação técnica de IA e do guia de referência.

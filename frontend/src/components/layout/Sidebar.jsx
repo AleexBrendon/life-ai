@@ -53,10 +53,10 @@ function Sidebar() {
           ))}
 
           <div className="sidebar-user">
-            <div className="sidebar-user-avatar">AB</div>
+            <div className="sidebar-user-avatar">L</div>
 
             <div className="sidebar-user-info">
-              <strong>Alex</strong>
+              <strong>Sua rotina</strong>
               <span>Plano pessoal</span>
             </div>
           </div>

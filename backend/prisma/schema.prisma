@@ -1,290 +1,290 @@
-generator client {
-  provider = "prisma-client-js"
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
 
-datasource db {
-  provider = "postgresql"
-}
+  datasource db {
+    provider = "postgresql"
+  }
 
-model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  model User {
+    id           Int      @id @default(autoincrement())
+    name         String
+    email        String   @unique
+    passwordHash String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-  profile            Profile?
-  jobs               Job[]
-  routineItems       RoutineItem[]
-  routineExecutions  RoutineExecution[]
-  unexpectedEvents   UnexpectedEvent[]
-  reminders          Reminder[]
-  reminderExecutions ReminderExecution[]
-  notifications      Notification[]
-  aiRecommendations  AiRecommendation[]
-  goals              Goal[]
-}
+    profile            Profile?
+    jobs               Job[]
+    routineItems       RoutineItem[]
+    routineExecutions  RoutineExecution[]
+    unexpectedEvents   UnexpectedEvent[]
+    reminders          Reminder[]
+    reminderExecutions ReminderExecution[]
+    notifications      Notification[]
+    aiRecommendations  AiRecommendation[]
+    goals              Goal[]
+  }
 
-model Profile {
-  id                 Int       @id @default(autoincrement())
-  userId             Int       @unique
-  birthDate          DateTime?
-  timezone           String    @default("America/Sao_Paulo")
-  occupation         String?
-  relationshipStatus String?
-  hasChildren        Boolean   @default(false)
+  model Profile {
+    id                 Int       @id @default(autoincrement())
+    userId             Int       @unique
+    birthDate          DateTime?
+    timezone           String    @default("America/Sao_Paulo")
+    occupation         String?
+    relationshipStatus String?
+    hasChildren        Boolean   @default(false)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
 
 
-model Job {
-  id       Int     @id @default(autoincrement())
-  userId   Int
-  name     String
-  company  String?
-  position String?
-  workType String?
-  location String?
-  isActive Boolean @default(true)
-  status   String  @default("TODO")
+  model Job {
+    id       Int     @id @default(autoincrement())
+    userId   Int
+    name     String
+    company  String?
+    position String?
+    workType String?
+    location String?
+    isActive Boolean @default(true)
+    status   String  @default("TODO")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schedules   WorkSchedule[]
-  tasks       JobTask[]
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    schedules   WorkSchedule[]
+    tasks       JobTask[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
 
-model JobTask {
-  id          Int      @id @default(autoincrement())
-  jobId       Int
-  title       String
-  description String?
-  status      String   @default("TODO")
+  model JobTask {
+    id          Int      @id @default(autoincrement())
+    jobId       Int
+    title       String
+    description String?
+    status      String   @default("TODO")
 
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  @@index([jobId, status])
-}
+    @@index([jobId, status])
+  }
 
-model WorkSchedule {
-  id         Int     @id @default(autoincrement())
-  jobId      Int
-  dayOfWeek  Int
-  startTime  String
-  endTime    String
-  breakStart String?
-  breakEnd   String?
+  model WorkSchedule {
+    id         Int     @id @default(autoincrement())
+    jobId      Int
+    dayOfWeek  Int
+    startTime  String
+    endTime    String
+    breakStart String?
+    breakEnd   String?
 
-  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
 
-model RoutineItem {
-  id       Int     @id @default(autoincrement())
-  userId   Int
-  name     String
-  type     String
-  isActive Boolean @default(true)
+  model RoutineItem {
+    id       Int     @id @default(autoincrement())
+    userId   Int
+    name     String
+    type     String
+    isActive Boolean @default(true)
 
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schedules         RoutineSchedule[]
-  routineExecutions RoutineExecution[]
+    user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    schedules         RoutineSchedule[]
+    routineExecutions RoutineExecution[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
 
-model RoutineSchedule {
-  id            Int    @id @default(autoincrement())
-  routineItemId Int
-  dayOfWeek     Int
-  startTime     String
-  endTime       String
+  model RoutineSchedule {
+    id            Int    @id @default(autoincrement())
+    routineItemId Int
+    dayOfWeek     Int
+    startTime     String
+    endTime       String
 
-  routineItem       RoutineItem        @relation(fields: [routineItemId], references: [id], onDelete: Cascade)
-  routineExecutions RoutineExecution[]
+    routineItem       RoutineItem        @relation(fields: [routineItemId], references: [id], onDelete: Cascade)
+    routineExecutions RoutineExecution[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
 
-model RoutineExecution {
-  id                Int       @id @default(autoincrement())
-  userId            Int
-  routineItemId     Int
-  routineScheduleId Int
-  date              DateTime
-  startTime         String
-  endTime           String
-  status            String
-  completedAt       DateTime?
-  skipReason        String?
+  model RoutineExecution {
+    id                Int       @id @default(autoincrement())
+    userId            Int
+    routineItemId     Int
+    routineScheduleId Int
+    date              DateTime
+    startTime         String
+    endTime           String
+    status            String
+    completedAt       DateTime?
+    skipReason        String?
 
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  routineItem     RoutineItem     @relation(fields: [routineItemId], references: [id], onDelete: Cascade)
-  routineSchedule RoutineSchedule @relation(fields: [routineScheduleId], references: [id], onDelete: Cascade)
+    user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    routineItem     RoutineItem     @relation(fields: [routineItemId], references: [id], onDelete: Cascade)
+    routineSchedule RoutineSchedule @relation(fields: [routineScheduleId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  @@unique([userId, routineScheduleId, date])
-  @@index([userId, date])
-}
+    @@unique([userId, routineScheduleId, date])
+    @@index([userId, date])
+  }
 
-model UnexpectedEvent {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  title       String
-  description String?
-  date        DateTime
-  startTime   String
-  endTime     String
-  priority    String
-  status      String
+  model UnexpectedEvent {
+    id          Int      @id @default(autoincrement())
+    userId      Int
+    title       String
+    description String?
+    date        DateTime
+    startTime   String
+    endTime     String
+    priority    String
+    status      String
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  @@index([userId, date])
-}
+    @@index([userId, date])
+  }
 
-model Reminder {
-  id           Int       @id @default(autoincrement())
-  userId       Int
-  title        String
-  description  String?
-  reminderTime String
-  date         DateTime?
-  dayOfWeek    Int?
-  recurrence   String    @default("NONE")
-  isCompleted  Boolean   @default(false)
-  isActive     Boolean   @default(true)
+  model Reminder {
+    id           Int       @id @default(autoincrement())
+    userId       Int
+    title        String
+    description  String?
+    reminderTime String
+    date         DateTime?
+    dayOfWeek    Int?
+    recurrence   String    @default("NONE")
+    isCompleted  Boolean   @default(false)
+    isActive     Boolean   @default(true)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  reminderExecutions ReminderExecution[]
+    reminderExecutions ReminderExecution[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  @@index([userId])
-  @@index([userId, date])
-}
+    @@index([userId])
+    @@index([userId, date])
+  }
 
-model ReminderExecution {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  reminderId  Int
-  date        DateTime
-  status      String
-  completedAt DateTime?
+  model ReminderExecution {
+    id          Int       @id @default(autoincrement())
+    userId      Int
+    reminderId  Int
+    date        DateTime
+    status      String
+    completedAt DateTime?
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  @@unique([userId, reminderId, date])
-  @@index([userId, date])
-}
+    @@unique([userId, reminderId, date])
+    @@index([userId, date])
+  }
 
-model Notification {
-  id     Int @id @default(autoincrement())
-  userId Int
+  model Notification {
+    id     Int @id @default(autoincrement())
+    userId Int
 
-  title   String
-  message String
+    title   String
+    message String
 
-  type     String
-  priority String @default("MEDIUM")
+    type     String
+    priority String @default("MEDIUM")
 
-  isRead Boolean   @default(false)
-  readAt DateTime?
+    isRead Boolean   @default(false)
+    readAt DateTime?
 
-  scheduledAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+    scheduledAt DateTime?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
 
-  entityType String?
-  entityId   Int?
+    entityType String?
+    entityId   Int?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([userId, isRead])
-  @@index([userId, scheduledAt])
-}
+    @@index([userId])
+    @@index([userId, isRead])
+    @@index([userId, scheduledAt])
+  }
 
-model AiRecommendation {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  date       DateTime
-  action     String
-  targetType String
-  targetId   Int?
-  reason     String
-  confidence Float
-  changes    Json
-  status     String   @default("PENDING")
-  approvedAt DateTime?
-  rejectedAt DateTime?
-  executedAt DateTime?
-  result     Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  model AiRecommendation {
+    id         Int      @id @default(autoincrement())
+    userId     Int
+    date       DateTime
+    action     String
+    targetType String
+    targetId   Int?
+    reason     String
+    confidence Float
+    changes    Json
+    status     String   @default("PENDING")
+    approvedAt DateTime?
+    rejectedAt DateTime?
+    executedAt DateTime?
+    result     Json?
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, status])
-  @@index([userId, date])
-  @@map("AIRecommendation")
-}
+    @@index([userId, status])
+    @@index([userId, date])
+    @@map("AIRecommendation")
+  }
 
-model Goal {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  title           String
-  description     String?
-  targetDate      DateTime?
-  weeklyFrequency Int      @default(3)
-  sessionMinutes  Int      @default(60)
-  priority        String   @default("MEDIUM")
-  status          String   @default("ACTIVE")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  model Goal {
+    id              Int      @id @default(autoincrement())
+    userId          Int
+    title           String
+    description     String?
+    targetDate      DateTime?
+    weeklyFrequency Int      @default(3)
+    sessionMinutes  Int      @default(60)
+    priority        String   @default("MEDIUM")
+    status          String   @default("ACTIVE")
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
 
-  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions GoalPlanSession[]
+    user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    sessions GoalPlanSession[]
 
-  @@index([userId, status])
-}
+    @@index([userId, status])
+  }
 
-model GoalPlanSession {
-  id        Int      @id @default(autoincrement())
-  goalId    Int
-  date      DateTime
-  startTime String
-  endTime   String
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  model GoalPlanSession {
+    id        Int      @id @default(autoincrement())
+    goalId    Int
+    date      DateTime
+    startTime String
+    endTime   String
+    status    String   @default("PENDING")
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+    goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
-  @@index([goalId, date])
-  @@unique([goalId, date, startTime])
-}
+    @@index([goalId, date])
+    @@unique([goalId, date, startTime])
+  }

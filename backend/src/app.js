@@ -39,5 +39,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/goals", goalRoutes);
+app.use("/api/planner", require("./routes/planner.routes"));
 
 module.exports = app;
+

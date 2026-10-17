@@ -208,6 +208,7 @@ export function Reminders() {
 
     const [reminders, setReminders] = useState([]);
     const [activeTab, setActiveTab] = useState("upcoming");
+    const [search, setSearch] = useState("");
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -274,22 +275,11 @@ export function Reminders() {
     }, [reminders]);
 
     const visibleReminders = useMemo(() => {
-        if (activeTab === "postponed") {
-            return postponed;
-        }
-
-        if (activeTab === "completed") {
-            return completed;
-        }
-
-        return upcoming;
-    }, [
-        activeTab,
-        upcoming,
-        postponed,
-        completed,
-    ]);
-
+        const source = activeTab === "postponed" ? postponed : activeTab === "completed" ? completed : upcoming;
+        const normalize = value => String(value || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+        const query = normalize(search.trim());
+        return source.filter(item => normalize(`${item.title} ${item.description || ""}`).includes(query));
+    }, [activeTab, upcoming, postponed, completed, search]);
     const groupedReminders = useMemo(() => {
         const groups = new Map();
 
@@ -576,7 +566,7 @@ export function Reminders() {
     };
 
     return (
-        <section className="planner-page">
+        <section className="planner-page reminders-page">
             <Heading
                 title="Lembretes"
                 text="Não deixe o importante passar."
@@ -595,61 +585,20 @@ export function Reminders() {
             <MiniStats data={stats} />
 
             <article className="reminder-list">
-                <div className="reminder-tabs">
-                    <button
-                        type="button"
-                        className={
-                            activeTab === "upcoming"
-                                ? "active"
-                                : ""
-                        }
-                        onClick={() =>
-                            setActiveTab("upcoming")
-                        }
-                    >
-                        Próximos
-                        <span>{upcoming.length}</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        className={
-                            activeTab === "postponed"
-                                ? "active"
-                                : ""
-                        }
-                        onClick={() =>
-                            setActiveTab("postponed")
-                        }
-                    >
-                        Adiados
-                        <span>{postponed.length}</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        className={
-                            activeTab === "completed"
-                                ? "active"
-                                : ""
-                        }
-                        onClick={() =>
-                            setActiveTab("completed")
-                        }
-                    >
-                        Concluídos
-                        <span>{completed.length}</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={openCreateModal}
-                    >
-                        <Plus />
-                        Criar lembrete
-                    </button>
+                <div className="reminder-toolbar">
+                    <nav className="reminder-status-filters" aria-label="Filtrar lembretes por status">
+                        {[["upcoming", "Pendentes", upcoming.length], ["postponed", "Pausados", postponed.length], ["completed", "Concluídos", completed.length]].map(([id, label, count]) => (
+                            <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => setActiveTab(id)}>
+                                {label}<span>{count}</span>
+                            </button>
+                        ))}
+                    </nav>
+                    <label className="reminder-search">
+                        <span className="reminder-search-label">Buscar lembretes</span>
+                        <input type="search" placeholder="Buscar lembrete..." value={search} onChange={event => setSearch(event.target.value)} />
+                    </label>
                 </div>
-
+                {!loading && !error && <div className="reminder-result-count" role="status">{visibleReminders.length} {visibleReminders.length === 1 ? "lembrete encontrado" : "lembretes encontrados"}{search.trim() && <button type="button" onClick={() => setSearch("")}>Limpar busca</button>}</div>}
                 {loading && (
                     <div className="empty-state">
                         <p>
@@ -679,9 +628,9 @@ export function Reminders() {
 
                             <strong>
                                 {activeTab === "upcoming"
-                                    ? "Nenhum lembrete próximo"
+                                    ? (search.trim() ? "Nenhum resultado para sua busca" : "Nenhum lembrete pendente")
                                     : activeTab === "postponed"
-                                        ? "Nenhum lembrete adiado"
+                                        ? "Nenhum lembrete pausado"
                                         : "Nenhum lembrete concluído"}
                             </strong>
 
@@ -2757,3 +2706,5 @@ export function Incidents() {
         </section>
     );
 }
+
+

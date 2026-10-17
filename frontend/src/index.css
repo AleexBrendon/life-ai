@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./styles/variables.css";
 @import "./styles/components.css";
+@import "./styles/simple.css";
 
 :root {
   font-family:
@@ -7932,6 +7933,82 @@ a {
 }
 
 
+.routine-schedules {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.routine-schedules-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.routine-schedules-heading p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.routine-schedule-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1.4fr) 1fr 1fr auto;
+    align-items: end;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color, #dedede);
+    border-radius: 12px;
+}
+
+.routine-schedule-row label {
+    min-width: 0;
+}
+
+.routine-schedule-row input,
+.routine-schedule-row select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.routine-schedule-remove {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 38px;
+    border: 1px solid var(--border-color, #dedede);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.routine-schedule-remove:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+@media (max-width: 560px) {
+    .routine-schedule-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .routine-schedule-row label:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .routine-schedule-remove {
+        justify-self: end;
+    }
+
+    .routine-schedules-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
 /* =========================================================
    RESPONSIVE
 ========================================================= */
@@ -8199,6 +8276,32 @@ a {
   color: var(--text-secondary, #6b7280);
 }
 
+.day-task-complete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.day-task-complete-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.day-action-error {
+  margin: 0 0 12px;
+  color: #dc2626;
+}
+
 @media (max-width: 480px) {
   .my-day-progress>div:nth-child(2) strong {
     font-size: 22px;
@@ -8261,4 +8364,5 @@ a {
   .replan-reason ul {
     font-size: 12px;
   }
-}
+}`n
+

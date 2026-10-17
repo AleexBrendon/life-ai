@@ -70,6 +70,18 @@ function Routines() {
         type: "",
     });
 
+
+    const [schedules, setSchedules] = useState([
+        {
+            id: 1,
+            dayOfWeek: "",
+            startTime: "",
+            endTime: "",
+        },
+    ]);
+
+    const [nextScheduleId, setNextScheduleId] = useState(2);
+
     useEffect(() => {
         loadRoutines();
     }, []);
@@ -104,15 +116,27 @@ function Routines() {
         }
     }
 
+
     function openCreateModal() {
         setForm({
             name: "",
             type: "",
         });
 
+        setSchedules([
+            {
+                id: 1,
+                dayOfWeek: "",
+                startTime: "",
+                endTime: "",
+            },
+        ]);
+
+        setNextScheduleId(2);
         setFormError("");
         setIsModalOpen(true);
     }
+
 
     function closeCreateModal() {
         if (creating) {
@@ -132,6 +156,38 @@ function Routines() {
         }));
     }
 
+
+    function addSchedule() {
+        setSchedules((current) => [
+            ...current,
+            {
+                id: nextScheduleId,
+                dayOfWeek: "",
+                startTime: "",
+                endTime: "",
+            },
+        ]);
+
+        setNextScheduleId((current) => current + 1);
+    }
+
+    function removeSchedule(scheduleId) {
+        setSchedules((current) =>
+            current.filter((schedule) => schedule.id !== scheduleId),
+        );
+    }
+
+    function handleScheduleChange(scheduleId, field, value) {
+        setSchedules((current) =>
+            current.map((schedule) =>
+                schedule.id === scheduleId
+                    ? { ...schedule, [field]: value }
+                    : schedule,
+            ),
+        );
+    }
+
+
     async function handleCreateRoutine(event) {
         event.preventDefault();
 
@@ -148,6 +204,50 @@ function Routines() {
             return;
         }
 
+        if (schedules.length === 0) {
+            setFormError("Adicione pelo menos um horário.");
+            return;
+        }
+
+        for (const schedule of schedules) {
+            if (
+                schedule.dayOfWeek === "" ||
+                !schedule.startTime ||
+                !schedule.endTime
+            ) {
+                setFormError("Preencha o dia e os horários de cada programação.");
+                return;
+            }
+
+            if (schedule.startTime >= schedule.endTime) {
+                setFormError(
+                    "O horário inicial deve ser anterior ao horário final.",
+                );
+                return;
+            }
+        }
+
+        for (let i = 0; i < schedules.length; i += 1) {
+            for (let j = i + 1; j < schedules.length; j += 1) {
+                const first = schedules[i];
+                const second = schedules[j];
+
+                const sameDay = first.dayOfWeek === second.dayOfWeek;
+                const overlaps =
+                    first.startTime < second.endTime &&
+                    first.endTime > second.startTime;
+
+                if (sameDay && overlaps) {
+                    setFormError(
+                        "Existem horários sobrepostos no mesmo dia.",
+                    );
+                    return;
+                }
+            }
+        }
+
+        let createdRoutine = null;
+
         try {
             setCreating(true);
             setFormError("");
@@ -157,9 +257,21 @@ function Routines() {
                 type,
             });
 
-            const newRoutine = response.data;
+            createdRoutine = response.data;
 
-            setRoutines((current) => [...current, newRoutine]);
+            if (!createdRoutine?.id) {
+                throw new Error(
+                    "A API não retornou o identificador da rotina criada.",
+                );
+            }
+
+            for (const schedule of schedules) {
+                await lifeApi.createRoutineSchedule(createdRoutine.id, {
+                    dayOfWeek: Number(schedule.dayOfWeek),
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime,
+                });
+            }
 
             setIsModalOpen(false);
 
@@ -167,12 +279,43 @@ function Routines() {
                 name: "",
                 type: "",
             });
+
+            setSchedules([
+                {
+                    id: 1,
+                    dayOfWeek: "",
+                    startTime: "",
+                    endTime: "",
+                },
+            ]);
+
+            await loadRoutines();
         } catch (requestError) {
-            console.error("Erro ao criar rotina:", requestError);
+            console.error("Erro ao criar rotina e horários:", requestError);
+
+            let cleanupFailed = false;
+
+            if (createdRoutine?.id) {
+                try {
+                    await lifeApi.deleteRoutine(createdRoutine.id);
+                } catch (cleanupError) {
+                    cleanupFailed = true;
+                    console.error(
+                        "Não foi possível desfazer a criação da rotina:",
+                        cleanupError,
+                    );
+                }
+            }
+
+            const apiMessage =
+                requestError.response?.data?.message ||
+                requestError.message;
 
             setFormError(
-                requestError.response?.data?.message ||
-                "Não foi possível criar a rotina.",
+                cleanupFailed
+                    ? "Não foi possível salvar todos os horários e a rotina pode ter ficado cadastrada parcialmente. Atualize a lista e confira os dados."
+                    : apiMessage ||
+                    "Não foi possível criar a rotina e salvar seus horários.",
             );
         } finally {
             setCreating(false);
@@ -435,6 +578,100 @@ function Routines() {
                                         disabled={creating}
                                     />
                                 </label>
+
+
+                                <div className="routine-schedules">
+                                    <div className="routine-schedules-heading">
+                                        <div>
+                                            <strong>Programação semanal</strong>
+                                            <p>Escolha os dias e horários da rotina.</p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="routine-modal-secondary"
+                                            onClick={addSchedule}
+                                            disabled={creating}
+                                        >
+                                            <Plus size={16} />
+                                            Adicionar horário
+                                        </button>
+                                    </div>
+
+                                    {schedules.map((schedule, index) => (
+                                        <div className="routine-schedule-row" key={schedule.id}>
+                                            <label>
+                                                <span>Dia da semana</span>
+
+                                                <select
+                                                    value={schedule.dayOfWeek}
+                                                    onChange={(event) =>
+                                                        handleScheduleChange(
+                                                            schedule.id,
+                                                            "dayOfWeek",
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    disabled={creating}
+                                                >
+                                                    <option value="">Selecione</option>
+                                                    <option value="0">Domingo</option>
+                                                    <option value="1">Segunda-feira</option>
+                                                    <option value="2">Terça-feira</option>
+                                                    <option value="3">Quarta-feira</option>
+                                                    <option value="4">Quinta-feira</option>
+                                                    <option value="5">Sexta-feira</option>
+                                                    <option value="6">Sábado</option>
+                                                </select>
+                                            </label>
+
+                                            <label>
+                                                <span>Início</span>
+
+                                                <input
+                                                    type="time"
+                                                    value={schedule.startTime}
+                                                    onChange={(event) =>
+                                                        handleScheduleChange(
+                                                            schedule.id,
+                                                            "startTime",
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    disabled={creating}
+                                                />
+                                            </label>
+
+                                            <label>
+                                                <span>Término</span>
+
+                                                <input
+                                                    type="time"
+                                                    value={schedule.endTime}
+                                                    onChange={(event) =>
+                                                        handleScheduleChange(
+                                                            schedule.id,
+                                                            "endTime",
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    disabled={creating}
+                                                />
+                                            </label>
+
+                                            <button
+                                                type="button"
+                                                className="routine-schedule-remove"
+                                                onClick={() => removeSchedule(schedule.id)}
+                                                disabled={creating || schedules.length === 1}
+                                                aria-label={`Remover horário ${index + 1}`}
+                                                title="Remover horário"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
 
                                 {formError && (
                                     <p className="routine-modal-error">

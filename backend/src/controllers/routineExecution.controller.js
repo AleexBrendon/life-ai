@@ -549,6 +549,178 @@ const markRoutineExecutionAsMissed = async (
   }
 };
 
+
+const completeScheduledRoutine = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const routineScheduleId = Number(req.params.routineScheduleId);
+    const dateInput = req.body?.date;
+
+    if (
+      !Number.isInteger(routineScheduleId) ||
+      routineScheduleId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Horário de rotina inválido.",
+      });
+    }
+
+    const parsedDate = new Date(dateInput);
+
+    if (!dateInput || Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Informe uma data válida.",
+      });
+    }
+
+    // Mantém a mesma convenção de data UTC usada
+    // no controller de execução de rotinas.
+    const date = new Date(
+      Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate()
+      )
+    );
+
+    const schedule = await prisma.routineSchedule.findFirst({
+      where: {
+        id: routineScheduleId,
+        routineItem: {
+          userId,
+          isActive: true,
+        },
+      },
+      include: {
+        routineItem: true,
+      },
+    });
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: "Rotina não encontrada ou inativa.",
+      });
+    }
+
+    if (schedule.dayOfWeek !== date.getUTCDay()) {
+      return res.status(400).json({
+        success: false,
+        message: "A rotina não está programada para essa data.",
+      });
+    }
+
+    const uniqueKey = {
+      userId_routineScheduleId_date: {
+        userId,
+        routineScheduleId,
+        date,
+      },
+    };
+
+    let execution = await prisma.routineExecution.findUnique({
+      where: uniqueKey,
+    });
+
+    if (execution?.status === "COMPLETED") {
+      return res.status(200).json({
+        success: true,
+        message: "Rotina já concluída.",
+        data: execution,
+      });
+    }
+
+    if (
+      execution &&
+      ["SKIPPED", "MISSED"].includes(execution.status)
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Não é possível concluir uma rotina ignorada ou perdida.",
+      });
+    }
+
+    if (execution) {
+      execution = await prisma.routineExecution.update({
+        where: { id: execution.id },
+        data: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+          skipReason: null,
+        },
+      });
+    } else {
+      try {
+        execution = await prisma.routineExecution.create({
+          data: {
+            userId,
+            routineItemId: schedule.routineItemId,
+            routineScheduleId: schedule.id,
+            date,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            status: "COMPLETED",
+            completedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        // Proteção adicional contra duas requisições simultâneas.
+        if (error.code !== "P2002") {
+          throw error;
+        }
+
+        execution = await prisma.routineExecution.findUnique({
+          where: uniqueKey,
+        });
+
+        if (!execution) {
+          throw error;
+        }
+
+        if (execution.status === "COMPLETED") {
+          return res.status(200).json({
+            success: true,
+            message: "Rotina já concluída.",
+            data: execution,
+          });
+        }
+
+        if (["SKIPPED", "MISSED"].includes(execution.status)) {
+          return res.status(409).json({
+            success: false,
+            message: "Não é possível concluir uma rotina ignorada ou perdida.",
+          });
+        }
+
+        execution = await prisma.routineExecution.update({
+          where: { id: execution.id },
+          data: {
+            status: "COMPLETED",
+            completedAt: new Date(),
+            skipReason: null,
+          },
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Rotina concluída com sucesso.",
+      data: execution,
+    });
+  } catch (error) {
+    console.error("Erro ao concluir rotina programada:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Erro interno ao concluir rotina.",
+    });
+  }
+};
+
+
 module.exports = {
   createRoutineExecution,
   getRoutineExecutions,
@@ -556,4 +728,5 @@ module.exports = {
   completeRoutineExecution,
   skipRoutineExecution,
   markRoutineExecutionAsMissed,
+  completeScheduledRoutine,
 };
