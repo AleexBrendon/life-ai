@@ -20,7 +20,8 @@ const goalRoutes = require("./routes/goal.routes");
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '512kb' }));
+app.use(require('./middlewares/activityNotification.middleware'));
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
@@ -40,6 +41,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/planner", require("./routes/planner.routes"));
+app.use("/api/personal", require("./routes/personalPlanning.routes"));
+app.use('/api/activity-status', require('./routes/activityStatus.routes'));
 
 module.exports = app;
 

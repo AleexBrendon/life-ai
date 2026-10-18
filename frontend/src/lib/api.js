@@ -12,7 +12,10 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    if (response.headers['x-activity-notification'] === 'created') window.dispatchEvent(new Event('lifeai:notifications-updated'));
+    return response.data;
+  },
   (error) => {
     if (error.response?.status === 401) localStorage.removeItem("lifeai_token");
     return Promise.reject(error);

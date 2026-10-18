@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Plus, Trash2, Pencil, Search, ArrowUpRight, CalendarDays } from 'lucide-react';
 import api from '../../lib/api';
+import { WeekdayPicker, TimePicker, DatePicker } from './ScheduleInputs';
 import { entities, defaultValues, payload, valuesFor, weekdays } from './entityConfig';
 
 export function Dialog({ title, subtitle, onClose, busy, children }) {
@@ -11,6 +12,8 @@ export function Dialog({ title, subtitle, onClose, busy, children }) {
 function Field({field,values,onChange,prefix}) {
  if(field.when&&!field.when(values))return null;
  const id=`${prefix}-${field.key}`;const value=values[field.key]??'';
+ if(field.key==='dayOfWeek')return <WeekdayPicker id={id} label={field.label} value={value} onChange={value=>onChange(field.key,value)}/>;
+ if(['time','date'].includes(field.type)){const Control=field.type==='time'?TimePicker:DatePicker;return <div className="studio-field"><label className="schedule-label" htmlFor={id}>{field.label}{field.required&&<small> *</small>}</label><Control id={id} value={value} required={field.required} min={field.min} max={field.max} onChange={value=>onChange(field.key,value)}/></div>}
  const props={id,name:field.key,required:field.required, maxLength:field.maxLength,min:field.min,max:field.max,value,onChange:e=>onChange(field.key,e.target.value)};
  return <label className={`studio-field ${field.type==='textarea'?'wide':''} ${field.type==='checkbox'?'check':''}`} htmlFor={id}>
  {field.type==='checkbox'?<><input id={id} type="checkbox" checked={!!value} onChange={e=>onChange(field.key,e.target.checked)}/><span>{field.label}</span></>:<><span>{field.label}{field.required&&<small> *</small>}</span>{field.type==='select'?<select {...props}>{field.options.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>:field.type==='textarea'?<textarea {...props} rows={3}/>:<input {...props} type={field.type} list={field.list?`${id}-options`:undefined}/>} {field.list&&<datalist id={`${id}-options`}>{field.list.map(option=><option key={option}>{option}</option>)}</datalist>}</>}
@@ -41,6 +44,7 @@ export function DeleteDialog({kind,item,onClose,onDeleted}) {
 }
 export default function EntityManager({kind}) {
  const config=entities[kind];const [items,setItems]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[search,setSearch]=useState(''),[filter,setFilter]=useState('all'),[editor,setEditor]=useState(undefined),[deleting,setDeleting]=useState(null),[revision,setRevision]=useState(0),[notice,setNotice]=useState('');
+ useEffect(()=>{const reload=()=>setRevision(r=>r+1);window.addEventListener("lifeai:agenda-updated",reload);return()=>window.removeEventListener("lifeai:agenda-updated",reload)},[]);
  useEffect(()=>{let active=true;setLoading(true);setError('');api.get(`/planner/${kind}`).then(r=>{if(active)setItems(r.data)}).catch(e=>{if(active)setError(errorMessage(e))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[kind,revision]);
  const normalize=v=>String(v||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
  const completed=i=>i.isCompleted||['COMPLETED','RESOLVED','CANCELLED'].includes(i.status);
@@ -55,3 +59,4 @@ export default function EntityManager({kind}) {
  {loading?<p role="status" className="studio-empty">Carregando seus registros...</p>:!visible.length?<div className="studio-empty"><CalendarDays size={30}/><h3>{search||filter!=='all'?'Nenhum resultado para este filtro':'Tudo começa com um novo plano'}</h3><p>{search||filter!=='all'?'Experimente outra busca ou selecione Todos.':`Adicione ${config.singular} para começar.`}</p></div>:<div className="studio-record-grid">{visible.map(item=><article className="studio-record" key={item.id}><div className="studio-record-top"><span className={`studio-badge ${completed(item)?'done':''}`}>{completed(item)?'Concluído':paused(item)?'Pausado':item.type||config.singular}</span><div><button aria-label={`Editar ${item.name||item.title}`} onClick={()=>setEditor(item)}><Pencil size={16}/></button><button aria-label={`Excluir ${item.name||item.title}`} onClick={()=>setDeleting(item)}><Trash2 size={16}/></button></div></div><h3>{item.name||item.title}</h3><p>{item.description||item.company||'Organize seus detalhes e acompanhe seu progresso.'}</p><div className="studio-record-meta">{item.reminderTime&&<span>{item.reminderTime} · {item.recurrence==='DAILY'?'Todos os dias':item.recurrence==='WEEKLY'?weekdays[item.dayOfWeek]:String(item.date).slice(0,10)}</span>}{item.targetDate&&<span>Prazo · {new Date(item.targetDate).toLocaleDateString('pt-BR',{timeZone:'UTC'})}</span>}{item.schedules&&<span>{item.schedules.length} horários na semana</span>}{item.sessions&&<span>{item.sessions.length} sessões planejadas</span>}{item.tasks&&<span>{item.tasks.length} tarefas</span>}</div><button className="studio-record-link" onClick={()=>setEditor(item)}>Ver e editar detalhes<ArrowUpRight size={15}/></button></article>)}</div>}
  {editor!==undefined&&<EntityEditor key={editor?.id||'new'} kind={kind} item={editor} onClose={()=>setEditor(undefined)} onSaved={()=>refresh('Registro salvo com sucesso.')}/>}{deleting&&<DeleteDialog kind={kind} item={deleting} onClose={()=>setDeleting(null)} onDeleted={()=>refresh('Registro excluído.')}/>}</section>;
 }
+

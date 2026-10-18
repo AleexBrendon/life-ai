@@ -20,6 +20,10 @@ const getClient = () => {
 const generateAIResponse = async ({
     messages,
     responseFormat,
+    maxOutputTokens,
+    reasoningEffort,
+    timeoutMs,
+    model,
 }) => {
     if (!Array.isArray(messages) || messages.length === 0) {
         throw new Error(
@@ -28,19 +32,21 @@ const generateAIResponse = async ({
     }
 
     const request = {
-        model: process.env.OPENROUTER_MODEL || "openrouter/free",
+        model: model || process.env.OPENROUTER_MODEL || "openrouter/free",
         messages,
         temperature: 0.2,
     };
 
+    if (maxOutputTokens) request.max_tokens = maxOutputTokens;
+    if (reasoningEffort) request.reasoning = { effort: reasoningEffort };
     if (responseFormat) {
         request.response_format = responseFormat;
     }
 
-    const response =
-        await getClient().chat.completions.create(
-            request
-        );
+    const client = getClient();
+    const response = timeoutMs
+        ? await client.chat.completions.create(request, { timeout: timeoutMs, maxRetries: 0 })
+        : await client.chat.completions.create(request);
 
     const content =
         response.choices?.[0]?.message?.content;
@@ -54,9 +60,14 @@ const generateAIResponse = async ({
     return {
         content,
         model: response.model,
+        ...(response.choices?.[0]?.finish_reason ? { finishReason: response.choices[0].finish_reason } : {}),
     };
 };
 
 module.exports = {
     generateAIResponse,
 };
+
+
+
+

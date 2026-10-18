@@ -3,14 +3,17 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import MobileNavigation from "./MobileNavigation";
+import HydrationAlarm from './HydrationAlarm';
+import { UserPreferencesProvider } from '../../lib/UserPreferences';
 
 function AppShell({ onLogout }) {
   return (
-    <div className="app-shell">
+    <UserPreferencesProvider><div className="app-shell">
       <Sidebar />
 
       <div className="app-main">
         <Header onLogout={onLogout} />
+        <HydrationAlarm />
 
         <main className="app-content">
           <Outlet />
@@ -18,7 +21,7 @@ function AppShell({ onLogout }) {
 
         <MobileNavigation />
       </div>
-    </div>
+    </div></UserPreferencesProvider>
   );
 }
 

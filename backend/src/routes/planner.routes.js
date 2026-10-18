@@ -2,22 +2,7 @@ const express = require("express");
 const { z } = require("zod");
 const prisma = require("../database/prisma");
 const auth = require("../middlewares/auth.middleware");
-const { createRoutineSchema } = require("../schemas/routine.schema");
-const { createJobSchema } = require("../schemas/job.schema");
-const { goalSchema } = require("../schemas/goal.schema");
-const { reminderSchema } = require("../schemas/reminder.schema");
-const { unexpectedEventSchema } = require("../schemas/unexpectedEvent.schema");
-const { createRoutineScheduleSchema } = require("../schemas/routineSchedule.schema");
-const { createWorkScheduleSchema } = require("../schemas/workSchedule.schema");
-const { createJobTaskSchema } = require("../schemas/job-task.schema");
-const sessionSchema = z.object({ date: z.string().date(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), status: z.enum(["PENDING", "COMPLETED", "SKIPPED"]).default("PENDING") }).refine(row => row.startTime < row.endTime, { message: "O início deve ser anterior ao fim." });
-const configurations = {
-  rotinas: { model: "routineItem", schema: createRoutineSchema.extend({ isActive: z.boolean().optional() }), children: { schedules: ["routineSchedule", "routineItemId", createRoutineScheduleSchema] } },
-  trabalho: { model: "job", schema: createJobSchema, children: { schedules: ["workSchedule", "jobId", createWorkScheduleSchema], tasks: ["jobTask", "jobId", createJobTaskSchema] } },
-  metas: { model: "goal", schema: goalSchema.extend({ targetDate: z.string().date().nullable().optional(), status: z.enum(["ACTIVE", "COMPLETED", "PAUSED"]).default("ACTIVE") }), children: { sessions: ["goalPlanSession", "goalId", sessionSchema] } },
-  lembretes: { model: "reminder", schema: reminderSchema, children: {} },
-  imprevistos: { model: "unexpectedEvent", schema: unexpectedEventSchema, children: {} },
-};
+const { configurations } = require("../schemas/planner.schema");
 const router = express.Router();
 router.use(auth);
 router.use('/:kind', (req, res, next) => {
@@ -25,7 +10,11 @@ router.use('/:kind', (req, res, next) => {
   if (!req.plannerConfig) return res.status(404).json({ success: false, message: "Área não encontrada." });
   next();
 });
-const include = config => Object.keys(config.children).length ? Object.fromEntries(Object.keys(config.children).map(key => [key, true])) : undefined;
+const include = config => {
+ const relations = Object.fromEntries(Object.keys(config.children).map(key => [key, true]));
+ if (config.model === "routineItem") relations.routineExecutions = { select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true } };
+ return Object.keys(relations).length ? relations : undefined;
+};
 router.get('/:kind', async (req, res) => {
   try { const config = req.plannerConfig; const data = await prisma[config.model].findMany({ where: { userId: req.user.id }, include: include(config), orderBy: { createdAt: "asc" } }); res.json({ success: true, data }); }
   catch { res.status(500).json({ success: false, message: "Não foi possível carregar os registros." }); }
@@ -98,4 +87,6 @@ router.delete('/:kind/:id', async (req, res) => {
   catch { res.status(500).json({ success: false, message: "Não foi possível excluir." }); }
 });
 module.exports = router;
+
+
 

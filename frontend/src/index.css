@@ -2753,7 +2753,7 @@ a {
   margin-left: auto
 }
 
-.danger {
+.danger:not(button) {
   padding: 12px 14px;
   border-color: #f8d7ce !important;
   background: linear-gradient(100deg, #fff8f6, #fffcfb) !important;

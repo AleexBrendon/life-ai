@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+const DashboardCharts = lazy(() => import('./DashboardCharts'));
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CheckCheck, Target, BriefcaseBusiness, ArrowUpRight, Sparkles, Clock3, CalendarCheck2 } from 'lucide-react';
 import { lifeApi } from '../../lib/api';
@@ -7,6 +8,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => { const reload = () => setAttempt(value => value + 1); window.addEventListener("lifeai:agenda-updated", reload); return () => window.removeEventListener("lifeai:agenda-updated", reload); }, []);
   useEffect(() => {
     let active = true;
     setError(false);
@@ -26,27 +28,37 @@ export default function Dashboard() {
     ...data.work.map(item => ({ id: `work-${item.id}`, time: item.startTime, title: item.job.name, type: 'Trabalho', tone: 'work' })),
     ...(data.goals?.sessions || []).map(item => ({ id: `goal-${item.id}`, time: item.startTime, title: item.goal.title, type: 'Meta', tone: 'goal', done: item.status === 'COMPLETED' })),
     ...data.unexpectedEvents.map(item => ({ id: `event-${item.id}`, time: item.startTime, title: item.title, type: 'Imprevisto', tone: 'event', done: ['RESOLVED', 'CANCELLED'].includes(item.status) })),
-  ].sort((a, b) => a.time.localeCompare(b.time));
-  const total = summary.totalScheduledRoutines + summary.totalScheduledReminders;
+  ].sort((a, b) => a.time.localeCompare(b.time)).map(item => {
+    const [prefix, sourceId] = item.id.split('-');
+    const kind = {routine:'rotinas',reminder:'lembretes',work:'trabalho',goal:'metas',event:'imprevistos'}[prefix];
+    const activity = data.activities?.find(row => row.kind === kind && row.sourceId === Number(sourceId));
+    return activity ? {...item,done:activity.status==='COMPLETED',skipped:activity.status==='SKIPPED'} : item;
+  });
+  const total = summary.totalActivities ?? (summary.totalScheduledRoutines + summary.totalScheduledReminders);
   const percentage = total ? Math.min(100, Math.round(summary.completed / total * 100)) : 0;
-  const now = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
-  const next = agenda.find(item => !item.done && item.time >= now);
+  const now = new Intl.DateTimeFormat('pt-BR', { timeZone: data.timezone || 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const next = agenda.find(item => !item.done && !item.skipped && item.time >= now);
   const stats = [
     ['Rotinas de hoje', summary.totalScheduledRoutines, 'atividades programadas', CalendarDays],
-    ['Concluídas', summary.completed, 'rotinas e lembretes', CheckCheck],
+    ['Concluídas', summary.completed, 'atividades do dia', CheckCheck],
     ['Sessões de metas', summary.totalGoalSessions, 'passos para seus objetivos', Target],
     ['Trabalho', summary.totalWorkSchedules, 'períodos na agenda', BriefcaseBusiness],
   ];
   return <section className="overview-page">
     <div className="dashboard-welcome"><div className="simple-intro"><span>SEU DIA EM PERSPECTIVA</span><h1>Mais clareza. Um passo de cada vez.</h1><p>O que está planejado e o que já avançou, em um só lugar.</p></div><time className="dashboard-date" dateTime={data.date}>{new Date(`${data.date}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}</time></div>
     <div className="overview-stats">{stats.map(([label, value, note, Icon]) => <article key={label} className="overview-stat"><div><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{note}</small></article>)}</div>
+    <Suspense fallback={<p role="status">Carregando gráficos...</p>}><DashboardCharts /></Suspense>
     <div className="overview-layout"><article className="overview-agenda"><header><div><span className="studio-eyebrow">SEU PLANEJAMENTO</span><h2>Agenda de hoje</h2></div><Link to="/agenda">Ver agenda <ArrowUpRight size={15}/></Link></header>
-      <div className="overview-timeline">{agenda.length ? agenda.slice(0, 8).map(item => <div className={`overview-event ${item.tone} ${item.done ? 'done' : ''}`} key={item.id}><time>{item.time}</time><i/><div><strong>{item.title}</strong><span>{item.type}</span></div>{item.done && <CheckCheck size={17} aria-label="Concluída"/>}</div>) : <div className="dashboard-empty"><CalendarCheck2 size={28}/><strong>Espaço para um novo começo</strong><p>Nenhuma atividade programada para hoje.</p><Link to="/planejamento">Planejar minha rotina →</Link></div>}</div>
+      <div className="overview-timeline">{agenda.length ? agenda.slice(0, 8).map(item => <div className={`overview-event ${item.tone} ${item.done ? 'done' : ''}`} key={item.id}><time>{item.time}</time><i/><div><strong>{item.title}</strong><span>{item.type}{item.skipped ? ' · Pulada neste dia' : ''}</span></div>{item.done && <CheckCheck size={17} aria-label="Concluída"/>}</div>) : <div className="dashboard-empty"><CalendarCheck2 size={28}/><strong>Espaço para um novo começo</strong><p>Nenhuma atividade programada para hoje.</p><Link to="/planejamento">Planejar minha rotina →</Link></div>}</div>
       {agenda.length > 8 && <Link className="overview-more" to="/agenda">Ver as {agenda.length} atividades do dia →</Link>}
-    </article><aside className="overview-side"><article className="overview-progress"><span className="studio-eyebrow">NO SEU RITMO</span><div><h2>Progresso do dia</h2><strong>{percentage}%</strong></div><div className="overview-progress-track" role="progressbar" aria-label="Conclusão de rotinas e lembretes" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}><span style={{width:`${percentage}%`}}/></div><p>{total ? `${summary.completed} de ${total} rotinas e lembretes concluídos.` : 'Adicione rotinas ou lembretes para acompanhar seu progresso.'}</p></article>
+    </article><aside className="overview-side"><article className="overview-progress"><span className="studio-eyebrow">NO SEU RITMO</span><div><h2>Progresso do dia</h2><strong>{percentage}%</strong></div><div className="overview-progress-track" role="progressbar" aria-label="Conclusão das atividades do dia" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}><span style={{width:`${percentage}%`}}/></div><p>{total ? `${summary.completed} de ${total} atividades concluídas.${summary.skipped ? ` ${summary.skipped} pulada(s).` : ''}` : 'Adicione atividades à agenda para acompanhar seu progresso.'}</p></article>
     <article className="overview-next"><span className="studio-eyebrow"><Clock3 size={13}/> A SEGUIR</span>{next ? <><time>{next.time}</time><h3>{next.title}</h3><p>{next.type}</p></> : <><h3>Um respiro na agenda.</h3><p>Não há outras atividades previstas para começar hoje.</p></>}<Link to="/agenda">Conferir meu dia <ArrowUpRight size={14}/></Link></article>
     <Link to="/dashboard?painel=ia" className="overview-assistant"><span><Sparkles size={20}/></span><div><strong>Precisa organizar as ideias?</strong><p>Converse com seu assistente IA.</p></div><ArrowUpRight size={17}/></Link>
     <div className="overview-shortcuts"><Link to="/planejamento?aba=metas">Minhas metas <Target size={15}/></Link><Link to="/planejamento?aba=trabalho">Abrir Kanban <BriefcaseBusiness size={15}/></Link></div>
     </aside></div>
   </section>;
 }
+
+
+
+

@@ -189,6 +189,13 @@ const getCalendar = async (req, res) => {
             priority: session.goal.priority,
         }));
 
+        const dailyExecutions = await prisma.activityExecution.findMany({ where: { userId, date: startOfDay } });
+        for (const [kind, rows] of [['trabalho', workItems], ['imprevistos', unexpectedEventItems]]) {
+            for (const item of rows) {
+                const execution = dailyExecutions.find(row => row.kind === kind && row.sourceId === item.id);
+                if (execution) item.status = execution.status;
+            }
+        }
         const items = [
             ...routineItems,
             ...reminderItems,

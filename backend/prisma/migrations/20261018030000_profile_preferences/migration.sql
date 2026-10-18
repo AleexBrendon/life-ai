@@ -1,0 +1,5 @@
+ALTER TABLE "Profile"
+ ADD COLUMN "avatarData" TEXT,
+ ADD COLUMN "calendarView" TEXT NOT NULL DEFAULT 'month',
+ ADD COLUMN "weekStartsOn" INTEGER NOT NULL DEFAULT 1,
+ ADD COLUMN "notifyActions" BOOLEAN NOT NULL DEFAULT true;

@@ -225,7 +225,7 @@ O e-mail é exibido somente para consulta. O calendário usa referência de data
 
 1. Clique em **Assistente IA**, no cabeçalho ou no atalho do Dashboard.
 2. Digite, por exemplo: **Como posso organizar melhor meu dia?**
-3. Clique em **Enviar** e aguarde a resposta.
+3. Clique em **Enviar** ou pressione **Enter** e aguarde a resposta. Para quebrar linha, use **Shift+Enter**.
 4. Use a sugestão como apoio e aplique as alterações desejadas nos formulários.
 
 A IA precisa de um provedor configurado no backend. Se estiver indisponível, a interface apresenta uma mensagem de erro.
@@ -234,7 +234,7 @@ A conversa não altera a agenda automaticamente. O histórico da interface perma
 
 ### Conversa e recomendações são fluxos diferentes
 
-O backend também possui um MVP de recomendações que exige aprovação antes de aplicar alterações pontuais. O painel de conversa atual não oferece os botões de aprovação ou recusa desse fluxo. Não é necessário chamar endpoints para seguir este tutorial.
+O backend também possui um MVP de recomendações que exige aprovação antes de aplicar alterações pontuais. No painel da assistente, use **Propor ajuste**, escolha uma data e confira a proposta. Use **Aprovar e aplicar** ou **Recusar**. A análise considera a data escolhida; a mensagem da conversa não é um comando executável. Atualmente, as propostas podem mudar o horário de uma rotina naquela data, preservando o agendamento recorrente. Não é necessário chamar endpoints para seguir este tutorial.
 
 Para consultar o funcionamento técnico das recomendações, veja [MVP de recomendações de IA](ai-mvp.md).
 
@@ -259,3 +259,17 @@ O sistema solicita a revogação do token no backend e remove a sessão local. S
 | Aparece uma mensagem de sessão expirada | Entre novamente com sua conta. |
 
 Para uma consulta por funcionalidade, veja também o [Guia de uso](../../docs/GUIA-DE-USO.md).
+
+
+## 15. Montar cadastros descrevendo sua rotina à IA
+
+1. Abra **Assistente IA** e selecione **Cadastrar minha rotina**.
+2. Conte, por exemplo: “Trabalho na empresa Exemplo de segunda a sexta, das 9h às 18h. Quero caminhar terça e quinta, das 7h às 7h40, e estudar inglês 3 vezes por semana, 30 minutos por sessão.”
+3. Envie com Enter ou pelo botão **Organizar meus cadastros**.
+4. Responda às perguntas sobre dados que faltarem. Informe o fim das atividades, não apenas o horário inicial.
+5. Revise a proposta completa. As metas sem datas de sessões informadas ficam sem sessões na agenda; frequência e duração não criam horários sozinhas.
+6. Caso queira corrigir algo, escreva a mudança no campo de mensagem e envie antes de confirmar.
+7. Clique em **Confirmar e cadastrar**. Os dados passam a aparecer no Planejamento, no Kanban quando houver tarefas e na agenda quando houver horários.
+8. Para desistir, clique em **Descartar**. Para continuar depois, reabra essa aba e selecione a proposta pendente.
+
+A confirmação cria apenas novos registros, sem editar ou excluir os existentes. Duplicação de nomes na mesma categoria bloqueia o lote para revisão. Se alguma criação falhar, nenhuma das outras criações do lote é aplicada. A mesma proposta só pode ser aplicada uma vez.

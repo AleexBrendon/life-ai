@@ -24,6 +24,61 @@
     notifications      Notification[]
     aiRecommendations  AiRecommendation[]
     goals              Goal[]
+    hydrationPlan      HydrationPlan?
+    waterIntakes       WaterIntake[]
+    financeEntries     FinanceEntry[]
+    activityExecutions ActivityExecution[]
+  }
+
+  model ActivityExecution {
+    id          Int @id @default(autoincrement())
+    userId      Int
+    kind        String
+    sourceId    Int
+    date        DateTime @db.Date
+    status      String @default("PENDING")
+    skipReason  String?
+    completedAt DateTime?
+    user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@unique([userId, kind, sourceId, date])
+    @@index([userId, date])
+  }
+
+  model HydrationPlan {
+    id              Int @id @default(autoincrement())
+    userId          Int @unique
+    goalMl          Int @default(2000)
+    cupMl           Int @default(250)
+    intervalMinutes Int @default(120)
+    startTime       String @default("08:00")
+    endTime         String @default("20:00")
+    enabled         Boolean @default(false)
+    lastReminderKey String?
+    user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  }
+
+  model WaterIntake {
+    id        Int @id @default(autoincrement())
+    userId    Int
+    amountMl  Int
+    date      DateTime @db.Date
+    createdAt DateTime @default(now())
+    user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@index([userId, date])
+  }
+
+  model FinanceEntry {
+    id           Int @id @default(autoincrement())
+    userId       Int
+    kind         String
+    title        String
+    amountCents  Int
+    savedCents   Int @default(0)
+    monthlyCents Int @default(0)
+    installments Int @default(1)
+    createdAt    DateTime @default(now())
+    user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@index([userId, kind])
   }
 
   model Profile {
@@ -34,6 +89,10 @@
     occupation         String?
     relationshipStatus String?
     hasChildren        Boolean   @default(false)
+    avatarData         String?
+    calendarView       String    @default("month")
+    weekStartsOn       Int       @default(1)
+    notifyActions      Boolean   @default(true)
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

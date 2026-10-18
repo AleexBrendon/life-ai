@@ -21,6 +21,10 @@ const getMe = async (req, res) => {
             occupation: true,
             relationshipStatus: true,
             hasChildren: true,
+            avatarData: true,
+            calendarView: true,
+            weekStartsOn: true,
+            notifyActions: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -69,6 +73,9 @@ const updateMe = async (req, res) => {
     }
 
     const profileData = {};
+    for (const key of ['avatarData','calendarView','weekStartsOn','notifyActions']) {
+      if (req.body[key] !== undefined) profileData[key] = req.body[key];
+    }
 
     if (birthDate !== undefined) {
       profileData.birthDate = birthDate
@@ -125,6 +132,10 @@ const updateMe = async (req, res) => {
             occupation: true,
             relationshipStatus: true,
             hasChildren: true,
+            avatarData: true,
+            calendarView: true,
+            weekStartsOn: true,
+            notifyActions: true,
             createdAt: true,
             updatedAt: true,
           },

@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useUserPreferences, UserAvatar } from '../../lib/UserPreferences';
 
 import {
   navigationItems,
@@ -23,6 +24,7 @@ function NavigationItem({ item }) {
 }
 
 function Sidebar() {
+  const { user } = useUserPreferences();
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
@@ -53,10 +55,10 @@ function Sidebar() {
           ))}
 
           <div className="sidebar-user">
-            <div className="sidebar-user-avatar">L</div>
+            <UserAvatar className="sidebar-user-avatar"/>
 
             <div className="sidebar-user-info">
-              <strong>Sua rotina</strong>
+              <strong>{user?.name || 'Sua rotina'}</strong>
               <span>Plano pessoal</span>
             </div>
           </div>

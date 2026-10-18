@@ -6,4 +6,5 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`LifeAI API rodando na porta ${PORT}`);
+  require('./services/hydrationReminder.service').startHydrationReminders();
 });

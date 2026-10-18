@@ -1,0 +1,23 @@
+CREATE TABLE "HydrationPlan" (
+ "id" SERIAL PRIMARY KEY, "userId" INTEGER NOT NULL UNIQUE,
+ "goalMl" INTEGER NOT NULL DEFAULT 2000, "cupMl" INTEGER NOT NULL DEFAULT 250,
+ "intervalMinutes" INTEGER NOT NULL DEFAULT 120, "startTime" TEXT NOT NULL DEFAULT '08:00',
+ "endTime" TEXT NOT NULL DEFAULT '20:00', "enabled" BOOLEAN NOT NULL DEFAULT false,
+ "lastReminderKey" TEXT,
+ CONSTRAINT "HydrationPlan_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE "WaterIntake" (
+ "id" SERIAL PRIMARY KEY, "userId" INTEGER NOT NULL, "amountMl" INTEGER NOT NULL,
+ "date" DATE NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT "WaterIntake_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX "WaterIntake_userId_date_idx" ON "WaterIntake"("userId", "date");
+CREATE TABLE "FinanceEntry" (
+ "id" SERIAL PRIMARY KEY, "userId" INTEGER NOT NULL, "kind" TEXT NOT NULL,
+ "title" TEXT NOT NULL, "amountCents" INTEGER NOT NULL,
+ "savedCents" INTEGER NOT NULL DEFAULT 0, "monthlyCents" INTEGER NOT NULL DEFAULT 0,
+ "installments" INTEGER NOT NULL DEFAULT 1,
+ "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT "FinanceEntry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX "FinanceEntry_userId_kind_idx" ON "FinanceEntry"("userId", "kind");

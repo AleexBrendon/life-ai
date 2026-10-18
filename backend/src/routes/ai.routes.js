@@ -11,10 +11,13 @@ const router = express.Router();
 
 router.use(authMiddleware);
 router.post("/chat", require("../controllers/aiChat.controller").chat);
+router.post("/setup/preview", require("../controllers/aiSetup.controller").preview);
+router.post("/setup/:id/apply", require("../controllers/aiSetup.controller").apply);
 router.post("/recommendations", createRecommendation);
 router.get("/recommendations", getRecommendations);
 router.post("/recommendations/:id/approve", approveRecommendation);
 router.post("/recommendations/:id/reject", rejectRecommendation);
 
 module.exports = router;
+
 

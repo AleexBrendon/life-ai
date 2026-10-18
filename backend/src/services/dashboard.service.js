@@ -1,9 +1,14 @@
 const prisma = require("../database/prisma");
+const { localClock } = require('./personalPlanning.service');
 
-const getDashboard = async ({ userId, date }) => {
-    const targetDate = date
-        ? new Date(`${date}T00:00:00.000Z`)
-        : new Date();
+const getDashboard = async ({ userId, date, now = new Date() }) => {
+    const profile = await prisma.profile.findUnique({ where: { userId }, select: { timezone: true } });
+    let timezone = profile?.timezone || 'America/Sao_Paulo';
+    let today;
+    try { today = localClock(now, timezone).date; }
+    catch { timezone = 'America/Sao_Paulo'; today = localClock(now, timezone).date; }
+    // Stored dates represent calendar days at UTC midnight, not UTC's current day.
+    const targetDate = new Date(`${date || today}T00:00:00.000Z`);
 
     if (Number.isNaN(targetDate.getTime())) {
         throw new Error("Data inválida.");
@@ -25,6 +30,7 @@ const getDashboard = async ({ userId, date }) => {
         workSchedules,
         unexpectedEvents,
         goalSessions,
+        activityExecutions,
     ] = await Promise.all([
 
         prisma.routineItem.findMany({
@@ -154,35 +160,8 @@ const getDashboard = async ({ userId, date }) => {
             include: { goal: true },
             orderBy: { startTime: "asc" },
         }),
+        prisma.activityExecution.findMany({ where: { userId, date: startOfDay } }),
     ]);
-
-    const completedRoutineExecutions = routineExecutions.filter(
-        (execution) => execution.status === "COMPLETED"
-    );
-
-    const pendingRoutineExecutions = routineExecutions.filter(
-        (execution) => execution.status === "PENDING"
-    );
-
-    const missedRoutineExecutions = routineExecutions.filter(
-        (execution) => execution.status === "MISSED"
-    );
-
-    const skippedRoutineExecutions = routineExecutions.filter(
-        (execution) => execution.status === "SKIPPED"
-    );
-
-    const completedReminderExecutions = reminderExecutions.filter(
-        (execution) => execution.status === "COMPLETED"
-    );
-
-    const pendingReminderExecutions = reminderExecutions.filter(
-        (execution) => execution.status === "PENDING"
-    );
-
-    const missedReminderExecutions = reminderExecutions.filter(
-        (execution) => execution.status === "MISSED"
-    );
 
     const totalScheduledRoutines = routines.reduce(
         (total, routine) => total + routine.schedules.length,
@@ -197,26 +176,28 @@ const getDashboard = async ({ userId, date }) => {
     const totalExecutions =
         totalRoutineExecutions + totalReminderExecutions;
 
-    const completed =
-        completedRoutineExecutions.length +
-        completedReminderExecutions.length;
-
-    const pending =
-        pendingRoutineExecutions.length +
-        pendingReminderExecutions.length;
-
-    const missed =
-        missedRoutineExecutions.length +
-        missedReminderExecutions.length;
-
-    const skipped =
-        skippedRoutineExecutions.length;
+    const normalize = status => status === 'RESOLVED' ? 'COMPLETED' : status === 'CANCELLED' ? 'SKIPPED' : status || 'PENDING';
+    const occurrence = (kind, sourceId, fallback, execution) => ({ kind, sourceId, status: normalize(execution?.status || fallback), skipReason: execution?.skipReason || null });
+    const activities = [
+        ...routines.flatMap(routine => routine.schedules.map(schedule => occurrence('rotinas', schedule.id, 'PENDING', routineExecutions.find(row => row.routineScheduleId === schedule.id)))),
+        ...reminders.map(reminder => occurrence('lembretes', reminder.id, 'PENDING', reminderExecutions.find(row => row.reminderId === reminder.id))),
+        ...workSchedules.map(schedule => occurrence('trabalho', schedule.id, 'PENDING', activityExecutions.find(row => row.kind === 'trabalho' && row.sourceId === schedule.id))),
+        ...goalSessions.map(session => occurrence('metas', session.id, session.status)),
+        ...unexpectedEvents.map(event => occurrence('imprevistos', event.id, event.status, activityExecutions.find(row => row.kind === 'imprevistos' && row.sourceId === event.id))),
+    ];
+    const completed = activities.filter(row => row.status === 'COMPLETED').length;
+    const skipped = activities.filter(row => row.status === 'SKIPPED').length;
+    const missed = activities.filter(row => row.status === 'MISSED').length;
+    const pending = activities.length - completed - skipped - missed;
 
     return {
         date: targetDate.toISOString().split("T")[0],
+        timezone,
+        activities,
 
         summary: {
             totalScheduledRoutines,
+            totalActivities: activities.length,
             totalRoutineExecutions,
 
             totalScheduledReminders,

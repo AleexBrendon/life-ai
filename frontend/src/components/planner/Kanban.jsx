@@ -5,8 +5,10 @@ import { Dialog } from './EntityManager';
 import { statuses } from './entityConfig';
 
 export default function Kanban() {
+ const [jobsRevision,setJobsRevision]=useState(0);
  const [jobs,setJobs]=useState([]),[jobId,setJobId]=useState(''),[tasks,setTasks]=useState([]),[revision,setRevision]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState(''),[busy,setBusy]=useState(false),[editing,setEditing]=useState(undefined),[deleting,setDeleting]=useState(null),[form,setForm]=useState({title:'',description:'',status:'TODO'});
- useEffect(()=>{let active=true;api.get('/planner/trabalho').then(r=>{if(active){setJobs(r.data);setJobId(id=>id||String(r.data[0]?.id||''));setLoading(false)}}).catch(()=>{if(active){setError('Não foi possível carregar os trabalhos.');setLoading(false)}});return()=>{active=false}},[]);
+ useEffect(()=>{const reload=()=>{setJobsRevision(r=>r+1);setRevision(r=>r+1)};window.addEventListener("lifeai:agenda-updated",reload);return()=>window.removeEventListener("lifeai:agenda-updated",reload)},[]);
+ useEffect(()=>{let active=true;api.get('/planner/trabalho').then(r=>{if(active){setJobs(r.data);setJobId(id=>id||String(r.data[0]?.id||''));setLoading(false)}}).catch(()=>{if(active){setError('Não foi possível carregar os trabalhos.');setLoading(false)}});return()=>{active=false}},[jobsRevision]);
  useEffect(()=>{if(!jobId)return;let active=true;setLoading(true);api.get(`/jobs/${jobId}/tasks`).then(r=>{if(active){setTasks(r.data);setError('')}}).catch(()=>{if(active)setError('Não foi possível carregar as tarefas.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[jobId,revision]);
  function edit(item){setEditing(item||null);setError('');setForm({title:item?.title||'',description:item?.description||'',status:item?.status==='DONE'?'COMPLETED':item?.status||'TODO'})}
  async function save(event){event.preventDefault();setBusy(true);setError('');try{const body={...form,title:form.title.trim()};if(editing)await api.patch(`/jobs/${jobId}/tasks/${editing.id}`,body);else await api.post(`/jobs/${jobId}/tasks`,body);setEditing(undefined);setRevision(r=>r+1)}catch{setError('Não foi possível salvar a tarefa. Revise os campos e tente novamente.')}finally{setBusy(false)}}
@@ -20,3 +22,4 @@ export default function Kanban() {
  {deleting&&<Dialog title="Excluir tarefa?" subtitle={deleting.title} onClose={()=>setDeleting(null)} busy={busy}><div className="studio-editor-body"><p>Essa ação não pode ser desfeita.</p>{error&&<p role="alert" className="studio-error">{error}</p>}</div><footer><button className="studio-button secondary" disabled={busy} onClick={()=>setDeleting(null)}>Cancelar</button><button className="studio-button danger" disabled={busy} onClick={remove}>Excluir tarefa</button></footer></Dialog>}
  </section>;
 }
+

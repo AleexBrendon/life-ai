@@ -57,3 +57,7 @@ O cenário E2E simula o provider de IA e verifica que a recomendação permanece
 ```bash
 npx vitest run tests/e2e/lifeai-complete-flow.e2e.test.js
 ```
+
+## Cadastro pela descrição da rotina
+
+Para o fluxo de novos cadastros com revisão e confirmação, consulte [Cadastros a partir da descrição da rotina](ai-setup.md).
