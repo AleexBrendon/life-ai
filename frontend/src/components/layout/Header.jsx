@@ -21,7 +21,7 @@ export default function Header({ onLogout }) {
     let active = true;
     const refresh = () => api.get('/notifications').then(response => { if (active) setUnread(response.data.filter(item => !item.isRead).length); }).catch(() => {});
     refresh();
-    const timer = setInterval(refresh, 60000);
+    const timer = setInterval(refresh, 30000);
     window.addEventListener('lifeai:notifications-updated', refresh);
     return () => { active = false; clearInterval(timer); window.removeEventListener('lifeai:notifications-updated', refresh); };
   }, [key]);

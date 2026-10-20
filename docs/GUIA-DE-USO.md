@@ -17,9 +17,19 @@ Use **Descartar** para desfazer alterações ainda não salvas. O e-mail é exib
 
 ## Notificações das ações
 
+### Aviso cinco minutos antes
+
+O sistema verifica a agenda e gera um aviso no sino aproximadamente **cinco minutos antes** do início de rotinas, lembretes, turnos de trabalho, sessões de metas e imprevistos pendentes. Atividades já concluídas ou puladas não geram esse aviso. Há apenas um aviso por ocorrência e horário; alterar o horário permite um novo aviso para o novo início.
+
+Em **Configurações → Notificações**, use **Avisar 5 minutos antes** para ativar ou desativar. Essa preferência é independente dos avisos de alterações e do alarme de água. A API precisa estar em execução na janela do aviso; não há push externo nem recuperação dos avisos perdidos enquanto ela estava desligada.
+
+Na central, **Ver atividade** marca o aviso como lido e abre a agenda na data correspondente, destacando a atividade. A conclusão ou o skip continuam sendo feitos na agenda. A exceção é o aviso de água: **Já bebi 250 ml** registra o consumo e marca o aviso como lido. Cada aviso permite confirmar o copo uma única vez, mesmo se clicar novamente. Apenas lembretes e imprevistos oferecem **Editar**, que abre o cadastro original. O texto dos avisos automáticos não é editável; não há botão de concluir atividade na central.
+
+No modal de **Lembretes**, o campo **Status** permite escolher **Ativo**, **Pausado** ou **Concluído**. Pausar suspende o cadastro sem apagar seus dados; concluir encerra suas próximas aparições na agenda. Para retomar, edite e escolha Ativo. Isso é diferente de concluir apenas uma ocorrência na agenda do dia, que mantém a recorrência.
+
 Cadastros, edições, exclusões, mudanças de status, registros de água, alterações financeiras e ações aplicadas da IA geram avisos no **sino**, quando a opção estiver ativada. Na agenda, concluir, pular ou voltar a pendente gera uma confirmação com a data selecionada. Alterar horários pelo formulário gera um aviso de edição; aprovar um ajuste da IA gera um aviso da proposta aplicada. A confirmação se refere à operação solicitada: um cadastro com vários horários ou uma proposta em lote gera um aviso da operação.
 
-O contador é atualizado após a resposta da operação e os avisos ficam disponíveis na central. Use **Abrir área** para voltar à seção relacionada. Falhas de validação, leituras de dados e conversa da IA sem alteração não geram confirmação de mudança. Marcar, editar ou apagar a própria notificação não gera outra, evitando um ciclo de avisos.
+O contador é atualizado após a resposta da operação e os avisos ficam disponíveis na central. Use **Ver atividade** para abrir a agenda ou a seção relacionada. Falhas de validação, leituras de dados e conversa da IA sem alteração não geram confirmação de mudança. Marcar avisos como lidos não gera novas notificações. Os avisos automáticos não oferecem edição do texto.
 
 ## Primeiro acesso
 
@@ -34,7 +44,7 @@ O seed preserva os registros existentes e não duplica os exemplos da mesma data
 
 ### Alarme na tela e intervalo
 
-O topo do sistema exibe **Água**, consumo diário e o tempo até o próximo aviso. Com lembretes ativados, aparece um aviso na tela nos horários configurados. Use **Bebi … ml**, **Outro volume** ou **Agora não**. Dispensar não registra consumo nem desativa os próximos intervalos. A escolha é lembrada neste navegador para aquele intervalo.
+O topo do sistema exibe **Água**, consumo diário e o tempo até o próximo aviso. Com lembretes ativados, aparece um aviso na tela nos horários configurados. O aviso de água oferece apenas **Já bebi 250 ml**, que registra esse volume. Feche pelo X para dispensar sem registrar nem desativar os próximos intervalos. Para outros volumes, abra Planejamento → Água. A escolha é lembrada neste navegador para aquele intervalo.
 
 Para começar, abra **Planejamento → Água → Configurar aviso de 1 em 1 hora**, revise a meta e os horários e salve. O botão preenche 60 minutos e ativa os avisos no formulário; você pode mudar o intervalo antes de salvar. As configurações existentes são preservadas até salvar.
 
@@ -89,6 +99,16 @@ Mostra um resumo dos dados reais da sua conta:
 Clique em **Abrir minha agenda** para ver o calendário completo. Os números não representam o progresso das tarefas do Kanban: essas tarefas têm acompanhamento próprio na aba Trabalho.
 
 ## 2. Minha agenda: visualizar e organizar o tempo
+
+### Início e cores das atividades
+
+O calendário não projeta atividades antes de **17/10/2026**, início deste projeto. Rotinas, turnos de trabalho e lembretes recorrentes respeitam também a data em que foram criados, no fuso do perfil. Um horário adicionado depois começa a aparecer a partir da própria criação. Os registros já criados pela IA seguem a mesma regra, sem precisar refazer o cadastro ou excluir histórico.
+
+As cores identificam o tipo: **verde para rotinas**, **amarelo para lembretes**, **azul para trabalho**, **roxo para metas** e **laranja para imprevistos**. As cores aparecem nos filtros, nos eventos do calendário e no painel do dia.
+
+Datas anteriores continuam navegáveis, mas sem atividades do projeto. As recorrências futuras continuam enquanto o cadastro estiver ativo; não existe uma data final automática para rotinas e jornadas. Para encerrar novas repetições, pause ou desative o cadastro correspondente.
+
+O calendário usa células maiores e títulos de até duas linhas, com até três compromissos visíveis por dia no mês. Quando houver mais, clique no dia para ver o restante. Em telas menores, o painel do dia fica abaixo e o calendário permite rolagem horizontal para preservar a leitura.
 
 ### Navegação no calendário
 
@@ -152,6 +172,8 @@ O formulário contém:
 Você pode editar ou remover sessões individualmente dentro do formulário. Limpar o prazo remove a data limite da meta.
 
 ### Trabalho: cadastro e jornada
+
+O trabalho agrupa suas tarefas e jornadas. Seu cadastro tem apenas **Ativo/Inativo**, sem status de execução. **A fazer**, **Em andamento** e **Concluído** pertencem às tarefas do Kanban. Na agenda, concluir ou pular um turno afeta somente a ocorrência daquele dia.
 
 Em **Trabalho → Trabalhos e jornadas**, cadastre:
 

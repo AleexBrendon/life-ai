@@ -4,7 +4,7 @@ const { getDashboard } = require('../../src/services/dashboard.service');
 let user;
 beforeAll(async () => {
  user = await prisma.user.create({ data: { name: 'Dashboard fuso teste', email: `dashboard-tz-${Date.now()}@example.invalid`, passwordHash: 'not-used', profile: { create: { timezone: 'America/Sao_Paulo' } } } });
- const routine = await prisma.routineItem.create({ data: { userId: user.id, name: 'Rotina de sábado', type: 'Organização', schedules: { create: [{ dayOfWeek: 6, startTime: '08:00', endTime: '09:00' }, { dayOfWeek: 6, startTime: '10:00', endTime: '11:00' }] } }, include: { schedules: true } });
+ const routine = await prisma.routineItem.create({ data: { userId: user.id, name: 'Rotina de sábado', type: 'Organização', createdAt:new Date('2026-10-17T12:00:00Z'), schedules: { create: [{ createdAt:new Date('2026-10-17T12:00:00Z'),dayOfWeek: 6, startTime: '08:00', endTime: '09:00' }, { createdAt:new Date('2026-10-17T12:00:00Z'),dayOfWeek: 6, startTime: '10:00', endTime: '11:00' }] } }, include: { schedules: true } });
  for (const [index, schedule] of routine.schedules.entries()) await prisma.routineExecution.create({ data: { userId: user.id, routineItemId: routine.id, routineScheduleId: schedule.id, date: new Date('2026-10-17T00:00:00Z'), startTime: schedule.startTime, endTime: schedule.endTime, status: index ? 'SKIPPED' : 'COMPLETED' } });
 });
 afterAll(async () => { if (user) await prisma.user.delete({ where: { id: user.id } }); await prisma.$disconnect(); });

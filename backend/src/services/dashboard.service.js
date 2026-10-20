@@ -1,5 +1,6 @@
 const prisma = require("../database/prisma");
 const { localClock } = require('./personalPlanning.service');
+const { PROJECT_START, canOccurOn } = require('../utils/agendaStart');
 
 const getDashboard = async ({ userId, date, now = new Date() }) => {
     const profile = await prisma.profile.findUnique({ where: { userId }, select: { timezone: true } });
@@ -22,7 +23,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
 
     const dayOfWeek = targetDate.getUTCDay();
 
-    const [
+    let [
         routines,
         routineExecutions,
         reminders,
@@ -163,6 +164,13 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
         prisma.activityExecution.findMany({ where: { userId, date: startOfDay } }),
     ]);
 
+    const key = targetDate.toISOString().slice(0,10);
+    routines = routines.filter(routine => canOccurOn(key, timezone, routine)).map(routine => ({ ...routine, schedules: routine.schedules.filter(schedule => canOccurOn(key, timezone, schedule)) })).filter(routine => routine.schedules.length);
+    workSchedules = workSchedules.filter(schedule => canOccurOn(key, timezone, schedule, schedule.job));
+    reminders = reminders.filter(reminder => reminder.recurrence === 'NONE' ? key >= PROJECT_START : canOccurOn(key, timezone, reminder));
+    if (key < PROJECT_START) { unexpectedEvents = []; goalSessions = []; }
+    routineExecutions = routineExecutions.filter(row => routines.some(routine => routine.schedules.some(schedule => schedule.id === row.routineScheduleId)));
+    reminderExecutions = reminderExecutions.filter(row => reminders.some(reminder => reminder.id === row.reminderId));
     const totalScheduledRoutines = routines.reduce(
         (total, routine) => total + routine.schedules.length,
         0

@@ -15,6 +15,7 @@ const updateUserSchema = z
     calendarView: z.enum(['month', 'week', 'day']).optional(),
     weekStartsOn: z.union([z.literal(0), z.literal(1)]).optional(),
     notifyActions: z.boolean().optional(),
+    notifyUpcoming: z.boolean().optional(),
     name: z
       .string()
       .trim()

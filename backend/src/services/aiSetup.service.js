@@ -100,7 +100,7 @@ async function proposeSetup(userId,input){
 Use horários compactos para evitar respostas enormes: em schedules, agrupe dias iguais com {days:[1,2,3,4,5],startTime:"08:00",endTime:"18:00",breakStart:"12:00",breakEnd:"14:00"}. O servidor expande os dias. Para sábado diferente, adicione outra linha com days:[6]. Não repita a mesma jornada em cinco objetos. Se houver pausa explícita, prefira um intervalo com breakStart/breakEnd em vez de duplicar manhã/tarde. Escreva JSON completo, sem truncar.
 Formatos data:
 rotinas: {name,type,isActive:true,schedules:[{dayOfWeek,startTime,endTime}]}; type em português, ex Saúde ou Desenvolvimento pessoal.
-trabalho: {name,company?,position?,workType?,location?,status:"TODO"|"IN_PROGRESS"|"COMPLETED",isActive:true,schedules:[{dayOfWeek,startTime,endTime,breakStart?,breakEnd?}],tasks:[{title,description?,status:"TODO"|"IN_PROGRESS"|"COMPLETED"}]}. Pausa omitida se não informada.
+trabalho: {name,company?,position?,workType?,location?,isActive:true,schedules:[{dayOfWeek,startTime,endTime,breakStart?,breakEnd?}],tasks:[{title,description?,status:"TODO"|"IN_PROGRESS"|"COMPLETED"}]}. Pausa omitida se não informada.
 metas: {title,description?,targetDate?:"YYYY-MM-DD",weeklyFrequency:1..7,sessionMinutes:15..240,priority:"LOW"|"MEDIUM"|"HIGH",status:"ACTIVE",sessions:[{date,startTime,endTime,status:"PENDING"}]}.
 lembretes: {title,description?,reminderTime,recurrence:"NONE"|"DAILY"|"WEEKLY",date? apenas NONE,dayOfWeek? apenas WEEKLY,isActive:true}. Pergunte horário se faltar.
 imprevistos: {title,description?,date,startTime,endTime,priority:"LOW"|"MEDIUM"|"HIGH",status:"PENDING"}.

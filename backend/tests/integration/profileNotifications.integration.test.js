@@ -48,7 +48,7 @@ describe('Preferências, foto e notificações das alterações',()=>{
   await call('put','/users/me',{notifyActions:true});expect(await count()).toBe(before+1);
  });
  it('notifica conclusão, skip e retomada de uma ocorrência',async()=>{
-  const reminder=await prisma.reminder.create({data:{userId:users[0],title:'Lembrete de teste',reminderTime:'10:00',recurrence:'DAILY'}});
+  const reminder=await prisma.reminder.create({data:{userId:users[0],title:'Lembrete de teste',reminderTime:'10:00',recurrence:'DAILY',createdAt:new Date('2026-10-17T12:00:00Z')}});
   const before=await count();
   for(const status of ['COMPLETED','SKIPPED','PENDING'])expect((await call('put','/activity-status',{kind:'lembretes',sourceId:reminder.id,date:'2026-10-18',status})).status).toBe(200);
   expect(await count()).toBe(before+3);

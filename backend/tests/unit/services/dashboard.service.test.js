@@ -38,6 +38,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.routineItem.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 userId,
                 name,
                 type,
@@ -56,6 +57,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.routineSchedule.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 routineItemId,
                 dayOfWeek,
                 startTime,
@@ -77,6 +79,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.reminder.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 userId,
                 title,
                 reminderTime,
@@ -97,6 +100,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.job.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 userId,
                 name,
                 isActive,
@@ -114,6 +118,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.workSchedule.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 jobId,
                 dayOfWeek,
                 startTime,
@@ -127,7 +132,7 @@ describe("Dashboard Service", () => {
         {
             title = "Imprevisto",
             date = new Date(
-                "2026-08-16T00:00:00.000Z"
+                "2026-10-18T00:00:00.000Z"
             ),
             startTime = "18:00",
             endTime = "19:00",
@@ -137,6 +142,7 @@ describe("Dashboard Service", () => {
     ) => {
         return prisma.unexpectedEvent.create({
             data: {
+                createdAt: new Date('2026-10-17T12:00:00Z'),
                 userId,
                 title,
                 date,
@@ -174,11 +180,11 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(result.date).toBe(
-                "2026-08-16"
+                "2026-10-18"
             );
         });
     });
@@ -242,7 +248,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: userA.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -299,7 +305,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -335,7 +341,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -360,7 +366,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -393,7 +399,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(result.work).toHaveLength(
@@ -418,7 +424,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -460,7 +466,7 @@ describe("Dashboard Service", () => {
                         routineScheduleId:
                             schedule.id,
                         date: new Date(
-                            "2026-08-16T00:00:00.000Z"
+                            "2026-10-18T00:00:00.000Z"
                         ),
                         startTime: "08:00",
                         endTime: "09:00",
@@ -472,7 +478,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -519,7 +525,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(
@@ -536,7 +542,7 @@ describe("Dashboard Service", () => {
             const result =
                 await getDashboard({
                     userId: user.user.id,
-                    date: "2026-08-16",
+                    date: "2026-10-18",
                 });
 
             expect(result.routines.scheduled)

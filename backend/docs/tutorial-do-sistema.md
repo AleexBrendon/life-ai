@@ -88,7 +88,7 @@ A frequência e a duração são preferências. Preencher esses números não cr
 3. Clique em **Adicionar trabalho**.
 4. Informe o nome **Projeto do aplicativo**.
 5. Preencha empresa, cargo, modalidade e local, se forem relevantes.
-6. Escolha o status **Em andamento** e mantenha **Ativo** marcado.
+6. Mantenha **Ativo** marcado. O trabalho agrupa tarefas e jornadas; os status ficam nas tarefas do Kanban.
 7. Em **Jornada e intervalos**, adicione uma linha para **Segunda**.
 8. Informe início às **09:00**, fim às **18:00**, pausa das **12:00** às **13:00**.
 9. Adicione linhas para outros dias, se necessário.

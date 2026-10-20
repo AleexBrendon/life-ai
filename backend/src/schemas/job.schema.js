@@ -1,12 +1,6 @@
 
 const { z } = require("zod");
 
-const jobStatusSchema = z.enum([
-  "TODO",
-  "IN_PROGRESS",
-  "COMPLETED",
-]);
-
 const createJobSchema = z.object({
   name: z
     .string()
@@ -19,7 +13,6 @@ const createJobSchema = z.object({
   workType: z.string().trim().max(50).optional(),
   location: z.string().trim().max(200).optional(),
   isActive: z.boolean().optional(),
-  status: jobStatusSchema.optional(),
 });
 
 const updateJobSchema = z
@@ -30,7 +23,6 @@ const updateJobSchema = z
     workType: createJobSchema.shape.workType,
     location: createJobSchema.shape.location,
     isActive: z.boolean().optional(),
-    status: jobStatusSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Informe pelo menos um campo para atualizar.",
@@ -39,5 +31,4 @@ const updateJobSchema = z
 module.exports = {
   createJobSchema,
   updateJobSchema,
-  jobStatusSchema,
 };

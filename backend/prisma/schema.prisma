@@ -93,6 +93,7 @@
     calendarView       String    @default("month")
     weekStartsOn       Int       @default(1)
     notifyActions      Boolean   @default(true)
+    notifyUpcoming     Boolean   @default(true)
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -280,6 +281,8 @@
 
     entityType String?
     entityId   Int?
+    dedupKey   String? @unique
+    hydrationConfirmedAt DateTime?
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

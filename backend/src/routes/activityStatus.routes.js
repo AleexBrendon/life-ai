@@ -24,6 +24,8 @@ router.put('/', async (req, res) => {
  const { kind, sourceId, date: key, status, skipReason } = parsed.data;
  const userId = req.user.id, date = new Date(`${key}T00:00:00Z`), weekday = date.getUTCDay();
  try {
+  const day = await getDashboard({ userId, date: key });
+  if (!day.activities.some(activity => activity.kind === kind && activity.sourceId === sourceId)) return res.status(404).json({ success: false, message: 'A atividade ainda não estava programada para essa data.' });
   const data = await prisma.$transaction(async tx => {
    const changes = { status, completedAt: status === 'COMPLETED' ? new Date() : null, skipReason: status === 'SKIPPED' ? skipReason || null : null };
    const missing = () => { throw Object.assign(new Error('Atividade não encontrada nesta data.'), { status: 404 }); };

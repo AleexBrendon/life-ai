@@ -58,7 +58,15 @@ async function save(req, res) {
       }
       const values = parent.data;
       if (config.model === "goal") values.targetDate = values.targetDate ? new Date(`${values.targetDate}T00:00:00.000Z`) : null;
-      if (config.model === "reminder") { values.date = values.recurrence === "NONE" ? values.date : null; values.dayOfWeek = values.recurrence === "WEEKLY" ? values.dayOfWeek : null; }
+      if (config.model === "reminder") {
+        values.date = values.recurrence === "NONE" ? values.date : null;
+        values.dayOfWeek = values.recurrence === "WEEKLY" ? values.dayOfWeek : null;
+        if (values.reminderState) {
+          values.isCompleted = values.reminderState === 'COMPLETED';
+          values.isActive = values.reminderState === 'ACTIVE';
+          delete values.reminderState;
+        }
+      }
       const record = id ? await tx[config.model].update({ where: { id }, data: values }) : await tx[config.model].create({ data: { ...values, userId: req.user.id } });
       for (const [key, rows] of Object.entries(children)) {
         const [model, foreignKey] = config.children[key];

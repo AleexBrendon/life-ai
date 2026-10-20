@@ -41,7 +41,7 @@ export default function HydrationAlarm() {
  async function drink() {
   setBusy(true); setError('');
   try {
-   await api.post('/personal/water/intakes', { amountMl: data.plan.cupMl });
+   await api.post('/personal/water/intakes', { amountMl: 250 });
    dismiss(); window.dispatchEvent(new Event('lifeai:water-updated'));
   } catch (e) { setError(e.response?.data?.message || 'Não foi possível registrar o copo. Tente novamente.'); }
   finally { setBusy(false); }
@@ -51,6 +51,6 @@ export default function HydrationAlarm() {
  {data && <span className="hydration-strip-total">{(data.totalMl / 1000).toLocaleString('pt-BR')} / {(data.plan.goalMl / 1000).toLocaleString('pt-BR')} L</span>}
  <button type="button" className="hydration-sound" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Desativar som do alarme de água' : 'Ativar som do alarme de água'}>{sound ? <Volume2 size={16}/> : <VolumeX size={16}/>}<span>{sound ? 'Som ligado' : 'Ativar som'}</span></button>
  {error && !show && <small role="alert">{error}</small>}
- {show && <aside className="hydration-toast" role="region" aria-label="Hora de beber água"><div className="hydration-toast-heading"><Droplets size={23}/><strong role="status">Uma pausa para beber água?</strong><button type="button" disabled={busy} onClick={dismiss} aria-label="Dispensar este lembrete de água"><X size={17}/></button></div><p>Faltam {((data.plan.goalMl - data.totalMl) / 1000).toLocaleString('pt-BR')} L para a meta que você definiu. Registre apenas o que bebeu.</p><div className="personal-actions"><button className="studio-button" disabled={busy} onClick={drink}>{busy ? 'Registrando…' : `Bebi ${data.plan.cupMl} ml`}</button><Link className="studio-button secondary" to="/planejamento?aba=agua" onClick={dismiss}>Outro volume</Link><button className="hydration-dismiss" disabled={busy} onClick={dismiss}>Agora não</button></div>{error && <p className="studio-error" role="alert">{error}</p>}</aside>}
+ {show && <aside className="hydration-toast" role="region" aria-label="Hora de beber água"><div className="hydration-toast-heading"><Droplets size={23}/><strong role="status">Uma pausa para beber água?</strong><button type="button" disabled={busy} onClick={dismiss} aria-label="Dispensar este lembrete de água"><X size={17}/></button></div><p>Faltam {((data.plan.goalMl - data.totalMl) / 1000).toLocaleString('pt-BR')} L para a meta que você definiu. Registre apenas o que bebeu.</p><div className="personal-actions"><button className="studio-button" disabled={busy} onClick={drink}>{busy ? 'Registrando…' : 'Já bebi 250 ml'}</button></div>{error && <p className="studio-error" role="alert">{error}</p>}</aside>}
  </section>;
 }

@@ -152,6 +152,25 @@
 .studio-section-heading p,.studio-record > p,.studio-task > p,.studio-dialog > header p,.studio-inline-empty,.studio-empty p { color:#6f8273; }
 .studio-field > span,.studio-record-meta,.studio-column-empty,.studio-calendar-detail > header > span:last-child,.studio-day-event > time { color:#6c826b; }
 .studio-calendar-event { color:#547a45; }.studio-calendar-event.trabalho { color:#637899; }.studio-calendar-event.metas { color:#86649e; }.studio-calendar-event.imprevistos { color:#9b7847; }
+.studio-calendar-event.rotinas { background:#e5f3e9;color:#25633d;border-left:3px solid #399560; }
+.app-shell .app-content:has(.studio-calendar-page) { max-width:1640px; }
+.studio-calendar-page .studio-calendar-layout { grid-template-columns:minmax(0,1fr) 300px; }
+.studio-calendar-page .studio-calendar-main { overflow-x:auto; }
+.studio-calendar-page .studio-calendar-day { min-height:160px;padding:12px 9px;gap:10px; }
+.studio-calendar-page .studio-calendar-day > time { min-width:30px;height:30px;font-size:14px;font-weight:600; }
+.studio-calendar-page .studio-weekdays span { font-size:12px;padding:16px 8px;color:#637b5d; }
+.studio-calendar-page .studio-calendar-event { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;font-size:11px;line-height:1.45;padding:6px 7px;margin-bottom:5px; }
+.studio-calendar-page .studio-calendar-event b { display:inline;margin-right:5px; }
+.studio-calendar-page .studio-calendar-day small { font-size:11px;color:#6b825f; }
+.studio-calendar-page .studio-calendar-grid.week .studio-calendar-day { min-height:420px; }
+@media(max-width:1440px) { .studio-calendar-page .studio-calendar-layout { grid-template-columns:minmax(0,1fr); }.studio-calendar-page .studio-calendar-detail { width:100%;box-sizing:border-box; } }
+@media(max-width:700px) { .studio-calendar-page .studio-calendar-grid { min-width:700px; }.studio-calendar-page .studio-calendar-day { min-height:145px; }.studio-calendar-page .studio-calendar-filters { padding:12px; } }
+.studio-calendar-event.lembretes { background:#fff3ce;color:#78570b;border-left:3px solid #d0a01f; }
+.studio-calendar-event.trabalho { background:#e6efff;color:#28568c;border-left:3px solid #4c82c4; }
+.studio-calendar-event.metas { background:#efe8fc;color:#694095;border-left:3px solid #9565be; }
+.studio-calendar-event.imprevistos { background:#ffebe6;color:#a34b30;border-left:3px solid #d77a55; }
+.studio-calendar-filters i.rotinas { background:#399560; }.studio-calendar-filters i.lembretes { background:#d0a01f; }.studio-calendar-filters i.trabalho { background:#4c82c4; }.studio-calendar-filters i.metas { background:#9565be; }.studio-calendar-filters i.imprevistos { background:#d77a55; }
+.studio-day-event.rotinas { border-left:3px solid #399560; }.studio-day-event.lembretes { border-left:3px solid #d0a01f; }.studio-day-event.trabalho { border-left:3px solid #4c82c4; }.studio-day-event.metas { border-left:3px solid #9565be; }.studio-day-event.imprevistos { border-left:3px solid #d77a55; }
 @media(max-width:400px) { .app-shell .app-header { padding-inline:12px; }.app-shell .app-header > strong { font-size:11px; }.app-shell .header-actions { gap:4px; } }
 
 /* Scroll only the daily activity list; keep its date and add action visible. */
@@ -284,6 +303,9 @@
 .settings-section { padding:20px;background:#fff;border:1px solid #e0e8dd;border-radius:14px;min-width:0; }.settings-section > header { display:flex;align-items:start;gap:10px;margin-bottom:20px;color:#68906a; }.settings-section h3 { margin:0 0 6px;font-size:14px;font-weight:600;color:#4d6c52; }.settings-section header p { font-size:11px;color:#8a9b86;margin:0;line-height:1.6; }
 .settings-photo { display:flex;align-items:center;gap:16px;margin:0 0 24px; }.settings-photo-preview { display:grid;place-items:center;flex-shrink:0;width:80px;height:80px;border:1px solid #dbe8d9;border-radius:22px;overflow:hidden;background:#eff5e9;color:#86a17a; }.settings-photo-preview img { width:100%;height:100%;object-fit:cover; }.settings-photo strong { font-size:13px;color:#59714f; }.settings-photo p { font-size:11px;line-height:1.6;color:#8a9b85;margin:7px 0; }.settings-photo .personal-actions { margin:10px 0 0;gap:8px; }.settings-photo .studio-button { min-height:34px;font-size:10px;padding:0 10px; }.settings-file-input { position:absolute;width:1px;height:1px;opacity:0; }.settings-text-button { border:0;background:none;font:inherit;font-size:11px;color:#94655b;text-decoration:underline;cursor:pointer; }
 .settings-help { font-size:10px;line-height:1.6; }.settings-toggle { display:flex;align-items:center;gap:18px;cursor:pointer; }.settings-toggle > div { flex:1; }.settings-toggle strong { font-size:12px;color:#617b58; }.settings-toggle p { font-size:11px;line-height:1.8;color:#8a9d84;margin:8px 0 0; }.settings-toggle input { width:19px;height:19px;accent-color:#397758;flex-shrink:0; }
+.upcoming-toggle { margin-top:20px;padding-top:20px;border-top:1px solid #e5ecdf; }
+.notification-item-actions { display:flex;gap:8px;flex-wrap:wrap;margin-top:16px; }
+.studio-day-event.notification-target { outline:2px solid #57926c;outline-offset:-2px;background:#f1f8ef; }
 .settings-shortcuts { display:flex;gap:10px;flex-wrap:wrap; }.settings-shortcuts a { display:flex;align-items:center;gap:8px;padding:12px;border-radius:9px;background:#f4f8ef;color:#6a855e;font-size:11px; }.settings-action-footer { display:flex;justify-content:space-between;align-items:center;gap:14px;position:sticky;bottom:0;background:#f7faf3;padding:16px 0;margin-top:18px;border-top:1px solid #e1e9da;z-index:2; }.settings-action-footer small { font-size:10px;line-height:1.6;color:#8a9e81; }
 .profile-settings .settings-action-footer { position:static;box-sizing:border-box;width:100%;flex-direction:column;align-items:stretch;gap:12px;padding:8px 0 0;background:transparent;border:0;border-radius:0;box-shadow:none; }
 .settings-action-footer .settings-save-status { display:flex;align-items:center;gap:7px;color:#52645a;font-size:12px; }

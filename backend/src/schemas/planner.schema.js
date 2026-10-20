@@ -12,7 +12,7 @@ const configurations = {
   rotinas: { model: "routineItem", schema: createRoutineSchema.extend({ isActive: z.boolean().optional() }), children: { schedules: ["routineSchedule", "routineItemId", createRoutineScheduleSchema] } },
   trabalho: { model: "job", schema: createJobSchema, children: { schedules: ["workSchedule", "jobId", createWorkScheduleSchema], tasks: ["jobTask", "jobId", createJobTaskSchema] } },
   metas: { model: "goal", schema: goalSchema.extend({ targetDate: z.string().date().nullable().optional(), status: z.enum(["ACTIVE", "COMPLETED", "PAUSED"]).default("ACTIVE") }), children: { sessions: ["goalPlanSession", "goalId", sessionSchema] } },
-  lembretes: { model: "reminder", schema: reminderSchema, children: {} },
+  lembretes: { model: "reminder", schema: reminderSchema.safeExtend({ reminderState: z.enum(['ACTIVE', 'PAUSED', 'COMPLETED']).optional() }), children: {} },
   imprevistos: { model: "unexpectedEvent", schema: unexpectedEventSchema, children: {} },
 };
 

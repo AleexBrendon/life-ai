@@ -28,7 +28,7 @@ function extractFixedCommitments(description){
   else if(/trabalh/.test(prefix))kind='work';
   if(!kind)return null;
   const names={work:company?`Trabalho na ${company}`:'Trabalho principal',freelance:'Programação freelancer',class:/musica/.test(prefix)?'Aulas de música':'Aulas e oficinas',personal:/culto/.test(prefix)?'Culto':'Atividade pessoal'};
-  if(!records.has(kind))records.set(kind,{kind:['work','freelance'].includes(kind)?'trabalho':'rotinas',data:{name:names[kind],...(kind==='work'&&company?{company}:{}),...(['work','freelance'].includes(kind)?{tasks:[],status:'IN_PROGRESS'}:{type:'Pessoal'}),isActive:true,schedules:[]}});
+  if(!records.has(kind))records.set(kind,{kind:['work','freelance'].includes(kind)?'trabalho':'rotinas',data:{name:names[kind],...(kind==='work'&&company?{company}:{}),...(['work','freelance'].includes(kind)?{tasks:[]}:{type:'Pessoal'}),isActive:true,schedules:[]}});
   const record=records.get(kind);for(const dayOfWeek of days){const row={dayOfWeek,startTime:clock(start),endTime:clock(end)};if(!record.data.schedules.some(s=>JSON.stringify(s)===JSON.stringify(row)))record.data.schedules.push(row);}
  }
  return [...records.values()];

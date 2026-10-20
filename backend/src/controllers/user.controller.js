@@ -25,6 +25,7 @@ const getMe = async (req, res) => {
             calendarView: true,
             weekStartsOn: true,
             notifyActions: true,
+            notifyUpcoming: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -73,7 +74,7 @@ const updateMe = async (req, res) => {
     }
 
     const profileData = {};
-    for (const key of ['avatarData','calendarView','weekStartsOn','notifyActions']) {
+    for (const key of ['avatarData','calendarView','weekStartsOn','notifyActions','notifyUpcoming']) {
       if (req.body[key] !== undefined) profileData[key] = req.body[key];
     }
 
@@ -136,6 +137,7 @@ const updateMe = async (req, res) => {
             calendarView: true,
             weekStartsOn: true,
             notifyActions: true,
+            notifyUpcoming: true,
             createdAt: true,
             updatedAt: true,
           },

@@ -19,6 +19,11 @@ beforeAll(async () => {
  const reminder = await prisma.reminder.create({ data: { userId: users[0], title: 'Lembrete', recurrence: 'DAILY', reminderTime: '12:30' } });
  const goal = await prisma.goal.create({ data: { userId: users[0], title: 'Meta', sessions: { create: { date: new Date(`${date}T00:00:00Z`), startTime: '19:00', endTime: '20:00' } } }, include: { sessions: true } });
  const event = await prisma.unexpectedEvent.create({ data: { userId: users[0], title: 'Imprevisto', date: new Date(`${date}T00:00:00Z`), startTime: '20:00', endTime: '21:00', priority: 'MEDIUM', status: 'PENDING' } });
+ await prisma.routineItem.updateMany({where:{userId:users[0]},data:{createdAt:new Date('2026-10-17T12:00:00Z')}});
+ await prisma.routineSchedule.updateMany({where:{routineItem:{userId:users[0]}},data:{createdAt:new Date('2026-10-17T12:00:00Z')}});
+ await prisma.job.updateMany({where:{userId:users[0]},data:{createdAt:new Date('2026-10-17T12:00:00Z')}});
+ await prisma.workSchedule.updateMany({where:{job:{userId:users[0]}},data:{createdAt:new Date('2026-10-17T12:00:00Z')}});
+ await prisma.reminder.updateMany({where:{userId:users[0]},data:{createdAt:new Date('2026-10-17T12:00:00Z')}});
  activities.push({ kind: 'rotinas', sourceId: routine.schedules[0].id }, { kind: 'trabalho', sourceId: job.schedules[0].id }, { kind: 'lembretes', sourceId: reminder.id }, { kind: 'metas', sourceId: goal.sessions[0].id }, { kind: 'imprevistos', sourceId: event.id });
 });
 afterAll(async () => { if (users.length) await prisma.user.deleteMany({ where: { id: { in: users } } }); await prisma.$disconnect(); redis.disconnect(); });

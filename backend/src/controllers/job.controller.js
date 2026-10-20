@@ -23,7 +23,6 @@ const createJob = async (req, res) => {
       workType,
       location,
       isActive,
-      status,
     } = validation.data;
 
     const job = await prisma.job.create({
@@ -35,7 +34,6 @@ const createJob = async (req, res) => {
         workType,
         location,
         ...(isActive !== undefined && { isActive }),
-        ...(status !== undefined && { status }),
       },
     });
 
