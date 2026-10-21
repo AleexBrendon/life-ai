@@ -4,6 +4,7 @@ function describe(req, body) {
  const path = req.originalUrl.split('?')[0];
  if (!['POST','PUT','PATCH','DELETE'].includes(req.method) || !req.user?.id || path.startsWith('/api/notifications') || path.startsWith('/api/auth')) return null;
  if (path === '/api/ai/chat' || path === '/api/ai/setup/preview' && !body.data?.proposal) return null;
+ if (req.method === 'POST' && path.replace(/\/$/, '') === '/api/personal/water/intakes') return null;
  const pieces = path.split('/').filter(Boolean);
  const area = path.startsWith('/api/users') ? 'Configurações'
   : path.startsWith('/api/personal/water') ? 'Água'

@@ -25,11 +25,10 @@ router.post('/:id/drink', authMiddleware, async (req,res)=>{
             const now=new Date();
             const claimed=await tx.notification.updateMany({where:{id,userId:req.user.id,hydrationConfirmedAt:null},data:{hydrationConfirmedAt:now,isRead:true,readAt:now}});
             if(!claimed.count)return {recorded:false,amountMl:250};
-            const profile=await tx.profile.findUnique({where:{userId:req.user.id},select:{timezone:true,notifyActions:true}});
+            const profile=await tx.profile.findUnique({where:{userId:req.user.id},select:{timezone:true}});
             const {localClock}=require('../services/personalPlanning.service');
             let date;try{date=localClock(now,profile?.timezone).date}catch{date=localClock(now).date}
             await tx.waterIntake.create({data:{userId:req.user.id,amountMl:250,date:new Date(`${date}T00:00:00Z`)}});
-            if(profile?.notifyActions!==false)await tx.notification.create({data:{userId:req.user.id,type:'ACTIVITY',priority:'LOW',entityType:'agua',title:'Água · Consumo registrado',message:'Você registrou 250 ml de água pela notificação.'}});
             return {recorded:true,amountMl:250};
         });
         res.json({success:true,data});
@@ -39,6 +38,10 @@ router.post('/:id/drink', authMiddleware, async (req,res)=>{
 router.post("/", authMiddleware, create);
 
 router.get("/", authMiddleware, getAll);
+router.get('/upcoming', authMiddleware, async(req,res)=>{
+    try{const data=await require('../services/upcomingNotification.service').getUpcomingActivities(req.user.id);res.json({success:true,data})}
+    catch{res.status(500).json({success:false,message:'Não foi possível verificar as próximas atividades.'})}
+});
 
 router.get("/:id", authMiddleware, getById);
 

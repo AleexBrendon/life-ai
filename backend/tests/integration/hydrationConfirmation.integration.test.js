@@ -11,6 +11,7 @@ it('registra exatamente 250 ml, inclusive em aviso já lido, e não duplica ao c
  const rows=await prisma.waterIntake.findMany({where:{userId:users[0]}});expect(rows).toHaveLength(1);expect(rows[0].amountMl).toBe(250);
  const saved=await prisma.notification.findUnique({where:{id:notice.id}});expect(saved.isRead).toBe(true);expect(saved.hydrationConfirmedAt).toBeTruthy();
  expect((await call(notice.id)).body.data.recorded).toBe(false);
+ expect(await prisma.notification.count({where:{userId:users[0],type:'ACTIVITY'}})).toBe(0);
 });
 it('não confirma avisos de outras categorias como consumo de água',async()=>{
  const other=await prisma.notification.create({data:{userId:users[0],title:'Outro',message:'Outra atividade',type:'ACTIVITY'}});

@@ -5,10 +5,12 @@ import Sidebar from "./Sidebar";
 import MobileNavigation from "./MobileNavigation";
 import HydrationAlarm from './HydrationAlarm';
 import { UserPreferencesProvider } from '../../lib/UserPreferences';
+import { NotificationFeedbackProvider } from '../../lib/NotificationFeedback';
+import NotificationToasts from './NotificationToasts';
 
 function AppShell({ onLogout }) {
   return (
-    <UserPreferencesProvider><div className="app-shell">
+    <UserPreferencesProvider><NotificationFeedbackProvider><div className="app-shell">
       <Sidebar />
 
       <div className="app-main">
@@ -20,8 +22,9 @@ function AppShell({ onLogout }) {
         </main>
 
         <MobileNavigation />
+        <NotificationToasts />
       </div>
-    </div></UserPreferencesProvider>
+    </div></NotificationFeedbackProvider></UserPreferencesProvider>
   );
 }
 

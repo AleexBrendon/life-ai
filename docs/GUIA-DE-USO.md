@@ -19,6 +19,14 @@ Use **Descartar** para desfazer alterações ainda não salvas. O e-mail é exib
 
 ### Aviso cinco minutos antes
 
+Além do sino, o LifeAI mostra um **aviso na tela** para cada atividade pendente que estiver a até cinco minutos de começar. O cartão informa o nome, o tipo e o horário, com contagem regressiva **05:00 → 04:59 → …** e uma barra do tempo restante. Ao chegar ao horário, o cartão sai da tela sem concluir a atividade automaticamente.
+
+Use **Ver na agenda** para abrir a atividade ou o **X** para dispensar o cartão. Dispensar não altera a agenda; o mesmo aviso não reaparece durante essa sessão do navegador. Ao concluir, pular ou mudar o horário de uma atividade, os cartões são recalculados na atualização seguinte. A consulta ocorre a cada 15 segundos e após alterações da agenda. A contagem usa o instante real de início, para não acumular atraso se o navegador limitar os timers.
+
+O **ícone de alto-falante no cabeçalho** ativa ou silencia os sons das notificações. O controle no cartão e o da faixa de água usam a mesma preferência. Um aviso novo toca uma vez; a contagem não fica apitando a cada segundo. Avisos do mesmo compromisso usam a mesma identificação para não tocar duas vezes entre o cartão e o sino. Notificações antigas carregadas ao entrar não são reproduzidas em sequência.
+
+Por exigência dos navegadores, clique em **Ativar som** para liberar o áudio nesta sessão. O som começa desligado ao abrir/recarregar o sistema. Silenciar mantém os avisos visuais ativos. O sistema precisa estar aberto e conectado à API; não são notificações push do celular.
+
 O sistema verifica a agenda e gera um aviso no sino aproximadamente **cinco minutos antes** do início de rotinas, lembretes, turnos de trabalho, sessões de metas e imprevistos pendentes. Atividades já concluídas ou puladas não geram esse aviso. Há apenas um aviso por ocorrência e horário; alterar o horário permite um novo aviso para o novo início.
 
 Em **Configurações → Notificações**, use **Avisar 5 minutos antes** para ativar ou desativar. Essa preferência é independente dos avisos de alterações e do alarme de água. A API precisa estar em execução na janela do aviso; não há push externo nem recuperação dos avisos perdidos enquanto ela estava desligada.
@@ -111,6 +119,10 @@ Datas anteriores continuam navegáveis, mas sem atividades do projeto. As recorr
 O calendário usa células maiores e títulos de até duas linhas, com até três compromissos visíveis por dia no mês. Quando houver mais, clique no dia para ver o restante. Em telas menores, o painel do dia fica abaixo e o calendário permite rolagem horizontal para preservar a leitura.
 
 ### Navegação no calendário
+
+Quando o dia tiver mais compromissos do que cabe na célula, clique em **+ atividades**. Uma lista com rolagem mostra todos os compromissos daquela data, incluindo os outros tipos mesmo se houver filtro no calendário. Clique em qualquer item para abrir o card de detalhes e concluir, pular ou voltar a pendente. Ao fechar o card, você retorna à lista do dia.
+
+Clique no nome de um compromisso dentro do mês ou da semana para abrir seu card de detalhes. Ele mostra data, horário, descrição e status daquele dia, com as ações **Concluir**, **Pular neste dia** e **Voltar a pendente**. O skip permite informar um motivo opcional. A ação atualiza a agenda e vale só para aquela ocorrência. **Editar cadastro** abre o formulário do registro original. Para apenas selecionar o dia, clique no número ou no espaço livre da célula.
 
 - **Mês:** visão geral das datas e atividades. Clique em um dia para abrir seus detalhes.
 - **Semana:** atividades da semana, começando na segunda-feira.
@@ -336,3 +348,9 @@ Para descrições reconhecidas com dias e intervalos explícitos — por exemplo
 As sugestões partem de até três corridas de 30 minutos, três sessões de estudo de 45 minutos nos próximos sete dias e pausas de 30 minutos. Os dias e intervalos são mostrados na proposta para alteração. São reservados intervalos de 15 minutos entre atividades; deslocamentos e necessidades individuais de sono não são estimados.
 
 A interpretação local é limitada aos formatos reconhecidos e deve ser conferida, principalmente quando a descrição associa vários compromissos ao mesmo dia. Descrições que não forem reconhecidas seguem para a IA gratuita. Corrigir uma proposta existente também pode depender do provedor. Horários ausentes ou ambíguos não devem ser tratados como certeza.
+# Aparência do sistema
+
+Em **Configurações → Aparência**, escolha **Claro**, **Escuro** ou **Automático**. O modo automático acompanha o tema do dispositivo e muda junto com ele. A escolha é aplicada imediatamente e fica salva neste navegador, sem precisar clicar em Salvar alterações. Em um navegador sem preferência salva, o LifeAI abre no tema escuro.
+
+O tema inclui agenda, dashboard, planejamento, finanças, água, notificações e modais. As transições respeitam a opção de reduzir movimentos do dispositivo.
+

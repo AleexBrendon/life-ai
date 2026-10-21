@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, it, expect } from 'vitest';
 const prisma=require('../../src/database/prisma'),redis=require('../../src/database/redis'),app=require('../../src/app'),request=require('supertest'),jwt=require('jsonwebtoken');
-const {sendUpcomingNotifications}=require('../../src/services/upcomingNotification.service');
+const {sendUpcomingNotifications,getUpcomingActivities}=require('../../src/services/upcomingNotification.service');
 let user,token,routine,job,reminder;const createdAt=new Date('2026-10-17T12:00:00Z');
 const count=()=>prisma.notification.count({where:{userId:user.id,type:'UPCOMING'}});
 beforeAll(async()=>{
@@ -32,10 +32,23 @@ it('não avisa atividades puladas ou concluídas nem cria execução ao ler o av
  expect((await request(app).patch(`/api/notifications/${notice.id}/read`).set(headers)).status).toBe(200);
  expect(await prisma.routineExecution.count({where:{userId:user.id,date:new Date('2026-10-24T00:00:00Z')}})).toBe(0);
 });
+it('expõe a janela completa da contagem e descarta alteração de horário sem duplicar avisos',async()=>{
+ const now=new Date('2026-10-24T11:56:45Z');
+ const live=await getUpcomingActivities(user.id,now);expect(live).toHaveLength(5);
+ expect(live.every(row=>row.remainingMs===195000&&row.startsAt==='2026-10-24T12:00:00.000Z')).toBe(true);
+ expect(await getUpcomingActivities(user.id,new Date('2026-10-24T12:00:00Z'))).toEqual([]);
+ await prisma.reminder.update({where:{id:reminder.id},data:{reminderTime:'10:00'}});
+ expect(await getUpcomingActivities(user.id,now)).toHaveLength(4);
+ await prisma.reminder.update({where:{id:reminder.id},data:{reminderTime:'09:00'}});
+ expect(await count()).toBe(5);
+ expect((await request(app).get('/api/notifications/upcoming')).status).toBe(401);
+ const response=await request(app).get('/api/notifications/upcoming').set('Authorization',`Bearer ${token}`);expect(response.status).toBe(200);expect(Array.isArray(response.body.data)).toBe(true);
+});
 it('antecipa atividades da próxima data perto da meia-noite e respeita a preferência',async()=>{
  await prisma.reminder.create({data:{userId:user.id,title:'Após meia-noite',recurrence:'DAILY',reminderTime:'00:02',createdAt}});
  await sendUpcomingNotifications(new Date('2026-10-25T02:57:00Z'),user.id);expect(await count()).toBe(6);
  const notice=await prisma.notification.findFirst({where:{userId:user.id,title:{contains:'Após meia-noite'}}});expect(notice.scheduledAt.toISOString()).toBe('2026-10-25T03:02:00.000Z');
  await prisma.profile.update({where:{userId:user.id},data:{notifyUpcoming:false}});
  await sendUpcomingNotifications(new Date('2026-11-01T11:55:00Z'),user.id);expect(await count()).toBe(6);
+ expect(await getUpcomingActivities(user.id,new Date('2026-11-01T11:55:00Z'))).toEqual([]);
 });

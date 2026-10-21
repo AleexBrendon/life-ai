@@ -13,20 +13,29 @@ function upcomingItems(day) {
  ];
  return rows.filter(row=>status(row.kind,row.id)==='PENDING');
 }
+async function getUpcomingActivities(userId, now = new Date(), knownProfile) {
+ const profile = knownProfile === undefined ? await prisma.profile.findUnique({where:{userId},select:{timezone:true,notifyUpcoming:true}}) : knownProfile;
+ if(profile?.notifyUpcoming===false)return [];
+ let clock;try{clock=localClock(now,profile?.timezone)}catch{clock=localClock(now)}
+ const dates=[clock.date],result=[];
+ if(clock.minute>=1435){const tomorrow=new Date(clock.date+'T00:00:00Z');tomorrow.setUTCDate(tomorrow.getUTCDate()+1);dates.push(tomorrow.toISOString().slice(0,10))}
+ for(const [offset,date] of dates.entries()){
+  const day=await getDashboard({userId,date,now});
+  for(const item of upcomingItems(day)){
+   const remaining=(offset*1440+minutes(item.time)-clock.minute)*60000-now.getUTCSeconds()*1000-now.getUTCMilliseconds();
+   if(remaining<=0||remaining>300000)continue;
+   result.push({...item,sourceId:item.id,date,remainingMs:remaining,startsAt:new Date(now.getTime()+remaining).toISOString(),key:`upcoming:${userId}:${item.kind}:${item.id}:${date}:${item.time}`});
+  }
+ }
+ return result.sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
+}
 async function sendUpcomingNotifications(now = new Date(), onlyUserId) {
- const users = await prisma.user.findMany({ where: { ...(onlyUserId ? { id:onlyUserId } : {}), OR:[{profile:{is:null}},{profile:{is:{notifyUpcoming:true}}}] }, select:{id:true,profile:{select:{timezone:true}}} });
- for (const user of users) {
-  let clock;try{clock=localClock(now,user.profile?.timezone)}catch{clock=localClock(now)}
-  const dates=[clock.date];
-  if(clock.minute>=1435){const tomorrow=new Date(`${clock.date}T00:00:00Z`);tomorrow.setUTCDate(tomorrow.getUTCDate()+1);dates.push(tomorrow.toISOString().slice(0,10))}
-  for(const [offset,date] of dates.entries()) {
-   const day=await getDashboard({userId:user.id,date,now});
-   for(const item of upcomingItems(day)) {
-    const remaining=(offset*1440+minutes(item.time)-clock.minute)*60000-now.getUTCSeconds()*1000-now.getUTCMilliseconds();
-    if(remaining<=240000 || remaining>300000)continue;
-    const dedupKey=`upcoming:${user.id}:${item.kind}:${item.id}:${date}:${item.time}`;
-    await prisma.notification.upsert({where:{dedupKey},update:{},create:{userId:user.id,dedupKey,type:'UPCOMING',priority:'HIGH',title:`Em 5 minutos · ${item.title.slice(0,100)}`,message:`${item.title.slice(0,150)} começa às ${item.time} em ${date.split('-').reverse().join('/')}. Abra a atividade para acompanhar na agenda.`,entityType:item.kind,entityId:item.id,scheduledAt:new Date(now.getTime()+remaining)}});
-   }
+ const users=await prisma.user.findMany({where:{...(onlyUserId?{id:onlyUserId}:{}),OR:[{profile:{is:null}},{profile:{is:{notifyUpcoming:true}}}]},select:{id:true,profile:{select:{timezone:true,notifyUpcoming:true}}}});
+ for(const user of users){
+  const items=await getUpcomingActivities(user.id,now,user.profile);
+  for(const item of items){
+   if(item.remainingMs<=240000)continue;
+   await prisma.notification.upsert({where:{dedupKey:item.key},update:{},create:{userId:user.id,dedupKey:item.key,type:'UPCOMING',priority:'HIGH',title:`Em 5 minutos · ${item.title.slice(0,100)}`,message:`${item.title.slice(0,150)} começa às ${item.time} em ${item.date.split('-').reverse().join('/')}. Abra a atividade para acompanhar na agenda.`,entityType:item.kind,entityId:item.id,scheduledAt:new Date(item.startsAt)}});
   }
  }
 }
@@ -35,4 +44,4 @@ function startUpcomingNotifications() {
  const tick=async()=>{if(running)return;running=true;try{await sendUpcomingNotifications()}catch(error){console.error('Falha nos avisos de início:',error.code||error.name)}finally{running=false}};
  tick();const timer=setInterval(tick,30000);timer.unref();return timer;
 }
-module.exports={sendUpcomingNotifications,startUpcomingNotifications};
+module.exports={getUpcomingActivities,sendUpcomingNotifications,startUpcomingNotifications};

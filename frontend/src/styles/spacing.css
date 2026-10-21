@@ -1,0 +1,149 @@
+/* Common spacing scale for every active screen and portalled dialog. */
+/* Labels and helper text belong to their parent surface, not separate panels. */
+:is(.app-shell,.studio-dialog,.workspace-panel) :is(.studio-field:not(.check),.studio-field > span,.schedule-label,.studio-column-empty,.studio-section-heading > div,.studio-record-meta,.assistant-note,.personal-subtitle,.settings-help) {
+ background:transparent !important;box-shadow:none;
+}
+.studio-field.kanban-job { padding:0;border:0;border-radius:0; }
+.studio-column-empty { border-radius:10px;line-height:1.7;margin:0 0 12px; }
+.studio-inline-empty { background:transparent !important;border-radius:10px; }
+.app-shell :is(h1,h2,h3,h4),.studio-dialog :is(h1,h2,h3,h4),.workspace-panel :is(h1,h2,h3,h4) { background:transparent;box-shadow:none;border-radius:0; }
+.app-shell .simple-tabs { gap:8px;padding:6px;margin-bottom:var(--space-section);border:1px solid #e1e8e2;border-radius:14px;background:#edf2ee;scroll-padding-inline:8px; }
+.app-shell .simple-tabs button { padding:10px 16px;min-height:42px;border:1px solid transparent;border-radius:9px;color:#64786b;font-size:12px;font-weight:500; }
+.app-shell .simple-tabs button[aria-current=page] { background:#fff;color:#286448;border-color:#d5e3d8;box-shadow:0 2px 6px #1d402008; }
+.app-shell .simple-tabs button[aria-current=page]::after { display:none; }
+.app-shell .simple-tabs button:hover:not([aria-current=page]) { background:#e0eae2;color:#315b40; }
+html[data-theme=dark] .app-shell .simple-tabs { background:#1c2421;border-color:#344039; }
+html[data-theme=dark] .app-shell .simple-tabs button[aria-current=page] { background:#2c4435;color:#b6e3c5 !important;border-color:#557760;box-shadow:none; }
+html[data-theme=dark] .app-shell .simple-tabs button:hover:not([aria-current=page]) { background:#2b3730;color:#d5e9dd !important; }
+:is(.studio-badge,.agenda-event-type,.agenda-preview-status,.finance-fit,.finance-count,.studio-kanban-column > header > span,.studio-toolbar nav button > span) { border-radius:999px;line-height:1.5; }
+.studio-badge { gap:6px;padding:5px 10px; }
+.studio-kanban-column > header { padding:0 0 16px;border-bottom:1px solid #dce6d8; }
+html[data-theme=dark] .studio-kanban-column > header { border-color:#35443b; }
+.studio-kanban-column > header h3 { background:transparent; }
+.studio-kanban-column > header > span { min-width:24px;box-sizing:border-box;text-align:center;padding:4px 8px; }
+.app-shell .studio-record-top button,.app-shell .agenda-event-tools button,.app-shell .studio-task > div button { border-radius:8px; }
+.app-shell .studio-record-link { min-height:40px;gap:12px;font-weight:500; }
+.app-shell .simple-intro h1,.app-shell .agenda-page-heading h1,.studio-dialog > header h2 { letter-spacing:-.025em; }
+.app-shell :is(.studio-record,.studio-task,.finance-section,.overview-agenda,.overview-progress,.overview-next,.settings-section),.workspace-panel .settings-section { border-radius:14px; }
+.app-shell .studio-toolbar nav,.app-shell .studio-view-toggle { border-radius:12px; }
+.app-shell .studio-toolbar nav button,.app-shell .studio-view-toggle button { border-radius:8px; }
+@media(hover:hover) {
+ .app-shell .studio-record:hover { border-color:#94b6a0;box-shadow:0 6px 18px #193d260a; }
+ html[data-theme=dark] .app-shell .studio-record:hover { border-color:#658771 !important; }
+ .app-shell .studio-task:hover { border-color:#94b6a0; }
+ html[data-theme=dark] .app-shell .studio-task:hover { border-color:#658771 !important; }
+}
+@media(prefers-reduced-motion:no-preference) {
+ .studio-record,.studio-task,.dashboard-total { transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease; }
+ .simple-tabs button { transition:background-color .18s ease,border-color .18s ease,color .18s ease; }
+}
+.dashboard-totals { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-gap);margin:0 0 var(--space-section); }
+.dashboard-total { display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;min-height:96px;box-sizing:border-box;padding:20px var(--space-card);border:1px solid #e0e8e2;border-radius:14px;background:#fff; }
+.dashboard-total dt { display:flex;align-items:center;gap:12px;min-width:0;color:#586d60;font-size:12px;font-weight:500;line-height:1.5; }
+.dashboard-total-icon { display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:10px;background:#edf4ef;color:#538466; }
+.dashboard-total dd { margin:0;flex-shrink:0;min-width:1.4ch;text-align:right;color:#2e4838;font-size:28px;font-weight:550;line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.03em; }
+.dashboard-total:nth-child(2) .dashboard-total-icon { background:#e8f3ed;color:#2e8055; }
+.dashboard-total:nth-child(3) .dashboard-total-icon { background:#f2eef8;color:#8c6eae; }
+.dashboard-total:nth-child(4) .dashboard-total-icon { background:#edf2f9;color:#668bb6; }
+html[data-theme=dark] .dashboard-total { background:#1c2226;border-color:#323c40; }
+html[data-theme=dark] .dashboard-total dt { color:#c3d0c7; }
+html[data-theme=dark] .dashboard-total dd { color:#e5ece7; }
+html[data-theme=dark] .dashboard-total-icon { background:#293b30;color:#9cc6ad; }
+html[data-theme=dark] .dashboard-total:nth-child(2) .dashboard-total-icon { background:#263d2e;color:#a3d6b6; }
+html[data-theme=dark] .dashboard-total:nth-child(3) .dashboard-total-icon { background:#342e40;color:#c5b0de; }
+html[data-theme=dark] .dashboard-total:nth-child(4) .dashboard-total-icon { background:#2b3645;color:#a8c0e0; }
+@media(max-width:1200px) { .dashboard-totals { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .dashboard-total { gap:10px;min-height:88px;padding:16px; }.dashboard-total dt { gap:8px;font-size:11px; }.dashboard-total dd { font-size:26px; }.dashboard-total-icon { width:30px;height:30px;border-radius:8px; }.dashboard-total-icon svg { width:16px;height:16px; } }
+@media(max-width:380px) { .dashboard-totals { grid-template-columns:1fr; }.dashboard-total { min-height:76px; } }
+:root { --space-page:24px;--space-section:18px;--space-card:18px;--space-gap:12px;--space-field:6px; }
+.app-shell .dashboard-refined .overview-layout { grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:var(--space-gap); }
+.app-shell .dashboard-refined :is(.overview-agenda,.overview-progress,.overview-next,.overview-assistant,.insights-chart) { border-radius:14px; }
+.app-shell .dashboard-refined .overview-progress strong { font-size:28px;line-height:1.2; }
+.app-shell .dashboard-refined .overview-next > time { font-size:28px;line-height:1.2;margin:16px 0 8px; }
+.app-shell .dashboard-refined .overview-shortcuts a { padding:12px;min-height:42px;box-sizing:border-box; }
+.app-shell .dashboard-refined .insights-heading h2 { margin:8px 0;font-size:20px; }
+@media(max-width:1100px) { .app-shell .dashboard-refined .overview-layout { grid-template-columns:minmax(0,1fr); } }
+.app-shell .app-content { padding:var(--space-page); }
+.app-shell :is(.simple-intro,.day-page-intro,.dashboard-welcome,.agenda-page-heading,.studio-section-heading) { margin-bottom:var(--space-section); }
+.app-shell :is(.studio-toolbar,.studio-calendar-toolbar,.simple-tabs,.overview-stats,.insights-heading,.insights-metrics,.studio-view-toggle) { margin-bottom:var(--space-section); }
+.app-shell :is(.overview-layout,.overview-side,.studio-record-grid,.studio-kanban-columns,.finance-sections,.finance-stats,.overview-stats,.insights-charts,.insights-metrics,.studio-calendar-layout) { gap:var(--space-gap); }
+.app-shell :is(.studio-record,.studio-task,.overview-stat,.overview-progress,.overview-next,.overview-assistant,.insights-chart,.insights-metrics article,.finance-stats article,.finance-record,.settings-section,.water-overview,.hydration-guidance),
+.workspace-panel .settings-section { padding:var(--space-card); }
+.app-shell .agenda-redesign .agenda-calendar-panel { padding:var(--space-card); }
+.app-shell .agenda-redesign .studio-day-scroll { gap:var(--space-gap); }
+.app-shell .agenda-redesign .studio-calendar-toolbar { padding:var(--space-gap) var(--space-card); }
+.app-shell .agenda-redesign .studio-calendar-add { padding:var(--space-section) 0; }
+.app-shell .agenda-redesign .agenda-day-summary { margin-top:var(--space-gap);padding-bottom:var(--space-gap); }
+.app-shell :is(.overview-agenda > header,.finance-section > header) { padding:var(--space-gap) var(--space-card); }
+.app-shell .overview-timeline { padding:0 var(--space-card); }
+.app-shell .insights-section { margin-top:var(--space-page);padding-top:var(--space-section); }
+.app-shell .personal-actions { gap:var(--space-field);margin:var(--space-section) 0; }
+.app-shell .personal-list { gap:var(--space-gap); }
+.app-shell .personal-list article { padding:var(--space-gap); }
+.app-shell .water-symbol { width:88px;height:88px;aspect-ratio:1 / 1;box-sizing:border-box;border-radius:50%;flex:0 0 88px; }
+.profile-settings .studio-profile-fields { gap:var(--space-gap); }
+.profile-settings > .appearance-settings { margin-bottom:var(--space-gap); }
+.settings-section > header { margin-bottom:var(--space-gap); }
+.studio-form-grid,.studio-dialog .studio-form-grid { gap:var(--space-gap); }
+.studio-field { gap:var(--space-field); }
+.studio-dialog .studio-editor-body,.studio-dialog > header,.workspace-panel-heading { padding:var(--space-card); }
+.studio-dialog footer { padding:var(--space-gap) var(--space-card);gap:var(--space-field); }
+.studio-child-section { margin-top:var(--space-section);padding-top:var(--space-section); }
+.studio-child-row { padding:var(--space-gap);margin-bottom:var(--space-gap); }
+.studio-notification { margin:var(--space-gap) 0;padding:var(--space-gap); }
+.assistant-composer,.assistant-message,.assistant-plan { padding:var(--space-card); }
+.notification-toolbar { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px 24px;margin-bottom:var(--space-section); }
+.notification-toolbar .studio-view-toggle { margin:0;gap:8px; }
+.notification-toolbar .studio-view-toggle button { padding:10px 16px;min-height:38px; }
+.notification-toolbar > .studio-button { min-height:42px;padding:10px 16px; }
+.app-shell .hydration-strip {
+ box-sizing:border-box;width:100%;margin:0;padding:14px var(--space-page);
+ display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+ background:#edf6f4;border-bottom:1px solid #d6e6e0;
+}
+.app-shell .hydration-strip > a { flex:1;min-width:0;gap:10px;flex-wrap:wrap;font-size:12px;line-height:1.6; }
+.app-shell .hydration-strip > a strong { font-size:13px;font-weight:600; }
+.app-shell .hydration-strip-total { display:inline-flex;align-items:center;margin:0;padding:6px 12px;border-radius:999px;background:#dfede6;color:#416952;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap; }
+.app-shell .hydration-strip .hydration-sound { margin:0;min-height:34px;padding:6px 10px;border:1px solid #ccdfd5;border-radius:8px;color:#4e7461;font-size:11px;white-space:nowrap; }
+html[data-theme=dark] .app-shell .hydration-strip { background:#1d2925 !important;border-color:#34473c !important; }
+html[data-theme=dark] .app-shell .hydration-strip-total { background:#2d4135;color:#c0dfcb; }
+html[data-theme=dark] .app-shell .hydration-strip .hydration-sound { color:#bdd8c7;border-color:#496251; }
+.app-shell .hydration-strip .hydration-sound:hover { background:#dcece2; }
+.app-shell .hydration-strip-drink { min-height:34px;padding:6px 12px;font-size:11px;flex-shrink:0; }
+html[data-theme=dark] .app-shell .hydration-strip .hydration-sound:hover { background:#344c3d; }
+@media(max-width:600px) { .app-shell .hydration-strip { gap:10px;padding-block:12px; }.app-shell .hydration-strip > a { flex-basis:100%; }.app-shell .hydration-strip .hydration-sound { margin-left:auto; } }
+@media(max-width:480px) { .notification-toolbar { align-items:stretch;flex-direction:column;gap:12px; }.notification-toolbar .studio-view-toggle { align-self:flex-start; }.notification-toolbar > .studio-button { width:100%; } }
+/* Compact density without shrinking the calendar or interaction targets. */
+.app-shell .app-header { height:62px;padding-inline:var(--space-page); }
+.app-shell .sidebar-inner { padding:24px 16px 16px; }
+.app-shell .sidebar-brand { padding-bottom:24px; }
+.app-shell .sidebar-navigation-list { gap:4px; }
+.app-shell .simple-tabs { padding:4px;gap:6px; }
+.app-shell .simple-tabs button { padding:8px 12px;min-height:38px; }
+.app-shell .dashboard-total { min-height:82px;padding:16px var(--space-card);gap:12px; }
+.app-shell .dashboard-refined .overview-event { padding:14px 0;gap:12px; }
+.app-shell .studio-record h3 { margin:14px 0 8px; }
+.app-shell .studio-record > p { margin-bottom:14px; }
+.app-shell .studio-record-meta { padding-bottom:12px; }
+.app-shell .studio-record-link { padding-top:10px; }
+.app-shell .studio-task h4 { margin:10px 0 6px; }
+.app-shell .studio-kanban-column { padding:12px;min-height:280px; }
+.app-shell .studio-kanban-column > header { padding-bottom:12px;margin-bottom:12px; }
+.app-shell .studio-task { margin-bottom:12px; }
+.app-shell .agenda-redesign .studio-day-event { padding:14px; }
+.app-shell .agenda-redesign .studio-day-event h3 { margin:10px 0; }
+.app-shell .agenda-redesign .studio-day-event .studio-activity-actions { margin-top:12px;padding-top:10px; }
+.app-shell .studio-empty { min-height:180px;padding:24px; }
+.app-shell .studio-column-empty { padding:18px 12px; }
+.app-shell .hydration-strip { padding-block:10px; }
+.notification-toolbar { gap:12px 16px; }
+.assistant-welcome { padding:24px 16px; }
+.agenda-day-list { padding:16px;gap:8px; }
+.agenda-day-list-intro { padding:16px 18px 0; }
+@media(max-width:900px) { :root { --space-page:20px;--space-card:16px; } }
+@media(max-width:600px) {
+ :root { --space-page:14px;--space-section:16px;--space-card:14px;--space-gap:10px; }
+ .app-shell .dashboard-total { min-height:80px;padding:14px; }
+ .app-shell .app-header { height:60px; }
+ .app-shell .studio-empty { min-height:160px;padding:20px 14px; }
+}

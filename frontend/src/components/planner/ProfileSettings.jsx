@@ -3,6 +3,7 @@ import { Camera, CalendarDays, Bell, UserRound, Droplets, Wallet, Save, LoaderCi
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { DatePicker } from './ScheduleInputs';
+import { useTheme } from '../../lib/ThemeProvider';
 
 function initial(user) {
  const profile = user.profile || {};
@@ -21,6 +22,7 @@ async function preparePhoto(file) {
  } finally { bitmap.close(); }
 }
 export default function ProfileSettings() {
+ const {theme,setTheme}=useTheme();
  const [saved,setSaved]=useState(null);
  const [form,setForm]=useState(null),[email,setEmail]=useState(''),[busy,setBusy]=useState(false),[photoBusy,setPhotoBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[revision,setRevision]=useState(0);
  const photoInput=useRef(null), alive=useRef(true);
@@ -41,6 +43,7 @@ export default function ProfileSettings() {
  const dirty=JSON.stringify(form)!==JSON.stringify(saved);
  if(!form)return <div>{error?<p role="alert">{error}<button onClick={()=>setRevision(value=>value+1)}>Tentar novamente</button></p>:<p role="status">Carregando configurações...</p>}</div>;
  return <form onSubmit={save} className="profile-settings"><div className="studio-section-heading"><div><h2>Do seu jeito</h2><p>Seu perfil e suas preferências, em um só lugar.</p></div></div>
+ <section className="settings-section appearance-settings"><header><UserRound size={18}/><div><h3>Aparência</h3><p>Escolha o tema. A mudança é imediata e fica salva neste navegador.</p></div></header><div className="appearance-options" role="group" aria-label="Tema do sistema">{[['light','Claro'],['dark','Escuro'],['system','Automático']].map(([value,label])=><button key={value} type="button" aria-pressed={theme===value} onClick={()=>setTheme(value)}><span className={`appearance-preview ${value}`} aria-hidden="true"><i/><i/><i/></span><strong>{label}</strong>{theme===value&&<Check size={15}/>}</button>)}</div></section>
  <fieldset disabled={busy||photoBusy} className="studio-profile-fields">
  <section className="settings-section"><header><UserRound size={18}/><div><h3>Perfil pessoal</h3><p>Como você aparece no LifeAI.</p></div></header>
  <div className="settings-photo"><span className="settings-photo-preview">{form.avatarData?<img src={form.avatarData} alt="Prévia da sua foto de perfil"/>:<UserRound size={32}/>}</span><div><strong>Sua foto</strong><p>JPG, PNG ou WebP · até 5 MB. Recorte central automático.</p><input ref={photoInput} className="settings-file-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={photo} aria-label="Escolher foto de perfil"/><div className="personal-actions"><button type="button" className="studio-button secondary" onClick={()=>photoInput.current.click()}><Camera size={14}/>{photoBusy?'Preparando…':'Escolher foto'}</button>{form.avatarData&&<button type="button" className="settings-text-button" onClick={()=>set('avatarData',null)}>Remover foto</button>}</div></div></div>

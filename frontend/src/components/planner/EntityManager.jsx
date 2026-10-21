@@ -4,10 +4,10 @@ import api from '../../lib/api';
 import { WeekdayPicker, TimePicker, DatePicker } from './ScheduleInputs';
 import { entities, defaultValues, payload, valuesFor, weekdays } from './entityConfig';
 
-export function Dialog({ title, subtitle, onClose, busy, children }) {
+export function Dialog({ title, subtitle, onClose, busy, children, className = '' }) {
  const ref=useRef(null);
  useEffect(()=>{const el=ref.current;const overflow=document.body.style.overflow;el.showModal();document.body.style.overflow='hidden';return()=>{el.close();document.body.style.overflow=overflow}},[]);
- return <dialog ref={ref} className="studio-dialog" aria-label={title} onCancel={e=>{e.preventDefault();if(!busy)onClose()}}><header><div><span className="studio-eyebrow">LIFEAI · PLANEJAMENTO</span><h2>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button type="button" onClick={onClose} disabled={busy} aria-label="Fechar"><X size={18}/></button></header>{children}</dialog>;
+ return <dialog ref={ref} className={`studio-dialog ${className}`} aria-label={title} onCancel={e=>{e.preventDefault();if(!busy)onClose()}}><header><div><span className="studio-eyebrow">LIFEAI · PLANEJAMENTO</span><h2>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button type="button" onClick={onClose} disabled={busy} aria-label="Fechar"><X size={18}/></button></header>{children}</dialog>;
 }
 function Field({field,values,onChange,prefix}) {
  if(field.when&&!field.when(values))return null;
