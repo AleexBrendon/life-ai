@@ -16,6 +16,8 @@ export default function NotificationCenter() {
  function target(item) {
   const kind=kindOf(item);
   if(item.type==='HYDRATION')return '/planejamento?aba=agua';
+  if(item.type==='ROUTINE_CHECKIN')return '/dashboard?painel=ia&assistente=rotina';
+  if(kind==='financas')return '/financeiro';
   if(item.type==='UPCOMING'&&item.scheduledAt){const date=localDateKey(new Date(item.scheduledAt),user?.profile?.timezone||'America/Sao_Paulo');return `/agenda?data=${date}&tipo=${kind}&item=${item.entityId}`;}
   if(['perfil','ia'].includes(kind))return `/dashboard?painel=${kind}`;
   if(['rotinas','trabalho','metas','lembretes','imprevistos','agua','financas'].includes(kind))return `/planejamento?aba=${kind}`;

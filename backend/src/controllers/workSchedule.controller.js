@@ -73,8 +73,8 @@ const createWorkSchedule = async (req, res) => {
         dayOfWeek,
         startTime,
         endTime,
-        breakStart,
-        breakEnd,
+        breakStart: breakStart || null,
+        breakEnd: breakEnd || null,
       },
     });
 
@@ -289,8 +289,8 @@ const updateWorkSchedule = async (req, res) => {
         dayOfWeek,
         startTime,
         endTime,
-        breakStart,
-        breakEnd,
+        breakStart: breakStart || null,
+        breakEnd: breakEnd || null,
       },
     });
 

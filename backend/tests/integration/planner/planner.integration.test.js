@@ -22,7 +22,7 @@ describe('Planejamento completo',()=>{
   expect((await call('put',`/planner/rotinas/${record.id}`,routine,otherToken)).status).toBe(404);
   expect((await call('delete',`/planner/rotinas/${record.id}`,undefined,otherToken)).status).toBe(404);
   const edited=await call('put',`/planner/rotinas/${record.id}`,{...routine,name:'Rotina editada',schedules:[{...record.schedules[0],startTime:'10:00',endTime:'11:00'}]});expect(edited.status).toBe(200);expect(edited.body.data.schedules[0].startTime).toBe('10:00');
-  const calendar=await call('get','/calendar?date=2026-10-17');expect(calendar.body.data.items.some(item=>item.title==='Rotina editada'&&item.startTime==='10:00')).toBe(true);
+  const nextSaturday=new Date();nextSaturday.setUTCDate(nextSaturday.getUTCDate()+7+(6-nextSaturday.getUTCDay()+7)%7);const calendar=await call('get','/calendar?date='+nextSaturday.toISOString().slice(0,10));expect(calendar.body.data.items.some(item=>item.title==='Rotina editada'&&item.startTime==='10:00')).toBe(true);
   expect((await call('delete',`/planner/rotinas/${record.id}`)).status).toBe(200);expect(await prisma.routineSchedule.count({where:{routineItemId:record.id}})).toBe(0);
  });
  it('rejeita horários inválidos antes de criar o registro',async()=>{
@@ -36,7 +36,7 @@ describe('Planejamento completo',()=>{
  it('salva trabalho com pausa e tarefas; persiste mudança no Kanban e exclusão',async()=>{
   const body={name:'Trabalho CRUD',status:'IN_PROGRESS',isActive:true,schedules:[{dayOfWeek:1,startTime:'09:00',endTime:'18:00',breakStart:'12:00',breakEnd:'13:00'}],tasks:[{title:'Entrega',description:'Descrição',status:'TODO'}]};
   const result=await call('post','/planner/trabalho',body);expect(result.status).toBe(201);const work=result.body.data;
-  expect((await call('patch',`/jobs/${work.id}/tasks/${work.tasks[0].id}`,{status:'COMPLETED'})).status).toBe(200);
+  expect((await call('post',`/jobs/${work.id}/tasks/${work.tasks[0].id}/move`,{status:'COMPLETED',reason:'Entrega validada'})).status).toBe(200);
   expect((await call('get',`/jobs/${work.id}/tasks`)).body.data[0].status).toBe('COMPLETED');
   const edit=await call('put',`/planner/trabalho/${work.id}`,{...body,schedules:[{...work.schedules[0],breakStart:undefined,breakEnd:undefined}],tasks:[]});expect(edit.status).toBe(200);expect(edit.body.data.schedules[0].breakStart).toBe(null);expect(edit.body.data.tasks).toHaveLength(0);
   expect((await call('delete',`/planner/trabalho/${work.id}`)).status).toBe(200);

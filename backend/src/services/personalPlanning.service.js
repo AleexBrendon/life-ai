@@ -14,13 +14,18 @@ function hydrationSlot(plan, clock, totalMl) {
  return `${clock.date}:${Math.floor((clock.minute - start) / plan.intervalMinutes)}`;
 }
 
-function financeSummary(entries) {
+function financeSummary(entries, context) {
+ const plannedAmount = entry => {
+  if(!context||!entry.scheduledBill||!['INCOME','EXPENSE'].includes(entry.kind))return entry.amountCents;
+  const {monthRows}=require('./financeBills.service');
+  return monthRows([entry.scheduledBill],context.month,context.today).filter(row=>row.dueDate.startsWith(context.month)).reduce((sum,row)=>sum+row.amountCents,0);
+ };
  const sum = (kind, fn) => entries.filter(entry => entry.kind === kind).reduce((total, entry) => total + fn(entry), 0);
  const allocation = entry => entry.kind === 'PURCHASE'
   ? Math.ceil(Math.max(0, entry.amountCents - entry.savedCents) / entry.installments)
   : entry.kind === 'BOX' && entry.savedCents < entry.amountCents ? Math.min(entry.monthlyCents, entry.amountCents - entry.savedCents) : 0;
- const incomeCents = sum('INCOME', e => e.amountCents);
- const expenseCents = sum('EXPENSE', e => e.amountCents);
+ const incomeCents = sum('INCOME', plannedAmount);
+ const expenseCents = sum('EXPENSE', plannedAmount);
  const allocatedCents = entries.reduce((total, entry) => total + allocation(entry), 0);
  const availableCents = incomeCents - expenseCents;
  return { incomeCents, expenseCents, availableCents, allocatedCents, freeCents: availableCents - allocatedCents,
@@ -28,7 +33,7 @@ function financeSummary(entries) {
    const monthly = allocation(entry);
    const remainingCents = Math.max(0, entry.amountCents - entry.savedCents);
    const capacityCents = Math.max(0, availableCents - allocatedCents + monthly);
-   return { ...entry, allocationCents: monthly, remainingCents, capacityCents,
+   return { ...entry, budgetAmountCents:plannedAmount(entry), allocationCents: monthly, remainingCents, capacityCents,
     fits: monthly <= capacityCents,
     minimumMonths: remainingCents === 0 ? 0 : capacityCents > 0 ? Math.ceil(remainingCents / capacityCents) : null,
     plannedMonths: remainingCents === 0 ? 0 : monthly > 0 ? Math.ceil(remainingCents / monthly) : null };

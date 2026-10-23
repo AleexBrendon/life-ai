@@ -4,11 +4,12 @@ function describe(req, body) {
  const path = req.originalUrl.split('?')[0];
  if (!['POST','PUT','PATCH','DELETE'].includes(req.method) || !req.user?.id || path.startsWith('/api/notifications') || path.startsWith('/api/auth')) return null;
  if (path === '/api/ai/chat' || path === '/api/ai/setup/preview' && !body.data?.proposal) return null;
+ if (['/api/ai/week/preview','/api/ai/shopping/analyze'].includes(path)) return null;
  if (req.method === 'POST' && path.replace(/\/$/, '') === '/api/personal/water/intakes') return null;
  const pieces = path.split('/').filter(Boolean);
  const area = path.startsWith('/api/users') ? 'Configurações'
   : path.startsWith('/api/personal/water') ? 'Água'
-  : path.startsWith('/api/personal/finance') ? 'Finanças'
+  : (path.startsWith('/api/personal/finance')||path.startsWith('/api/personal/debt-plans')) ? 'Finanças'
   : path.startsWith('/api/ai') ? 'Assistente IA'
   : areas[pieces[1] === 'planner' ? pieces[2] : pieces[1]] || areas[req.body?.kind];
  if (!area) return null;
@@ -20,6 +21,7 @@ function describe(req, body) {
  else if (state === 'IN_PROGRESS') action = 'Atividade em andamento';
  else if (state === 'PAUSED') action = 'Lembrete pausado';
  else if (/\/approve$|\/apply$/.test(path)) action = 'Proposta da IA aplicada';
+ else if (/\/debt-plans\/\d+\/choose$/.test(path)) action = 'Estratégia financeira escolhida';
  else if (/\/reject$/.test(path)) action = 'Proposta da IA recusada';
  else if (/\/plan$/.test(path)) action = 'Planejamento gerado';
  else if (area === 'Configurações') action = 'Perfil e preferências atualizados';

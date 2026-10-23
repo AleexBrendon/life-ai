@@ -2,8 +2,8 @@ const prisma = require("../database/prisma");
 const { localClock } = require('./personalPlanning.service');
 const { PROJECT_START, canOccurOn } = require('../utils/agendaStart');
 
-const getDashboard = async ({ userId, date, now = new Date() }) => {
-    const profile = await prisma.profile.findUnique({ where: { userId }, select: { timezone: true } });
+const getDashboard = async ({ userId, date, now = new Date(), db = prisma }) => {
+    const profile = await db.profile.findUnique({ where: { userId }, select: { timezone: true } });
     let timezone = profile?.timezone || 'America/Sao_Paulo';
     let today;
     try { today = localClock(now, timezone).date; }
@@ -34,7 +34,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
         activityExecutions,
     ] = await Promise.all([
 
-        prisma.routineItem.findMany({
+        db.routineItem.findMany({
             where: {
                 userId,
                 isActive: true,
@@ -59,7 +59,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.routineExecution.findMany({
+        db.routineExecution.findMany({
             where: {
                 userId,
                 date: {
@@ -76,7 +76,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.reminder.findMany({
+        db.reminder.findMany({
             where: {
                 userId,
                 isActive: true,
@@ -105,7 +105,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.reminderExecution.findMany({
+        db.reminderExecution.findMany({
             where: {
                 userId,
                 date: {
@@ -121,7 +121,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.workSchedule.findMany({
+        db.workSchedule.findMany({
             where: {
                 dayOfWeek,
                 job: {
@@ -137,7 +137,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.unexpectedEvent.findMany({
+        db.unexpectedEvent.findMany({
             where: {
                 userId,
                 date: {
@@ -150,7 +150,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             },
         }),
 
-        prisma.goalPlanSession.findMany({
+        db.goalPlanSession.findMany({
             where: {
                 date: {
                     gte: startOfDay,
@@ -161,7 +161,7 @@ const getDashboard = async ({ userId, date, now = new Date() }) => {
             include: { goal: true },
             orderBy: { startTime: "asc" },
         }),
-        prisma.activityExecution.findMany({ where: { userId, date: startOfDay } }),
+        db.activityExecution.findMany({ where: { userId, date: startOfDay } }),
     ]);
 
     const key = targetDate.toISOString().slice(0,10);

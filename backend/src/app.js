@@ -42,6 +42,8 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/planner", require("./routes/planner.routes"));
 app.use("/api/personal", require("./routes/personalPlanning.routes"));
+app.use('/api/personal/debt-plans',require('./routes/debtPurchase.routes'));
+app.use('/api/personal/finance-bills',require('./routes/financeBills.routes'));
 app.use('/api/activity-status', require('./routes/activityStatus.routes'));
 
 module.exports = app;

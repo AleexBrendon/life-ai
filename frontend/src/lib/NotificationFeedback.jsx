@@ -6,8 +6,8 @@ const Feedback=createContext(null);
 export const useNotificationFeedback=()=>useContext(Feedback);
 export function NotificationFeedbackProvider({children}){
  const {user}=useUserPreferences();
- const [notifications,setNotifications]=useState([]),[upcoming,setUpcoming]=useState([]),[sound,setSound]=useState(false),[soundError,setSoundError]=useState('');
- const audio=useRef(null),enabled=useRef(false),played=useRef(new Set()),seen=useRef(null),nextTone=useRef(0),nodes=useRef(new Set());
+ const [notifications,setNotifications]=useState([]),[upcoming,setUpcoming]=useState([]),[sound,setSound]=useState(true),[soundError,setSoundError]=useState('');
+ const audio=useRef(null),enabled=useRef(true),played=useRef(new Set()),seen=useRef(null),nextTone=useRef(0),nodes=useRef(new Set());
  const playOnce=useCallback(key=>{
   if(!enabled.current||!audio.current||audio.current.state!=='running'||played.current.has(key))return;
   played.current.add(key);
@@ -25,7 +25,24 @@ export function NotificationFeedbackProvider({children}){
   try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw new Error();audio.current ||=new Audio();await audio.current.resume();enabled.current=true;setSound(true);setSoundError('');playOnce(`sound-test:${Date.now()}`)}
   catch{setSoundError('O navegador não liberou o áudio. Os avisos visuais continuam ativos.')}
  }
- useEffect(()=>()=>{enabled.current=false;audio.current?.close().catch(()=>{})},[]);
+ useEffect(()=>{
+  enabled.current=true;
+  const unlock=()=>{
+   if(!enabled.current||audio.current?.state==='running')return;
+   try{
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(!Audio){setSoundError('Este navegador não oferece áudio para os avisos.');return;}
+    if(!audio.current||audio.current.state==='closed')audio.current=new Audio();
+    audio.current.resume().then(()=>{if(enabled.current)setSoundError('')}).catch(()=>{});
+   }catch{/* Retry on the next interaction when autoplay is restricted. */}
+  };
+  window.addEventListener('pointerdown',unlock,true);
+  window.addEventListener('keydown',unlock,true);
+  return()=>{
+   window.removeEventListener('pointerdown',unlock,true);window.removeEventListener('keydown',unlock,true);
+   enabled.current=false;audio.current?.close().catch(()=>{});audio.current=null;
+  };
+ },[]);
  useEffect(()=>{
   if(!user?.id)return;
   let active=true,inFlight=false,pending=false;

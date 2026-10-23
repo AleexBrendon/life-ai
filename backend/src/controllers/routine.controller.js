@@ -13,13 +13,18 @@ const createRoutine = async (req, res) => {
       });
     }
 
-    const { name, type } = validation.data;
+    const { name, type, isFlexible, isActive, autoSchedule, weeklyFrequency, sessionMinutes } = validation.data;
 
     const routineItem = await prisma.routineItem.create({
       data: {
         userId: req.user.id,
         name,
         type,
+        ...(isFlexible !== undefined ? {isFlexible} : {}),
+        ...(autoSchedule !== undefined ? {autoSchedule} : {}),
+        ...(weeklyFrequency !== undefined ? {weeklyFrequency} : {}),
+        ...(sessionMinutes !== undefined ? {sessionMinutes} : {}),
+        ...(isActive !== undefined ? {isActive} : {}),
       },
     });
 
@@ -123,7 +128,7 @@ const updateRoutine = async (req, res) => {
       });
     }
 
-    const { name, type } = validation.data;
+    const { name, type, isFlexible, isActive, autoSchedule, weeklyFrequency, sessionMinutes } = validation.data;
 
     const routine = await prisma.routineItem.findFirst({
       where: {
@@ -146,6 +151,11 @@ const updateRoutine = async (req, res) => {
       data: {
         name,
         type,
+        ...(isFlexible !== undefined ? {isFlexible} : {}),
+        ...(autoSchedule !== undefined ? {autoSchedule} : {}),
+        ...(weeklyFrequency !== undefined ? {weeklyFrequency} : {}),
+        ...(sessionMinutes !== undefined ? {sessionMinutes} : {}),
+        ...(isActive !== undefined ? {isActive} : {}),
       },
     });
 

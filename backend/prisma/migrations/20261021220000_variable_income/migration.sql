@@ -1,0 +1,2 @@
+ALTER TABLE "FinanceEntry" ADD COLUMN "isVariable" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "FinanceBill" ADD COLUMN "isVariable" BOOLEAN NOT NULL DEFAULT false;

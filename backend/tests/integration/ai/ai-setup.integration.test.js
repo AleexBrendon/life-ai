@@ -10,7 +10,7 @@ beforeAll(async()=>{process.env.OPENROUTER_API_KEY='test-no-external-calls';vi.s
 afterAll(async()=>{vi.unstubAllGlobals();if(users.length)await prisma.user.deleteMany({where:{id:{in:users}}});await prisma.$disconnect();redis.disconnect()});
 describe('Cadastro de rotina pela IA',()=>{
  it('exige autenticação e recusa mensagens vazias',async()=>{expect((await request(app).post('/api/ai/setup/preview').send({message:'oi'})).status).toBe(401);expect((await call('post','/setup/preview',{message:''})).status).toBe(400)});
- it('pergunta o que falta sem criar cadastro ou proposta aplicável',async()=>{provider({message:'Qual o seu horário?',questions:['Quais dias e horários de início e fim?'],items:[]});const response=await call('post','/setup/preview',{message:'Trabalho e quero caminhar.'});expect(response.status).toBe(200);expect(response.body.data.proposal).toBe(null);expect(response.body.data.questions).toHaveLength(1);expect(await prisma.routineItem.count({where:{userId:users[0]}})).toBe(0)});
+ it('pergunta o horário do trabalho antes de propor, sem criar cadastro ou proposta',async()=>{const before=global.fetch.mock.calls.length;const response=await call('post','/setup/preview',{message:'Trabalho e quero caminhar.'});expect(response.status).toBe(200);expect(response.body.data.proposal).toBe(null);expect(response.body.data.questions).toHaveLength(1);expect(response.body.data.questions[0]).toContain('Trabalho');expect(global.fetch.mock.calls.length).toBe(before);expect(await prisma.routineItem.count({where:{userId:users[0]}})).toBe(0)});
  it('monta proposta sem gravar cadastros, aplica somente ao dono e não reaplica',async()=>{const response=await preview([routines,goal]);expect(response.status).toBe(200);const id=response.body.data.proposal.id;expect(await prisma.routineItem.count({where:{userId:users[0]}})).toBe(0);
  expect((await call('post',`/setup/${id}/apply`,{},otherToken)).status).toBe(409);
  const applied=await call('post',`/setup/${id}/apply`,{});expect(applied.status).toBe(200);expect(applied.body.data.created).toHaveLength(2);
@@ -28,12 +28,12 @@ describe('Cadastro de rotina pela IA',()=>{
  it('refaz automaticamente a resposta em formato inválido e mantém a confirmação',async()=>{
   global.fetch.mockResolvedValueOnce(new Response(JSON.stringify({model:'mock',choices:[{message:{content:'Posso ajudar! Mas este texto não é JSON.'}}]}),{status:200,headers:{'Content-Type':'application/json'}}));
   provider({message:'Proposta corrigida.',questions:[],items:[{...goal,data:{...goal.data,title:'Meta após correção de formato'}}]});
-  const response=await call('post','/setup/preview',{message:'Quero uma meta de leitura.'});expect(response.status).toBe(200);expect(response.body.data.proposal.status).toBe('PENDING');expect(await prisma.goal.count({where:{userId:users[0],title:'Meta após correção de formato'}})).toBe(0);
+  const response=await call('post','/setup/preview',{message:'Quero uma meta nova.'});expect(response.status).toBe(200);expect(response.body.data.proposal.status).toBe('PENDING');expect(await prisma.goal.count({where:{userId:users[0],title:'Meta após correção de formato'}})).toBe(0);
  });
  it('para após duas respostas inválidas sem criar proposta ou cadastros',async()=>{
   const count=await prisma.aiRecommendation.count({where:{userId:users[0]}});
   for(let attempt=0;attempt<2;attempt++)global.fetch.mockResolvedValueOnce(new Response(JSON.stringify({model:'mock',choices:[{message:{content:'resposta inválida'}}]}),{status:200,headers:{'Content-Type':'application/json'}}));
-  const response=await call('post','/setup/preview',{message:'Quero organizar meus estudos.'});expect(response.status).toBe(200);expect(response.body.data.proposal).toBe(null);expect(response.body.data.questions[0]).toContain('nenhum cadastro foi criado');expect(await prisma.aiRecommendation.count({where:{userId:users[0]}})).toBe(count);
+  const response=await call('post','/setup/preview',{message:'Quero organizar melhor minha vida.'});expect(response.status).toBe(200);expect(response.body.data.proposal).toBe(null);expect(response.body.data.questions[0]).toContain('nenhum cadastro foi criado');expect(await prisma.aiRecommendation.count({where:{userId:users[0]}})).toBe(count);
  });
  it('monta a rotina complexa localmente sem chamar o provedor',async()=>{
   const description='Exemplo fictício: trabalho de segunda a sexta das 8h às 12h e das 14h às 18h na EmpresaExemplo. Também faço programação freelancer segunda, terça e quinta das 19h às 23h. Sábado trabalho das 8h às 12h e dou aula de música das 15h às 17h. Tenho atividade pessoal quarta das 19h30 às 21h e domingo das 18h30 às 20h30. Quero encaixar faculdade EAD, corrida e descanso.';
@@ -42,7 +42,7 @@ describe('Cadastro de rotina pela IA',()=>{
   expect(response.status).toBe(200);expect(response.body.data.questions).toHaveLength(0);expect(response.body.data.proposal.status).toBe('PENDING');expect(response.body.data.draft.some(item=>item.data.name==='Corrida')).toBe(true);expect(global.fetch.mock.calls.length).toBe(before);
  }); it('apresenta horários sugeridos como escolhas revisáveis antes de cadastrar',async()=>{
   provider({message:'Sugeri estudo em uma janela livre.',questions:[],assumptions:['Sugestão revisável: estudar por 45 minutos na segunda-feira.'],items:[{...goal,data:{...goal.data,title:'Estudo sugerido',sessionMinutes:45,sessions:[{date:'2026-10-19',startTime:'18:30',endTime:'19:15',status:'PENDING'}]}}]});
-  const response=await call('post','/setup/preview',{message:'Encaixe estudo na minha rotina e escolha um horário livre para eu revisar.'});
+  const response=await call('post','/setup/preview',{message:'Encaixe aprendizado de idiomas na minha rotina e escolha um horário livre para eu revisar.'});
   expect(response.status).toBe(200);expect(response.body.data.proposal.changes.assumptions).toHaveLength(1);expect(response.body.data.proposal.status).toBe('PENDING');expect(await prisma.goal.count({where:{userId:users[0],title:'Estudo sugerido'}})).toBe(0);
  });
  it('cadastra jornada, tarefas, lembrete e imprevisto com seus campos',async()=>{
@@ -55,3 +55,10 @@ describe('Cadastro de rotina pela IA',()=>{
 
 
 
+it('prepara uma proposta local quando já há sessões de metas persistidas no banco',async()=>{
+ await prisma.goal.create({data:{userId:users[0],title:'Meta com data no banco',sessions:{create:{date:new Date('2027-01-07T00:00:00Z'),startTime:'18:00',endTime:'19:00'}}}});
+ const previous=await prisma.goal.count({where:{userId:users[0]}});
+ const response=await call('post','/setup/preview',{message:'Quero encaixar corrida e treino de flauta.'});
+ expect(response.status).toBe(200);expect(response.body.data.proposal).not.toBeNull();expect(response.body.data.draft.length).toBeGreaterThan(0);
+ expect(await prisma.goal.count({where:{userId:users[0]}})).toBe(previous);
+});

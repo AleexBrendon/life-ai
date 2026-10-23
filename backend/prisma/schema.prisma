@@ -27,7 +27,12 @@
     hydrationPlan      HydrationPlan?
     waterIntakes       WaterIntake[]
     financeEntries     FinanceEntry[]
+    financeBills       FinanceBill[]
     activityExecutions ActivityExecution[]
+    routineCycles      RoutineCycle[]
+    routineCheckins    RoutineCheckin[]
+    jobTaskTimeLogs    JobTaskTimeLog[]
+    jobTaskEvents      JobTaskEvent[]
   }
 
   model ActivityExecution {
@@ -71,14 +76,67 @@
     id           Int @id @default(autoincrement())
     userId       Int
     kind         String
+    category     String @default("Outros")
+    isVariable   Boolean @default(false)
     title        String
     amountCents  Int
     savedCents   Int @default(0)
     monthlyCents Int @default(0)
     installments Int @default(1)
+    scheduledBill FinanceBill?
     createdAt    DateTime @default(now())
     user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
     @@index([userId, kind])
+  }
+
+  model FinanceBill {
+    id          Int @id @default(autoincrement())
+    userId      Int
+    title       String
+    kind        String @default("EXPENSE")
+    isVariable  Boolean @default(false)
+    sourceEntryId Int? @unique
+    sourceEntry FinanceEntry? @relation(fields: [sourceEntryId], references: [id], onDelete: SetNull)
+    category    String @default("Outros")
+    description String?
+    amountCents Int
+    firstDueDate DateTime @db.Date
+    recurrence  String @default("ONCE")
+    monthly     Boolean @default(false)
+    endDate     DateTime? @db.Date
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    occurrences FinanceBillOccurrence[]
+    @@index([userId])
+  }
+
+  model FinanceBillOccurrence {
+    id            Int @id @default(autoincrement())
+    billId        Int
+    referenceDate DateTime @db.Date
+    dueDate       DateTime @db.Date
+    status        String @default("PENDING")
+    amountCents   Int
+    paidAt        DateTime? @db.Date
+    reason        String?
+    updatedAt     DateTime @updatedAt
+    bill          FinanceBill @relation(fields: [billId], references: [id], onDelete: Cascade)
+    history       FinanceBillEvent[]
+    @@unique([billId, referenceDate])
+    @@index([dueDate])
+  }
+
+  model FinanceBillEvent {
+    id           Int @id @default(autoincrement())
+    occurrenceId Int
+    status       String
+    dueDate      DateTime @db.Date
+    paidAt       DateTime? @db.Date
+    reason       String?
+    createdAt    DateTime @default(now())
+    occurrence   FinanceBillOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+    @@index([occurrenceId])
   }
 
   model Profile {
@@ -127,12 +185,53 @@
     title       String
     description String?
     status      String   @default("TODO")
+    project          String?
+    repositoryUrl    String?
+    priority         String    @default("MEDIUM")
+    position         Int       @default(0)
+    dueDate          DateTime? @db.Date
+    estimatedMinutes Int?
+    completedAt      DateTime?
 
     job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    timeLogs  JobTaskTimeLog[]
+    events    JobTaskEvent[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     @@index([jobId, status])
+  }
+
+  // One row per tracked interval; an open interval (endedAt null) means the timer is running.
+  model JobTaskTimeLog {
+    id        Int       @id @default(autoincrement())
+    taskId    Int
+    userId    Int
+    startedAt DateTime
+    endedAt   DateTime?
+    createdAt DateTime  @default(now())
+
+    task JobTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, startedAt])
+    @@index([taskId])
+  }
+
+  model JobTaskEvent {
+    id         Int      @id @default(autoincrement())
+    taskId     Int
+    userId     Int
+    type       String
+    fromStatus String?
+    toStatus   String?
+    reason     String?
+    createdAt  DateTime @default(now())
+
+    task JobTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([taskId, createdAt])
   }
 
   model WorkSchedule {
@@ -156,6 +255,10 @@
     name     String
     type     String
     isActive Boolean @default(true)
+    isFlexible Boolean @default(false)
+    autoSchedule Boolean @default(false)
+    weeklyFrequency Int @default(3)
+    sessionMinutes Int @default(30)
 
     user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     schedules         RoutineSchedule[]
@@ -324,6 +427,7 @@
     targetDate      DateTime?
     weeklyFrequency Int      @default(3)
     sessionMinutes  Int      @default(60)
+    autoSchedule    Boolean  @default(false)
     priority        String   @default("MEDIUM")
     status          String   @default("ACTIVE")
     createdAt       DateTime @default(now())
@@ -349,4 +453,43 @@
 
     @@index([goalId, date])
     @@unique([goalId, date, startTime])
+  }
+
+  // Monthly routine cycle: the approved weekly template, its results and the user's check-ins.
+  model RoutineCycle {
+    id               Int       @id @default(autoincrement())
+    userId           Int
+    startDate        DateTime  @db.Date
+    endDate          DateTime  @db.Date
+    status           String    @default("ACTIVE")
+    optionId         String
+    recommendationId Int?
+    template         Json
+    metrics          Json?
+    performance      Json?
+    goalSessionIds   Json?
+    closedAt         DateTime?
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+
+    user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    checkins RoutineCheckin[]
+
+    @@index([userId, status])
+  }
+
+  model RoutineCheckin {
+    id        Int      @id @default(autoincrement())
+    cycleId   Int
+    userId    Int
+    step      Int
+    date      DateTime @db.Date
+    answers   Json
+    createdAt DateTime @default(now())
+
+    cycle RoutineCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+    user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([cycleId, step])
+    @@index([userId])
   }

@@ -39,8 +39,8 @@ export default function Header({ onLogout }) {
       <button type="button" onClick={logout} disabled={loggingOut} className="logout-button" aria-label="Sair da conta"><LogOut size={17} /><span>{loggingOut ? "Saindo..." : "Sair"}</span></button>
     </div></header>
     {soundError&&<p className="notification-sound-error" role="alert">{soundError}</p>}
-    {panel && <dialog ref={dialog} className="workspace-panel" aria-labelledby="workspace-panel-title" onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if(event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if(event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) close(); } }}>
-      <header className="workspace-panel-heading"><h2 id="workspace-panel-title">{panel[0]}</h2><button onClick={close} aria-label="Fechar painel"><X size={19} /></button></header><div className="workspace-panel-content"><Content /></div>
+    {panel && <dialog ref={dialog} className={`workspace-panel${key === "ia" ? " assistant-workspace" : ""}`} aria-labelledby="workspace-panel-title" onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if(event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if(event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) close(); } }}>
+      <header className="workspace-panel-heading"><h2 id="workspace-panel-title">{panel[0]}</h2><button onClick={close} aria-label="Fechar painel"><X size={19} /></button></header><div className="workspace-panel-content"><Content key={params.get("assistente")||""} /></div>
     </dialog>}
   </>;
 }

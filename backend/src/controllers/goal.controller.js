@@ -1,5 +1,5 @@
 const prisma = require("../database/prisma");
-const { goalSchema } = require("../schemas/goal.schema");
+const { goalSchema, updateGoalSchema } = require("../schemas/goal.schema");
 const { planGoal } = require("../services/goalPlanning.service");
 
 const id = (value) =>
@@ -105,7 +105,7 @@ const update = async (req, res) => {
         });
     }
 
-    const validation = goalSchema.partial().safeParse(req.body);
+    const validation = updateGoalSchema.safeParse(req.body);
 
     if (!validation.success) {
         return res.status(400).json({

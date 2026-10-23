@@ -10,6 +10,7 @@ const {
 const router = express.Router();
 
 router.use(authMiddleware);
+router.use(require('./aiMvp.routes'));
 router.post("/chat", require("../controllers/aiChat.controller").chat);
 router.post("/setup/preview", require("../controllers/aiSetup.controller").preview);
 router.post("/setup/:id/apply", require("../controllers/aiSetup.controller").apply);

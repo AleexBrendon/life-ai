@@ -5,6 +5,7 @@ import Dashboard from "../components/dashboard/Dashboard";
 import Calendar from "../components/planner/Calendar";
 import Planning from "../components/planner/Planning";
 import Login from "../components/auth/Login";
+import FinancePage from '../components/finance/FinancePage';
 import { authApi } from "../lib/api";
 function AppRoutes() {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/agenda" element={<Calendar />} />
         <Route path="/planejamento" element={<Planning />} />
+        <Route path="/financeiro" element={<FinancePage />} />
         <Route path="/meu-dia" element={<Navigate to="/agenda" replace />} />
         <Route path="/calendario" element={<Navigate to="/agenda" replace />} />
         {["rotinas", "metas", "trabalho", "lembretes"].map(tab => (

@@ -1,6 +1,11 @@
 const { z } = require("zod");
 
 const createRoutineSchema = z.object({
+  autoSchedule: z.boolean().optional(),
+  weeklyFrequency: z.number().int().min(1).max(7).optional(),
+  sessionMinutes: z.number().int().min(15).max(240).optional(),
+  isFlexible: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   name: z
     .string()
     .trim()

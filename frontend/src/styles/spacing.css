@@ -1,4 +1,28 @@
 /* Common spacing scale for every active screen and portalled dialog. */
+:is(.studio-notice,.studio-error) {
+ position:relative;box-sizing:border-box;display:block;width:100%;
+ margin:12px 0 16px;padding:13px 16px 13px 46px;
+ border:1px solid;border-radius:12px;font-size:12px;font-weight:400;line-height:1.7;
+ overflow-wrap:anywhere;
+}
+.studio-notice { background:#edf7f0;color:#326a46;border-color:#cce5d3; }
+.studio-error { background:#fff1f2;color:#9c3446;border-color:#f0cbd1; }
+:is(.studio-notice,.studio-error)::before {
+ position:absolute;left:15px;top:14px;display:grid;place-items:center;
+ width:19px;height:19px;box-sizing:border-box;border:1.5px solid currentColor;
+ border-radius:50%;font-size:12px;font-weight:600;line-height:1;
+}
+.studio-notice::before { content:'✓'; }
+.studio-manager > .studio-notice {
+ width:fit-content;max-width:100%;min-height:42px;margin:12px 0 16px;
+ padding:11px 16px 11px 42px;border-radius:12px;
+}
+.studio-manager > .studio-notice::before { left:14px;top:12px; }
+.studio-error::before { content:'!'; }
+.studio-error button { display:inline-block;margin:4px 0 0 8px;padding:3px 0;color:inherit;text-underline-offset:3px; }
+html[data-theme=dark] .studio-notice { background:#20362a;color:#b2e6c7 !important;border-color:#3e624b; }
+html[data-theme=dark] .studio-error { background:#38242a;color:#ffbec7 !important;border-color:#6c424c; }
+@media(max-width:600px) { :is(.studio-notice,.studio-error) { padding:12px 12px 12px 42px;margin:10px 0 14px; }.studio-notice::before,.studio-error::before { left:13px;top:13px; } }
 /* Labels and helper text belong to their parent surface, not separate panels. */
 :is(.app-shell,.studio-dialog,.workspace-panel) :is(.studio-field:not(.check),.studio-field > span,.schedule-label,.studio-column-empty,.studio-section-heading > div,.studio-record-meta,.assistant-note,.personal-subtitle,.settings-help) {
  background:transparent !important;box-shadow:none;

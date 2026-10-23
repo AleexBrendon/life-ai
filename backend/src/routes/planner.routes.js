@@ -12,7 +12,7 @@ router.use('/:kind', (req, res, next) => {
 });
 const include = config => {
  const relations = Object.fromEntries(Object.keys(config.children).map(key => [key, true]));
- if (config.model === "routineItem") relations.routineExecutions = { select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true } };
+ if (config.model === "routineItem") relations.routineExecutions = { select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true, skipReason: true } };
  return Object.keys(relations).length ? relations : undefined;
 };
 router.get('/:kind', async (req, res) => {

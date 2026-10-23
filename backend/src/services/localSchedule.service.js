@@ -35,32 +35,44 @@ function extractFixedCommitments(description){
 }
 function buildFlexiblePlan(fixed,description,today,existing=[]){
  const text=normalize(description),items=JSON.parse(JSON.stringify(fixed));
- const busy=Array.from({length:7},()=>[]),assumptions=['Os compromissos fixos foram lidos localmente dos dias e intervalos informados. Confira os nomes, dias e horários antes de confirmar.'];
- const addBusy=(day,start,end)=>busy[day].push([minute(start),minute(end)]);
+ const busy=Array.from({length:7},()=>[]),assumptions=[fixed.length?'Os compromissos fixos foram lidos localmente dos dias e intervalos informados. Confira os nomes, dias e horários antes de confirmar.':'As atividades flexíveis foram sugeridas nas janelas livres dos cadastros existentes. Confira os horários antes de confirmar.'];
+ const addBusy=(day,start,end)=>{
+  if(!Number.isInteger(day)||day<0||day>6||typeof start!=='string'||typeof end!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||start>=end)throw Error('Há um horário inválido nos cadastros existentes. Revise os dias e horários antes de gerar a proposta.');
+  busy[day].push([minute(start),minute(end)]);
+ };
  for(const item of [...fixed,...existing]){
   if(item.data.isActive===false)continue;
   for(const row of item.data.schedules||[]){if(row.breakStart&&row.breakEnd){addBusy(row.dayOfWeek,row.startTime,row.breakStart);addBusy(row.dayOfWeek,row.breakEnd,row.endTime)}else addBusy(row.dayOfWeek,row.startTime,row.endTime)}
-  for(const row of item.data.sessions||[]){const day=new Date(`${row.date}T12:00:00Z`).getUTCDay();addBusy(day,row.startTime,row.endTime)}
+  for(const row of item.data.sessions||[]){const date=row.date instanceof Date&&!Number.isNaN(row.date.getTime())?row.date.toISOString().slice(0,10):typeof row.date==='string'?row.date.slice(0,10):'';const parsed=new Date(`${date}T12:00:00Z`);const day=/^\d{4}-\d{2}-\d{2}$/.test(date)&&!Number.isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===date?parsed.getUTCDay():NaN;addBusy(day,row.startTime,row.endTime)}
  }
  const find=(day,duration,preferences)=>{for(const [low,high]of preferences)for(let start=low;start+duration<=high;start+=15){if(busy[day].every(([a,b])=>start+duration<=a-15||start>=b+15)){busy[day].push([start,start+duration]);return {startTime:clock(start),endTime:clock(start+duration)}}}return null};
  if(/correr|corrida/.test(text)){
-  const schedules=[];for(const day of [2,4,6,0,1,3,5]){const slot=find(day,30,[[7*60,8*60],[17*60,20*60],[9*60,17*60]]);if(slot)schedules.push({dayOfWeek:day,...slot});if(schedules.length===3)break;}
-  if(schedules.length){items.push({kind:'rotinas',data:{name:'Corrida',type:'Atividade física',isActive:true,schedules}});assumptions.push(`Sugestão: ${schedules.length} corridas semanais de 30 minutos. Dias e duração podem ser alterados na revisão.`);}
+  const daily=/corr(?:ida|er)[^.]{0,45}(?:todos os dias|todo dia|diari)|(?:todos os dias|todo dia|diari)[^.]{0,35}corr/.test(text),target=daily?7:3;
+  const schedules=[];for(const day of [2,4,6,0,1,3,5]){const slot=find(day,30,[[7*60,8*60],[17*60,20*60],[9*60,17*60]]);if(slot)schedules.push({dayOfWeek:day,...slot});if(schedules.length===target)break;}
+  if(schedules.length){items.push({kind:'rotinas',data:{name:'Corrida',type:'Atividade física',isActive:true,isFlexible:true,schedules}});assumptions.push(`Sugestão: ${schedules.length} corridas semanais de 30 minutos. Frequência solicitada: ${target} dia(s); revise as janelas disponíveis antes de confirmar.`);}
  }
  if(/faculdade|ead|estud|curso/.test(text)){
-  const sessions=[];for(let offset=1;offset<=7;offset++){const date=new Date(`${today}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+offset);const day=date.getUTCDay();const slot=find(day,45,[[18*60,22*60],[12*60,14*60],[8*60,12*60],[14*60,18*60]]);if(slot)sessions.push({date:date.toISOString().slice(0,10),...slot,status:'PENDING'});if(sessions.length===3)break;}
+  const target=/estud[^.]{0,45}(?:todos os dias|todo dia|diari)|(?:todos os dias|diari)[^.]{0,20}estud/.test(text)?7:/mais tempo[^.]*estud|estud[^.]*mais tempo/.test(text)?5:3;
+  const sessions=[];for(let offset=1;offset<=7;offset++){const date=new Date(`${today}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+offset);const day=date.getUTCDay();const slot=find(day,45,[[18*60,22*60],[12*60,14*60],[8*60,12*60],[14*60,18*60]]);if(slot)sessions.push({date:date.toISOString().slice(0,10),...slot,status:'PENDING'});if(sessions.length===target)break;}
   if(sessions.length){items.push({kind:'metas',data:{title:/faculdade|ead/.test(text)?'Estudar faculdade EAD':'Estudo e aprendizado',description:'Sugestão de planejamento em janelas livres; revise horários e duração.',weeklyFrequency:sessions.length,sessionMinutes:45,priority:'MEDIUM',status:'ACTIVE',sessions}});assumptions.push(`Sugestão: ${sessions.length} sessões de estudo de 45 minutos nos próximos sete dias, sem usar horários dos compromissos fixos.`);}
+ }
+ if(/flauta|treinar.*musica|praticar.*musica/.test(text)){
+  const schedules=[],target=/flauta[^.]{0,40}(?:todos os dias|diari)/.test(text)?7:3;
+  for(const day of [1,3,5,0,2,4,6]){const slot=find(day,30,[[18*60,22*60],[14*60,18*60],[8*60,12*60]]);if(slot)schedules.push({dayOfWeek:day,...slot});if(schedules.length===target)break;}
+  if(schedules.length){items.push({kind:'rotinas',data:{name:'Treinar flauta',type:'Desenvolvimento pessoal',isActive:true,isFlexible:true,schedules}});assumptions.push('Treino de flauta sugerido em '+schedules.length+' dias, com 30 minutos por sessão. Aulas e cultos existentes foram preservados.');}
  }
  if(/descans|lazer/.test(text)){
   const schedules=[];for(let day=0;day<7;day++){const slot=find(day,30,[[18*60,22*60],[12*60,14*60],[8*60,12*60],[14*60,18*60]]);if(slot)schedules.push({dayOfWeek:day,...slot});}
-  if(schedules.length){items.push({kind:'rotinas',data:{name:'Pausa e descanso',type:'Saúde',isActive:true,schedules}});assumptions.push('Sugestão: blocos de descanso de 30 minutos. Eles não representam todo o tempo de sono necessário.');}
+  if(schedules.length){items.push({kind:'rotinas',data:{name:'Pausa e descanso',type:'Saúde',isActive:true,isFlexible:true,schedules}});assumptions.push('Sugestão: blocos de descanso de 30 minutos. Eles não representam todo o tempo de sono necessário.');}
  }
  assumptions.push('As sugestões usam intervalos de 15 minutos entre atividades e não estimam deslocamentos. Somente estudo, corrida e pausas flexíveis receberam horários novos.');
  return {items,assumptions};
 }
 function localSchedulePlan(description,today,existing=[]){
- if(!/encaix|melhor rotina|organize|mont.*rotina|sugir/.test(normalize(description)))return null;
- const fixed=extractFixedCommitments(description);if(!fixed)return null;
+ const text=normalize(description);
+ if(!/encaix|melhor rotina|organize|mont.*rotina|sugir|adicionar|adicione|inclu/.test(text))return null;
+ const fixed=extractFixedCommitments(description);
+ if(!fixed){if(/corrid|correr|estud|flauta/.test(text)&&!/trabalh|culto|igreja|fixo/.test(text))return buildFlexiblePlan([],description,today,existing);return null;}
  return buildFlexiblePlan(fixed,description,today,existing);
 }
 module.exports={readDays,extractFixedCommitments,buildFlexiblePlan,localSchedulePlan};

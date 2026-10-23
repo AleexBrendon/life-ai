@@ -14,6 +14,10 @@ const {
   getTasks,
   createTask,
   updateTask,
+  startTask,
+  pauseTask,
+  moveTask,
+  reorderTask,
   deleteTask,
 } = require("../controllers/job-task.controller");
 
@@ -26,6 +30,10 @@ router.get("/", authMiddleware, getJobs);
 router.get("/:jobId/tasks", authMiddleware, getTasks);
 router.post("/:jobId/tasks", authMiddleware, createTask);
 router.patch("/:jobId/tasks/:taskId", authMiddleware, updateTask);
+router.post("/:jobId/tasks/:taskId/start", authMiddleware, startTask);
+router.post("/:jobId/tasks/:taskId/pause", authMiddleware, pauseTask);
+router.post("/:jobId/tasks/:taskId/move", authMiddleware, moveTask);
+router.post("/:jobId/tasks/:taskId/reorder", authMiddleware, reorderTask);
 router.delete("/:jobId/tasks/:taskId", authMiddleware, deleteTask);
 
 router.get("/:id", authMiddleware, getJobById);

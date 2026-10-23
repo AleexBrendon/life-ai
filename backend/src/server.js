@@ -8,4 +8,5 @@ app.listen(PORT, () => {
   console.log(`LifeAI API rodando na porta ${PORT}`);
   require('./services/hydrationReminder.service').startHydrationReminders();
   require('./services/upcomingNotification.service').startUpcomingNotifications();
+  require('./services/routinePlanner.service').startCheckinNotifications();
 });

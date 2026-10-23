@@ -1,0 +1,1 @@
+ALTER TABLE "RoutineItem" ADD COLUMN "isFlexible" BOOLEAN NOT NULL DEFAULT false;

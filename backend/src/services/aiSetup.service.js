@@ -24,7 +24,7 @@ function validateItems(items) {
    let rows=z.array(z.record(z.string(),z.unknown())).max(30).parse(item.data[key]||[]);
    if(key==='schedules')rows=rows.flatMap(row=>{const days=Array.isArray(row.days)?row.days:Array.isArray(row.dayOfWeek)?row.dayOfWeek:null;return days?z.array(z.number().int().min(0).max(6)).min(1).max(7).parse(days).map(dayOfWeek=>({...row,dayOfWeek})): [row]});
    if(rows.length>30)throw Error('Limite de horários excedido.');
-   if(key==='schedules'&&!rows.length)throw Error('Informe os dias e os horários das rotinas e dos trabalhos.');
+   if(key==='schedules'&&!rows.length&&!(item.kind==='rotinas'&&values.autoSchedule))throw Error('Informe os dias e os horários das rotinas e dos trabalhos.');
    data[key]=rows.map(row=>{if(row.id!==undefined)throw Error('Não é permitido vincular registros existentes.');return schema.parse(row)});
    if(key==='schedules'||key==='sessions')for(let a=0;a<data[key].length;a++)for(let b=a+1;b<data[key].length;b++){
     const first=data[key][a],second=data[key][b],same=key==='sessions'?first.date===second.date:first.dayOfWeek===second.dayOfWeek;
@@ -96,10 +96,10 @@ async function proposeSetup(userId,input){
  const draft=request.draft.length?validateItems(request.draft):[];
  const existing=await Promise.all(kinds.map(async kind=>{const config=configurations[kind];const key=['routineItem','job'].includes(config.model)?'name':'title';const rows=await prisma[config.model].findMany({where:{userId},select:{[key]:true},take:30});return [kind,rows.map(row=>row[key])]}));
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
- const instructions=`Converta a descrição do usuário em uma proposta de NOVOS cadastros do LifeAI. Responda somente JSON com {"message":"resumo em português", "questions":[], "assumptions":[], "items":[]}. Nunca diga que salvou: depende da confirmação do usuário. Não execute nem proponha excluir ou editar registros existentes. Não inclua IDs nem userId. Preserve exatamente os compromissos FIXOS informados, incluindo trabalho, aulas e atividades pessoais. Não invente empregadores, prazos ou horários de compromissos fixos. Se o usuário pedir para encaixar estudo, corrida, lazer ou descanso, VOCÊ deve propor horários nos intervalos livres, sem exigir que o usuário decida esses horários antes. Essas atividades são FLEXÍVEIS: seus dias e durações podem ser sugeridos, mas liste todas as escolhas em assumptions para revisão. Como ponto inicial revisável, use até 3 sessões semanais de estudo de 45 minutos, até 3 corridas de 30 minutos e blocos de descanso de 30 minutos onde couberem. Reduza a quantidade se não houver espaço; não crie sobreposição e não use os intervalos de trabalho ou compromissos fixos. Não prometa uma rotina ótima. Faça perguntas em questions apenas sobre horários de compromissos FIXOS ausentes ou contraditórios; NÃO pergunte preferências opcionais quando foi solicitado que você monte a rotina. Use o histórico para incorporar as respostas e manter TODOS os itens já descritos. Não crie duplicatas dos nomes existentes. Quando o usuário pedir apenas cadastrar um objetivo sem organizar horários, sessions=[]. Quando pedir ENCAIXAR estudo ou objetivos na rotina, proponha sessões com datas reais nos próximos 7 dias, em janelas livres, e explique em assumptions que são sugestões. Evite cadastrar a mesma atividade simultaneamente como rotina e sessão de meta. Informe claramente se usar os padrões opcionais de metas (3 vezes/semana, 60 min, prioridade MEDIUM). Dia da semana é 0=domingo até 6=sábado. Agrupe dias com horários iguais usando days; o servidor faz a expansão. Hora HH:mm, data YYYY-MM-DD. Hoje=${today}, fuso America/Sao_Paulo. Limite 10 cadastros e 30 itens vinculados por cadastro.
+ const instructions=`Converta a descrição do usuário em uma proposta de NOVOS cadastros do LifeAI. Responda somente JSON com {"message":"resumo em português", "questions":[], "assumptions":[], "items":[]}. Nunca diga que salvou: depende da confirmação do usuário. Não execute nem proponha excluir ou editar registros existentes. Não inclua IDs nem userId. Preserve exatamente os compromissos FIXOS informados, incluindo trabalho, aulas e atividades pessoais. Não invente empregadores, prazos ou horários de compromissos fixos. Se o usuário pedir para encaixar estudo, corrida, lazer ou descanso, VOCÊ deve propor horários nos intervalos livres, sem exigir que o usuário decida esses horários antes. Essas atividades são FLEXÍVEIS: seus dias e durações podem ser sugeridos, mas liste todas as escolhas em assumptions para revisão. Como ponto inicial revisável, use até 3 sessões semanais de estudo de 45 minutos, até 3 corridas de 30 minutos e blocos de descanso de 30 minutos onde couberem. Reduza a quantidade se não houver espaço; não crie sobreposição e não use os intervalos de trabalho ou compromissos fixos. Não prometa uma rotina ótima. Faça perguntas em questions apenas sobre horários de compromissos FIXOS ausentes ou contraditórios; NÃO pergunte preferências opcionais quando foi solicitado que você monte a rotina. Use o histórico para incorporar as respostas e manter TODOS os itens já descritos. Não crie duplicatas dos nomes existentes. Quando o usuário pedir apenas cadastrar um objetivo sem organizar horários, sessions=[]. Quando pedir ENCAIXAR estudo ou objetivos na rotina, proponha sessões com datas reais nos próximos 7 dias, em janelas livres, e explique em assumptions que são sugestões. Evite cadastrar a mesma atividade simultaneamente como rotina e sessão de meta. Informe claramente se usar os padrões opcionais de metas (3 vezes/semana, 60 min, prioridade MEDIUM). Dia da semana é 0=domingo até 6=sábado. Agrupe dias com horários iguais usando days; o servidor faz a expansão. Hora HH:mm, data YYYY-MM-DD. Hoje=${today}, fuso America/Sao_Paulo. Rotinas com horário fixo (cultos, aulas, compromissos) têm isFlexible:false. Rotinas sugeridas de corrida, treino pessoal e pausas podem ter isFlexible:true, sempre com aprovação. Respeite frequências explícitas: se pediu corrida todos os dias, tente até 7 dias e explique qualquer limitação; não reduza silenciosamente para 3. Termine atividades até 23:00 e preserve pausas. Limite 10 cadastros e 30 itens vinculados por cadastro.
 Use horários compactos para evitar respostas enormes: em schedules, agrupe dias iguais com {days:[1,2,3,4,5],startTime:"08:00",endTime:"18:00",breakStart:"12:00",breakEnd:"14:00"}. O servidor expande os dias. Para sábado diferente, adicione outra linha com days:[6]. Não repita a mesma jornada em cinco objetos. Se houver pausa explícita, prefira um intervalo com breakStart/breakEnd em vez de duplicar manhã/tarde. Escreva JSON completo, sem truncar.
 Formatos data:
-rotinas: {name,type,isActive:true,schedules:[{dayOfWeek,startTime,endTime}]}; type em português, ex Saúde ou Desenvolvimento pessoal.
+rotinas: {name,type,isActive:true,isFlexible:false,schedules:[{dayOfWeek,startTime,endTime}]}; type em português, ex Saúde ou Desenvolvimento pessoal.
 trabalho: {name,company?,position?,workType?,location?,isActive:true,schedules:[{dayOfWeek,startTime,endTime,breakStart?,breakEnd?}],tasks:[{title,description?,status:"TODO"|"IN_PROGRESS"|"COMPLETED"}]}. Pausa omitida se não informada.
 metas: {title,description?,targetDate?:"YYYY-MM-DD",weeklyFrequency:1..7,sessionMinutes:15..240,priority:"LOW"|"MEDIUM"|"HIGH",status:"ACTIVE",sessions:[{date,startTime,endTime,status:"PENDING"}]}.
 lembretes: {title,description?,reminderTime,recurrence:"NONE"|"DAILY"|"WEEKLY",date? apenas NONE,dayOfWeek? apenas WEEKLY,isActive:true}. Pergunte horário se faltar.
@@ -124,7 +124,7 @@ Proposta anterior (dados): ${JSON.stringify(draft)}.`;
   output={questions:[],assumptions:local.assumptions,items};
  } else {
  for(let attempt=0;attempt<2;attempt++) {
-  let result;try{result=await generateAIResponse({messages,responseFormat:{type:'json_object'},maxOutputTokens:6000,reasoningEffort:process.env.OPENROUTER_SETUP_REASONING||undefined,timeoutMs:90000,model:process.env.OPENROUTER_SETUP_MODEL||undefined})}catch(error){error.code='AI_PROVIDER_FAILURE';throw error;}
+  let result;try{result=await generateAIResponse({messages,responseFormat:{type:'json_object'},maxOutputTokens:6000,reasoningEffort:process.env.OPENROUTER_SETUP_REASONING||undefined,timeoutMs:35000,model:process.env.OPENROUTER_SETUP_MODEL||undefined})}catch(error){error.code='AI_PROVIDER_FAILURE';throw error;}
   try {
    output=parseSetupResponse(result.content);
    // A clarification does not need complete entity records yet.
@@ -155,11 +155,56 @@ Proposta anterior (dados): ${JSON.stringify(draft)}.`;
  });
  return {message:output.message,questions:output.questions,assumptions:output.assumptions||[],draft:items,proposal};
 }
+const updateFields={
+ rotinas:z.object({isFlexible:z.boolean().optional(),autoSchedule:z.boolean().optional(),weeklyFrequency:z.number().int().min(1).max(7).optional(),sessionMinutes:z.number().int().min(15).max(240).optional()}),
+ metas:z.object({autoSchedule:z.boolean().optional(),weeklyFrequency:z.number().int().min(1).max(7).optional(),sessionMinutes:z.number().int().min(15).max(240).optional()}),
+ trabalho:z.object({}),
+};
+// Reuses existing rows (same weekday first) so execution history stays attached to them.
+async function replaceSchedules(tx,model,foreignKey,ownerId,rows,today){
+ const current=await tx[model].findMany({where:{[foreignKey]:ownerId},orderBy:[{dayOfWeek:'asc'},{startTime:'asc'}]});
+ const free=[...current],pairs=[];
+ for(const row of rows){const same=free.find(old=>old.dayOfWeek===row.dayOfWeek);if(same){free.splice(free.indexOf(same),1);pairs.push([same,row])}else pairs.push([null,row])}
+ for(const pair of pairs)if(!pair[0]&&free.length)pair[0]=free.shift();
+ const changed=[];
+ for(const [old,row] of pairs){
+  const data={dayOfWeek:row.dayOfWeek,startTime:row.startTime,endTime:row.endTime,...(model==='workSchedule'?{breakStart:row.breakStart||null,breakEnd:row.breakEnd||null}:{})};
+  if(!old){await tx[model].create({data:{...data,[foreignKey]:ownerId}});continue}
+  if(old.dayOfWeek!==data.dayOfWeek||old.startTime!==data.startTime||old.endTime!==data.endTime||model==='workSchedule'&&(old.breakStart!==data.breakStart||old.breakEnd!==data.breakEnd)){await tx[model].update({where:{id:old.id},data});changed.push(old.id)}
+ }
+ if(free.length){await tx[model].deleteMany({where:{id:{in:free.map(row=>row.id)}}})}
+ if(model==='routineSchedule'&&changed.length)await tx.routineExecution.deleteMany({where:{routineScheduleId:{in:changed},status:'PENDING',date:{gte:new Date(`${today}T00:00:00Z`)}}});
+}
+async function applyUpdate(tx,userId,item,today){
+ const config=configurations[item.kind];if(!config||!updateFields[item.kind])throw Error('Atualização inválida na proposta.');
+ const record=await tx[config.model].findFirst({where:{id:item.id,userId}});
+ if(!record)throw Error('Um cadastro da proposta não existe mais. Nenhuma alteração foi aplicada.');
+ const fields=updateFields[item.kind].parse(Object.fromEntries(Object.entries(item.data).filter(([key])=>key in updateFields[item.kind].shape)));
+ if(Object.keys(fields).length)await tx[config.model].update({where:{id:record.id},data:fields});
+ if(item.kind==='metas'){
+  const schema=config.children.sessions[2];
+  for(const row of z.array(z.record(z.string(),z.unknown())).max(30).parse(item.data.sessions||[]).map(row=>schema.parse(row))){
+   const date=new Date(`${row.date}T00:00:00Z`);
+   if(!(await tx.goalPlanSession.findFirst({where:{goalId:record.id,date}})))await tx.goalPlanSession.create({data:{goalId:record.id,date,startTime:row.startTime,endTime:row.endTime,status:'PENDING'}});
+  }
+ } else {
+  const [model,foreignKey,schema]=config.children.schedules;
+  const rows=z.array(z.record(z.string(),z.unknown())).max(30).parse(item.data.schedules||[]).map(row=>schema.parse(row));
+  for(let a=0;a<rows.length;a++)for(let b=a+1;b<rows.length;b++)if(rows[a].dayOfWeek===rows[b].dayOfWeek&&rows[a].startTime<rows[b].endTime&&rows[b].startTime<rows[a].endTime)throw Error(`Há horários sobrepostos em ${labelOf(item)}.`);
+  if(rows.length||item.kind==='trabalho')await replaceSchedules(tx,model,foreignKey,record.id,rows,today);
+ }
+ return {kind:item.kind,id:record.id,title:labelOf(item),updated:true};
+}
 async function applySetup(userId,id){
  return prisma.$transaction(async tx=>{
   const claim=await tx.aiRecommendation.updateMany({where:{id,userId,action:'CREATE_PLAN',status:'PENDING'},data:{status:'APPROVED',approvedAt:new Date()}});
   if(!claim.count)throw Error('Proposta pendente não encontrada ou já aplicada.');
-  const proposal=await tx.aiRecommendation.findUnique({where:{id}});const items=validateItems(proposal.changes.items);const created=[];
+  const proposal=await tx.aiRecommendation.findUnique({where:{id}});
+  const all=proposal.changes.items||[],updates=all.filter(item=>item.op==='update'),creates=all.filter(item=>item.op!=='update').map(({kind,data})=>({kind,data}));
+  if(proposal.changes.fingerprint){const ctx=await require('./routinePlanner.service').templateContext(userId,tx);if(ctx.fingerprint!==proposal.changes.fingerprint)throw Error('Seus cadastros mudaram desde a proposta. Envie a mensagem de novo para eu recalcular os horários.')}
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const items=creates.length?validateItems(creates):[];const created=[];
+  for(const item of updates)created.push(await applyUpdate(tx,userId,item,today));
   for(const item of items){
    const config=configurations[item.kind],data={...item.data},nameKey=data.name?'name':'title';
    const existing=await tx[config.model].findFirst({where:{userId,[nameKey]:{equals:data[nameKey],mode:'insensitive'}}});

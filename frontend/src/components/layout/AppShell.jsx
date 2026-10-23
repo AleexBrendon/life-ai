@@ -7,6 +7,7 @@ import HydrationAlarm from './HydrationAlarm';
 import { UserPreferencesProvider } from '../../lib/UserPreferences';
 import { NotificationFeedbackProvider } from '../../lib/NotificationFeedback';
 import NotificationToasts from './NotificationToasts';
+import WeeklyAssistantFloat from '../ai/WeeklyAssistantFloat';
 
 function AppShell({ onLogout }) {
   return (
@@ -23,6 +24,7 @@ function AppShell({ onLogout }) {
 
         <MobileNavigation />
         <NotificationToasts />
+        <WeeklyAssistantFloat />
       </div>
     </div></NotificationFeedbackProvider></UserPreferencesProvider>
   );

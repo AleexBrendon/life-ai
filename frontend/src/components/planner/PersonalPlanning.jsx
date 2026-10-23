@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+const DebtPurchasePlanning=lazy(()=>import('../finance/DebtPurchasePlanning'));
+import FinanceCategory from '../finance/FinanceCategory';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Droplets, Plus, Pencil, Trash2, Wallet, PiggyBank, ShoppingBag, TrendingUp } from 'lucide-react';
 import api from '../../lib/api';
 import { Dialog } from './EntityManager';
@@ -10,7 +12,7 @@ const liters = ml => `${(ml / 1000).toLocaleString('pt-BR', { maximumFractionDig
 function usePersonal(path) {
  const [data, setData] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
  const load = useCallback(async () => { const response = await api.get(`/personal/${path}`); setData(response.data); }, [path]);
- useEffect(() => { let active = true; const refresh = () => api.get(`/personal/${path}`).then(r => { if (active) setData(r.data); }).catch(e => { if (active) setError(message(e)); }); refresh(); if (path === 'water') window.addEventListener('lifeai:water-updated', refresh); const timer = path === 'water' ? setInterval(refresh, 60000) : null; return () => { active = false; if (timer) clearInterval(timer); if (path === 'water') window.removeEventListener('lifeai:water-updated', refresh); }; }, [path]);
+ useEffect(() => { let active = true; const refresh = () => api.get(`/personal/${path}`).then(r => { if (active) setData(r.data); }).catch(e => { if (active) setError(message(e)); }); refresh(); window.addEventListener(path === 'water'?'lifeai:water-updated':'lifeai:finance-updated', refresh); const timer = path === 'water' ? setInterval(refresh, 60000) : null; return () => { active = false; if (timer) clearInterval(timer); window.removeEventListener(path === 'water'?'lifeai:water-updated':'lifeai:finance-updated', refresh); }; }, [path]);
  async function act(method, endpoint, body) {
   setBusy(true); setError('');
   try { await api[method](`/personal/${endpoint}`, body); await load(); if (path === 'water') window.dispatchEvent(new Event('lifeai:water-updated')); return true; }
@@ -54,19 +56,19 @@ export function WaterPlanning() {
 }
 
 const categories = [['INCOME', 'Rendas', TrendingUp], ['EXPENSE', 'Despesas', Wallet], ['PURCHASE', 'Compras planejadas', ShoppingBag], ['BOX', 'Caixinhas', PiggyBank]];
-const blankFinance = kind => ({ kind, title: '', amount: '', saved: '0', monthly: '', installments: 1 });
+const blankFinance = kind => ({ kind, category:'Outros', isVariable:false, title: '', amount: '', saved: '0', monthly: '', installments: 1 });
 function MoneyField({ label, value, onChange, required = false }) {
  return <label className="studio-field"><span>{label}{required && ' *'}</span><div className="personal-money-input"><span>R$</span><input type="number" inputMode="decimal" min={required ? '0.01' : '0'} max="1000000" step="0.01" required={required} value={value} onChange={e => onChange(e.target.value)}/></div></label>;
 }
-export function FinancePlanning() {
- const state = usePersonal('finance');
+export function FinancePlanning({onSchedule,month} = {}) {
+ const state = usePersonal(month?'finance?month='+month:'finance');
  const { data, busy, act } = state;
  const [editor, setEditor] = useState(null), [deleting, setDeleting] = useState(null);
  const set = (key, value) => setEditor(current => ({ ...current, [key]: value }));
  function edit(row) { setEditor({ ...row, amount: (row.amountCents / 100).toFixed(2), saved: (row.savedCents / 100).toFixed(2), monthly: (row.monthlyCents / 100).toFixed(2) }); }
  async function save(e) {
   e.preventDefault();
-  const body = { kind: editor.kind, title: editor.title, amountCents: Math.round(Number(editor.amount) * 100), savedCents: Math.round(Number(editor.saved || 0) * 100), monthlyCents: Math.round(Number(editor.monthly || 0) * 100), installments: Number(editor.installments) };
+  const body = { category:editor.category, kind: editor.kind, isVariable:editor.kind==='INCOME'&&!!editor.isVariable, title: editor.title, amountCents: Math.round(Number(editor.amount) * 100), savedCents: Math.round(Number(editor.saved || 0) * 100), monthlyCents: Math.round(Number(editor.monthly || 0) * 100), installments: Number(editor.installments) };
   if (await act(editor.id ? 'put' : 'post', `finance${editor.id ? `/${editor.id}` : ''}`, body)) setEditor(null);
  }
  const objective = editor && ['BOX', 'PURCHASE'].includes(editor.kind);
@@ -79,15 +81,20 @@ export function FinancePlanning() {
  <div className="finance-record-list" role="region" aria-labelledby={`finance-heading-${kind}`} tabIndex={0}>
  {!data.entries.some(row => row.kind === kind) && <p className="studio-inline-empty">Nenhum registro. Use + para começar.</p>}
  {data.entries.filter(row => row.kind === kind).map(row => <article className="finance-record" key={row.id}><div className="finance-record-heading"><strong>{row.title}</strong><div><button className="studio-icon" aria-label={`Editar ${row.title}`} disabled={busy} onClick={() => edit(row)}><Pencil size={15}/></button><button className="studio-icon" aria-label={`Excluir ${row.title}`} disabled={busy} onClick={() => setDeleting(row)}><Trash2 size={15}/></button></div></div>
- <h4>{money(row.amountCents)}{['INCOME', 'EXPENSE'].includes(kind) && <small> / mês</small>}</h4>
+ <small>{row.category||'Outros'}</small><h4>{money(row.amountCents)}{['INCOME', 'EXPENSE'].includes(kind) && <small>{row.scheduledBill?' / vencimento':' / mês'}</small>}</h4>
+ {row.scheduledBill&&<p className="personal-note">Primeiro vencimento: {new Date(row.scheduledBill.firstDueDate).toLocaleDateString('pt-BR',{timeZone:'UTC'})}{row.budgetAmountCents===0?' · sem vencimento no mês selecionado':''}</p>}
+ {onSchedule&&['INCOME','EXPENSE'].includes(kind)&&<button type="button" className="studio-button secondary" onClick={()=>onSchedule(row)}>Adicionar vencimento</button>}
  {['PURCHASE', 'BOX'].includes(kind) && <><progress aria-label={`Progresso de ${row.title}`} value={row.savedCents} max={row.amountCents}/><p>{money(row.savedCents)} guardados · faltam {money(row.remainingCents)}</p>
  {row.remainingCents === 0 ? <span className="studio-badge done">Objetivo atingido</span> : <><p>{kind === 'PURCHASE' ? `${row.installments}× de ${money(row.allocationCents)} por mês` : `${money(row.allocationCents)} reservados por mês${row.plannedMonths ? ` · cerca de ${row.plannedMonths} meses para a meta` : ''}`}</p>
  <span className={`finance-fit ${row.fits ? '' : 'warning'}`}>{row.allocationCents === 0 ? 'Defina um valor mensal para avançar' : row.fits ? 'Cabe no planejamento atual' : 'Acima do saldo disponível'}</span>
  {kind === 'PURCHASE' && <p className="personal-note">{row.minimumMonths === null ? 'Sem saldo disponível para esta compra após os outros compromissos.' : `Prazo mínimo estimado: ${row.minimumMonths} mês(es), destinando até ${money(row.capacityCents)}/mês, após as outras reservas.`}</p>}</>}
  </>}</article>)}</div></section>)}</div></>}
+ <Suspense fallback={<p role="status">Carregando planejamento de atrasos…</p>}><DebtPurchasePlanning/></Suspense>
  {editor && <Dialog title={editor.id ? 'Editar registro financeiro' : 'Novo registro financeiro'} subtitle="Informe os valores do seu planejamento mensal." busy={busy} onClose={() => setEditor(null)}><form onSubmit={save}><fieldset className="studio-editor-body" disabled={busy}><div className="studio-form-grid">
  <label className="studio-field"><span>Tipo *</span><select value={editor.kind} onChange={e => setEditor({ ...blankFinance(e.target.value), id: editor.id, title: editor.title })}>{categories.map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}</select></label>
  <label className="studio-field"><span>Nome *</span><input required maxLength={100} placeholder={editor.kind === 'BOX' ? 'Ex.: Reserva de emergência' : editor.kind === 'PURCHASE' ? 'Ex.: Notebook' : editor.kind === 'INCOME' ? 'Ex.: Salário líquido' : 'Ex.: Aluguel'} value={editor.title} onChange={e => set('title', e.target.value)}/></label>
+ {editor.kind==='INCOME'&&<label className="studio-field check wide"><input type="checkbox" checked={!!editor.isVariable} onChange={e=>set('isVariable',e.target.checked)}/><span>Renda variável ou incerta</span></label>}
+ <FinanceCategory kind={editor.kind} value={editor.category} onChange={value=>set('category',value)}/>
  <MoneyField required label={objective ? 'Valor do objetivo' : 'Valor mensal'} value={editor.amount} onChange={value => set('amount', value)}/>
  {objective && <MoneyField label="Já guardado / entrada" value={editor.saved} onChange={value => set('saved', value)}/>}
  {editor.kind === 'PURCHASE' && <label className="studio-field"><span>Dividir o restante em quantos meses? *</span><input type="number" min="1" max="360" step="1" required value={editor.installments} onChange={e => set('installments', e.target.value)}/></label>}

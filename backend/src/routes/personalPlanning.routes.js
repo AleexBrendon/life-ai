@@ -12,6 +12,7 @@ const planSchema = z.object({
 }).refine(data => minutes(data.endTime) > minutes(data.startTime), { message: 'O fim dos lembretes deve ser depois do início.' });
 const cents = z.number().int().min(0).max(100000000);
 const financeSchema = z.object({
+ isVariable:z.boolean().default(false),category:z.string().trim().min(1).max(60).default('Outros'),
  kind: z.enum(['INCOME', 'EXPENSE', 'PURCHASE', 'BOX']), title: z.string().trim().min(1).max(100),
  amountCents: cents.refine(value => value > 0), savedCents: cents.default(0), monthlyCents: cents.default(0),
  installments: z.number().int().min(1).max(360).default(1),
@@ -64,14 +65,22 @@ router.delete('/water/intakes/:id', route(async (req, res) => {
  res.json({ success: true });
 }));
 router.get('/finance', route(async (req, res) => {
- const entries = await prisma.financeEntry.findMany({ where: { userId: req.user.id }, orderBy: { createdAt: 'asc' } });
- res.json({ success: true, data: financeSummary(entries) });
+ const clock=await today(req.user.id),month=req.query.month||clock.slice(0,7);
+ if(typeof month!=='string'||!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))throw Object.assign(new Error('Mês inválido.'),{status:400});
+ const entries = await prisma.financeEntry.findMany({ where: { userId: req.user.id }, include:{scheduledBill:{include:{occurrences:true}}}, orderBy: { createdAt: 'asc' } });
+ res.json({ success: true, data: {...financeSummary(entries,{month,today:clock}),month} });
 }));
 async function saveFinance(req, res) {
  const data = parse(financeSchema, req.body);
  if (['INCOME', 'EXPENSE'].includes(data.kind)) { data.savedCents = 0; data.monthlyCents = 0; data.installments = 1; }
  if (req.params.id) {
-  const result = await prisma.financeEntry.updateMany({ where: { id: id(req), userId: req.user.id }, data });
+  const result = await prisma.$transaction(async tx=>{
+   const linked=await tx.financeBill.findFirst({where:{sourceEntryId:id(req),userId:req.user.id}});
+   if(linked&&linked.kind!==data.kind)throw Object.assign(new Error('Este registro possui vencimento. Preserve o tipo ou exclua a conta agendada antes de alterar o tipo.'),{status:400});
+   const result=await tx.financeEntry.updateMany({where:{id:id(req),userId:req.user.id},data});
+   if(result.count&&linked)await tx.financeBill.update({where:{id:linked.id},data:{title:data.title,category:data.category,amountCents:data.amountCents,isVariable:data.isVariable}});
+   return result;
+  });
   if (!result.count) notFound();
   return res.json({ success: true });
  }
