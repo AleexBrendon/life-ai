@@ -13,9 +13,9 @@ it('renda variável em contas entra somente no mês em que está recebida',()=>{
 it('a marcação explícita de renda variável prevalece mesmo quando o nome parece fixo',()=>{
  const budget=buildBudget({bills:[],entries:[{...entry(1,'INCOME',500000,'Pagamento do cliente'),isVariable:true},entry(2,'INCOME',200000,'Salário')],today:'2026-10-21',request});expect(budget.months[0].incomeCents).toBe(200000);
 });
-it('não conta despesas duplicadas duas vezes e inclui compras e caixinhas',()=>{
+it('soma despesas independentes e inclui compras e caixinhas',()=>{
  const bill={id:1,title:'Aluguel',kind:'EXPENSE',monthly:true,firstDueDate:new Date('2026-10-25'),amountCents:100000,occurrences:[]};
- const budget=buildBudget({bills:[bill],entries:[entry(1,'INCOME',500000,'Salário'),entry(2,'EXPENSE',200000,'Despesas'),{...entry(3,'BOX',1000000,'Reserva'),monthlyCents:50000}],today:'2026-10-21',request});expect(budget.months[0]).toMatchObject({expenseCents:200000,allocatedCents:50000,capacityCents:200000});
+ const budget=buildBudget({bills:[bill],entries:[entry(1,'INCOME',500000,'Salário'),entry(2,'EXPENSE',200000,'Despesas'),{...entry(3,'BOX',1000000,'Reserva'),monthlyCents:50000}],today:'2026-10-21',request});expect(budget.months[0]).toMatchObject({expenseCents:300000,allocatedCents:50000,capacityCents:100000});
 });
 it('não recomenda parcelas sem taxa conhecida, nem com contas vencidas',()=>{
  const budget={months:Array.from({length:24},()=>({capacityCents:50000})),arrearsCents:0};
@@ -23,7 +23,7 @@ it('não recomenda parcelas sem taxa conhecida, nem com contas vencidas',()=>{
  expect(strategiesFor(request,{...budget,arrearsCents:100},120000)).toEqual([]);
 });
 it('não duplica uma conta vencida do mês ao combinar contas com orçamento antigo',()=>{
- const bill={id:1,title:'Conta',kind:'EXPENSE',monthly:true,firstDueDate:new Date('2026-10-10'),amountCents:100000,occurrences:[]};
+ const bill={id:1,sourceEntryId:2,title:'Conta',kind:'EXPENSE',monthly:true,firstDueDate:new Date('2026-10-10'),amountCents:100000,occurrences:[]};
  const budget=buildBudget({bills:[bill],entries:[entry(1,'INCOME',500000,'Salário'),entry(2,'EXPENSE',100000,'Conta')],today:'2026-10-21',request});expect(budget.arrearsCents).toBe(100000);expect(budget.months[0].capacityCents).toBe(350000);
 });
 it('acrescenta bônus recebido à renda fixa antiga sem duplicar o salário entre fontes',()=>{
@@ -38,5 +38,9 @@ it('escolhe o menor prazo compatível em todos os meses e considera juros',()=>{
 it('impede entrada maior que o dinheiro declarado e não ignora déficits ao projetar poupança',()=>{
  expect(()=>requestSchema.parse({...request,availableSavingsCents:100,downPaymentCents:101})).toThrow();
  const budget={months:[{capacityCents:-10000},{capacityCents:10000},{capacityCents:10000}],arrearsCents:0};
- expect(strategiesFor({...request,interestRatePercent:null},budget,10000).find(s=>s.id==='cash').months).toBe(3);
+ expect(strategiesFor({...request,interestRatePercent:null},budget,10000).find(s=>s.id==='cash')).toBeUndefined();
+});
+it('não sugere comprar agora se o dinheiro faltará nos meses seguintes',()=>{
+ const budget={months:[{capacityCents:50000},{capacityCents:-200000}],arrearsCents:0};
+ expect(strategiesFor({...request,availableSavingsCents:120000},budget,120000)).toEqual([]);
 });

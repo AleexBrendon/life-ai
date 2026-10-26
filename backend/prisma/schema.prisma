@@ -169,6 +169,10 @@
     workType String?
     location String?
     isActive Boolean @default(true)
+    preparationMinutes Int?
+    outboundMinutes Int?
+    returnMinutes Int?
+    travelDuringBreak Boolean @default(false)
     status   String  @default("TODO")
 
     user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -256,6 +260,11 @@
     type     String
     isActive Boolean @default(true)
     isFlexible Boolean @default(false)
+    locationMode String?
+    preparationMinutes Int?
+    outboundMinutes Int?
+    returnMinutes Int?
+    travelDuringBreak Boolean @default(false)
     autoSchedule Boolean @default(false)
     weeklyFrequency Int @default(3)
     sessionMinutes Int @default(30)

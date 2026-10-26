@@ -102,3 +102,27 @@ html[data-theme=dark] .assistant-plan-review summary .assistant-plan-update { ba
 html[data-theme=dark] :is(.routine-week-scroll,.routine-month-day) { background:#1e2823;border-color:#3b4c3f; }html[data-theme=dark] .routine-week-head { background:#232e28;border-color:#3b4c3f; }html[data-theme=dark] .routine-week-day { border-color:#2f3c33; }html[data-theme=dark] .routine-week-day > i { border-color:#28332c; }
 html[data-theme=dark] :is(.routine-block.trabalho,.routine-block.fixo) { background:#2c353c;color:#c7d1d8;border-color:#3a454d; }html[data-theme=dark] :is(.routine-block.rotinas,.routine-chip.rotinas) { background:#24402f;color:#b9e3c7;border-color:#2f5440; }html[data-theme=dark] :is(.routine-block.metas,.routine-chip.metas) { background:#352d4a;color:#d5c9f2;border-color:#463b61; }
 html[data-theme=dark] .monthly-confirm-bar { background:#1f2c24;border-color:#3b4c3f; }html[data-theme=dark] :is(.routine-legend,.routine-preview-summary,.monthly-confirm-bar span,.routine-week-head strong,.routine-month-name) { color:#9fb3a3; }html[data-theme=dark] .routine-legend i.new { background:#1e2823; }
+
+/* Full-height weekly cards preserve short appointments and readable titles. */
+.routine-week-board{display:grid;grid-template-columns:repeat(7,minmax(178px,1fr));gap:10px;padding:12px;min-width:1320px;align-items:start}
+.routine-board-day{min-width:0}
+.routine-board-day>header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 12px;gap:8px;border-bottom:1px solid var(--studio-border,#dce5df);margin-bottom:10px}
+.routine-board-day>header strong{font-size:14px}.routine-board-day>header span{font-size:11px;color:var(--studio-muted,#64766d)}
+.routine-board-list{display:grid;gap:9px}
+.routine-board-card{border:1px solid #cdded4;border-left:3px solid #579b79;border-radius:12px;background:#f2f8f4;padding:11px;display:grid;gap:8px;min-width:0}
+.routine-board-card time{font-size:12px;font-variant-numeric:tabular-nums;color:#466757}
+.routine-board-card>strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere;color:#203e30;font-weight:600}
+.routine-board-card>footer{display:flex;justify-content:space-between;gap:6px;background:transparent;padding:0;font-size:10px;color:#627569;border:0}
+.routine-board-card.metas{background:#f5f2fb;border-color:#ddd5eb;border-left-color:#9b80c4}
+.routine-board-card.fixo,.routine-board-card.trabalho{background:#f2f5f7;border-color:#d9e0e5;border-left-color:#8297a5}
+.routine-board-card.new,.routine-board-card.moved{border-left-color:#c29138}
+.routine-board-previous{font-size:11px;line-height:1.5;color:var(--studio-muted,#64766d);padding:6px}
+.routine-board-previous summary{cursor:pointer}.routine-board-previous p{padding:8px 0;margin:0}
+html[data-theme=dark] .routine-board-day>header{border-color:#3a4640}html[data-theme=dark] .routine-board-day>header span,html[data-theme=dark] .routine-board-previous{color:#b6c9bf}
+html[data-theme=dark] .routine-board-card{background:#1e3029;border-color:#354a40;border-left-color:#72b896}
+html[data-theme=dark] .routine-board-card.metas{background:#2b2636;border-color:#463b56;border-left-color:#b79bdc}
+html[data-theme=dark] .routine-board-card.fixo,html[data-theme=dark] .routine-board-card.trabalho{background:#252e34;border-color:#3a464e;border-left-color:#93aab9}
+html[data-theme=dark] .routine-board-card>strong{color:#eef3ef}html[data-theme=dark] .routine-board-card time,html[data-theme=dark] .routine-board-card>footer{color:#b6c9bf}
+html[data-theme=dark] .routine-board-card.new,html[data-theme=dark] .routine-board-card.moved{border-left-color:#dfb669}
+.studio-calendar-grid.week .studio-calendar-event{white-space:normal;display:block;font-size:12px;line-height:1.5;padding:8px;border-radius:8px;overflow-wrap:anywhere;-webkit-line-clamp:unset;max-height:none}
+.studio-calendar-grid.week .studio-calendar-event b{display:block;font-size:11px;margin-bottom:3px}

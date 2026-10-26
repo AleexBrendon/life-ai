@@ -33,6 +33,7 @@ const createJob = async (req, res) => {
         position,
         workType,
         location,
+        ...Object.fromEntries(['preparationMinutes','outboundMinutes','returnMinutes','travelDuringBreak'].filter(key=>validation.data[key]!==undefined).map(key=>[key,validation.data[key]])),
         ...(isActive !== undefined && { isActive }),
       },
     });

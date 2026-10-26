@@ -35,7 +35,8 @@ test('modal de lembretes recupera o estado salvo e envia o status escolhido',()=
 });
 test('trabalho agrupa tarefas sem status próprio ou conclusão herdada na agenda',()=>{
  assert.equal(entities.trabalho.fields.some(field=>field.key==='status'),false);
- assert.equal(entities.trabalho.children.tasks.fields.some(field=>field.key==='status'),true);
+ // O status da tarefa é alterado no Kanban, e não no formulário do trabalho.
+ assert.equal(entities.trabalho.children.tasks.fields.some(field=>field.key==='status'),false);
  const resources={trabalho:[{id:1,name:'Empresa',status:'COMPLETED',isActive:true,schedules:[{id:8,dayOfWeek:2,startTime:'08:00',endTime:'12:00'}]}]};
  assert.equal(scheduledEvents(resources,'2026-10-20')[0].status,'PENDING');
 });

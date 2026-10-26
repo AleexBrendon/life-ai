@@ -1,10 +1,10 @@
+const {projectMonths}=require('./financialProjection.service');
 const {isDeepStrictEqual}=require('node:util');
 const {z}=require('zod');
 const prisma=require('../database/prisma');
-const {localClock,financeSummary}=require('./personalPlanning.service');
+const {localClock}=require('./personalPlanning.service');
 const {key,monthRows,recurrenceOf}=require('./financeBills.service');
 const inputSchema=z.object({purchaseIds:z.array(z.number().int().positive()).min(1,'Selecione pelo menos uma compra.').max(30).transform(ids=>[...new Set(ids)]),availableSavingsCents:z.number().int().min(0).max(100000000).default(0),reserveCents:z.number().int().min(0).max(100000000).default(0)});
-const variable=row=>row.isVariable||/freela|bônus|bonus|comiss|extra/i.test(row.title||'');
 function shift(month,n){const d=new Date(month+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+n);return key(d).slice(0,7)}
 function arrearsFor(bills,today){
  const rows=new Map(),month=today.slice(0,7);
@@ -23,16 +23,7 @@ function simulate({bills,entries,today},request){
  const arrears=arrearsFor(bills,today),overdueKeys=new Set(arrears.map(row=>row.key));
  const debtCents=arrears.reduce((sum,row)=>sum+row.amountCents,0);
  const purchaseCents=purchases.reduce((sum,row)=>sum+Math.max(0,row.amountCents-row.savedCents),0);
- const linkedIds=new Set(bills.map(b=>b.sourceEntryId).filter(Boolean));
- const independent=entries.filter(e=>!linkedIds.has(e.id));
- const allocations=financeSummary(entries.filter(e=>!request.purchaseIds.includes(e.id))).allocatedCents;
- const months=Array.from({length:24},(_,i)=>{
-  const month=shift(today.slice(0,7),i),rows=monthRows(bills,month,today).filter(r=>r.dueDate.startsWith(month));
-  const incomeCents=independent.filter(e=>e.kind==='INCOME'&&!variable(e)).reduce((sum,e)=>sum+e.amountCents,0)+rows.filter(r=>r.kind==='INCOME'&&(!variable(r.bill)&&recurrenceOf(r.bill)!=='ONCE'||r.status==='PAID')).reduce((sum,r)=>sum+r.amountCents,0);
-  const expenseCents=independent.filter(e=>e.kind==='EXPENSE').reduce((sum,e)=>sum+e.amountCents,0)+rows.filter(r=>r.kind==='EXPENSE'&&!overdueKeys.has(r.key)).reduce((sum,r)=>sum+r.amountCents,0);
-  const reserveCents=Math.max(request.reserveCents,Math.ceil(incomeCents*.1));
-  return {month,incomeCents,expenseCents,allocatedCents:allocations,reserveCents,capacityCents:incomeCents-expenseCents-allocations-reserveCents};
- });
+ const months=projectMonths({bills,entries,today,reserveCents:request.reserveCents,excludedPurchaseIds:request.purchaseIds,excludedExpenseKeys:overdueKeys});
  const options=[];
  if(purchaseCents>0)for(const [id,title,ratio]of [['priority','Quitar atrasos e depois comprar',1],['breathing','Preservar mais folga mensal',.7]]){
   let cash=request.availableSavingsCents,debt=debtCents,buyMonth=null,debtMonth=debt===0?today.slice(0,7):null,valid=true;const schedule=[];

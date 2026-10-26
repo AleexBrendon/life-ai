@@ -1,3 +1,4 @@
+import DateRangeFilter from '../planner/DateRangeFilter';
 import {useEffect,useState} from 'react';
 import {ResponsiveContainer,AreaChart,Area,XAxis,YAxis,CartesianGrid,Tooltip,PieChart,Pie,Cell} from 'recharts';
 import {Activity,CheckCheck,Clock3,CalendarDays,BarChart3} from 'lucide-react';
@@ -7,13 +8,14 @@ const weekdays=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const formatMinutes=n=>`${Math.floor(n/60)}h ${String(n%60).padStart(2,'0')}min`;
 const formatDate=key=>new Date(`${key}T12:00:00Z`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',timeZone:'UTC'});
 export default function DashboardCharts(){
- const [days,setDays]=useState(7),[data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[revision,setRevision]=useState(0);
- useEffect(()=>{let active=true;setLoading(current=>!data||current);setError('');api.get('/dashboard/insights',{params:{days}}).then(r=>{if(active)setData(r.data)}).catch(()=>{if(active)setError('Não foi possível carregar os gráficos.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[days,revision]);
+ const [range,setRange]=useState({days:7}),[data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[revision,setRevision]=useState(0);
+ useEffect(()=>{let active=true;setLoading(current=>!data||current);setError('');api.get('/dashboard/insights',{params:range}).then(r=>{if(active)setData(r.data)}).catch(()=>{if(active)setError('Não foi possível carregar os gráficos.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[range,revision]);
  useEffect(()=>{const refresh=()=>setRevision(value=>value+1);window.addEventListener('lifeai:agenda-updated',refresh);window.addEventListener('lifeai:tasks-updated',refresh);return()=>{window.removeEventListener('lifeai:agenda-updated',refresh);window.removeEventListener('lifeai:tasks-updated',refresh)}},[]);
  // Running Kanban timers keep adding time, so the totals refresh every minute.
  useEffect(()=>{const timer=setInterval(()=>setRevision(value=>value+1),60000);return()=>clearInterval(timer)},[]);
+ const days=data?.days||range.days||7;
  const max=data?Math.max(1,...data.heatmap.flatMap(row=>row.hours)):1;
- return <section className="insights-section" aria-label="Gráficos de acompanhamento"><header className="insights-heading"><div><span className="studio-eyebrow">SEUS PADRÕES</span><h2>Histórico de atividades</h2><p>Conclusões de rotinas, lembretes e metas, e o tempo cronometrado nas tarefas do trabalho.</p></div><label><span>Período</span><select value={days} onChange={e=>setDays(Number(e.target.value))}>{[[7,'Últimos 7 dias'],[14,'Últimos 14 dias'],[42,'Últimas 6 semanas']].map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label></header>
+ return <section className="insights-section" aria-label="Gráficos de acompanhamento"><header className="insights-heading"><div><span className="studio-eyebrow">SEUS PADRÕES</span><h2>Histórico de atividades</h2><p>Conclusões de rotinas, lembretes e metas, e o tempo cronometrado nas tarefas do trabalho.</p></div><DateRangeFilter value={range} onChange={setRange}/></header>
  {loading?<p className="studio-inline-empty" role="status">Carregando seu histórico...</p>:error?<p className="studio-error" role="alert">{error}<button onClick={()=>setRevision(r=>r+1)}>Tentar novamente</button></p>:data&&<>
  <div className="insights-metrics">{[[Activity,'Conclusão',`${data.summary.rate}%`,'dos registros do período'],[CheckCheck,'Concluídos',data.summary.completed,`de ${data.summary.total} registros`],[Clock3,'Tempo em tarefas',formatMinutes(data.summary.minutes),'cronometrado no Kanban do trabalho'],[CalendarDays,'Dias com registros',data.summary.activeDays,`no período de ${data.days} dias`]].map(([Icon,label,value,note])=><article key={label}><span><Icon size={20}/></span><div><h3>{label}</h3><strong>{value}</strong><p>{note}</p></div></article>)}</div>
  {!data.summary.total&&!data.summary.minutes?<div className="studio-empty"><BarChart3 size={30}/><h3>Sem registros neste período</h3><p>Conclua rotinas, registre sessões de metas ou inicie uma tarefa no Kanban para acompanhar seus padrões aqui.</p></div>:<div className="insights-charts">

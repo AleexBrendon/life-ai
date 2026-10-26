@@ -74,6 +74,7 @@ async function proposeFromConversation(userId,{message,previousProposalId}){
 async function respond(userId,input){
  const message=String(input.message||'').trim(),intent=intentOf(message);
  if(intent==='shopping')return {message:'Abra a análise de compras para pesquisar os anúncios e calcular uma estratégia com seu orçamento.',mode:'shopping',query:message};
+ if(/financ|salario|despesas|receitas|contas|caixinh|dividas/.test(normalize(message))&&/analis|analise|avali|revis|planej|saldo|quanto|situacao/.test(normalize(message)))return require('./purchaseAdvisor.service').assessFinances(userId);
  if(/\b(?:tirar|tire|remov\w*|exclu\w*|apag\w*|deixar de)\b/.test(normalize(message))&&interpret(message).removal)return {message:'Por segurança, eu não excluo cadastros pela conversa. Para remover uma rotina ou um horário, abra Planejamento, edite o item e salve. Se quiser, depois peça “remonte minha rotina” para eu reorganizar o restante.'};
  if(intent==='week'){
   const {localClock}=require('./personalPlanning.service');
@@ -83,6 +84,7 @@ async function respond(userId,input){
   const weeklyProposal=await require('./weeklyPlanner.service').proposeWeek(userId,{date,message});
   return {message:weeklyProposal.reason,weeklyProposal};
  }
+ if(intent==='build'&&/avali|reavali|revis|analise|mensal|mes\b|ciclo/.test(normalize(message))){const monthlyProposal=await planner.proposeMonth(userId,{message});return {message:monthlyProposal.reason,monthlyProposal}}
  const setup=await proposeFromConversation(userId,{message,previousProposalId:input.previousProposalId});
  if(setup)return setup;
  if(intent==='build'){

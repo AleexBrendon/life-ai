@@ -579,3 +579,47 @@ Após criar ou editar atividades, use **Sugerir melhorias com dados atuais** ou 
 A análise consulta novamente rotinas, trabalhos, tarefas do Kanban, metas, lembretes e imprevistos. Mostra os nomes dos itens novos, alterados e removidos desde a última análise da mesma semana. Na primeira revisão, estabelece a referência para as próximas comparações. Abra **Ver todos os itens conferidos** para consultar o inventário.
 
 As alternativas são recalculadas para a semana escolhida. Cadastros sem horário são apontados para preenchimento; tarefas do Kanban não ganham horário automaticamente. Compromissos fixos permanecem preservados. Para permitir mudanças de horário em uma rotina, habilite **Permitir reorganização pela IA**. Os ajustes só são aplicados após aprovar uma alternativa. Se os cadastros mudarem depois da sugestão, gere uma nova análise antes de aprovar.
+
+### Precisão das análises de rotina e finanças
+
+Em **Planejamento → Rotinas** ou **Trabalho**, edite cada compromisso e informe o tempo para se arrumar, a ida e a volta, em minutos. A análise semanal e a mensal reservam esses intervalos além do horário da atividade. Zero confirma que não há tempo adicional; vazio significa que falta informação, e a análise mostra essa pendência.
+
+Em atividades divididas em blocos no mesmo dia, o preparo e a ida ficam antes do primeiro bloco e a volta depois do último. Marque a opção de voltar para casa entre os blocos ou no almoço somente se isso acontecer: nesse caso, os deslocamentos e o preparo também são reservados entre os blocos. Os tempos informados não são estimativas de trânsito em tempo real.
+
+A análise mensal continua usando uma **semana-modelo** para o ciclo indicado. Agora consulta também lembretes, imprevistos, sessões já marcadas fora do ciclo e ajustes pontuais. Esses compromissos bloqueiam o horário do respectivo dia da semana no modelo para evitar conflito em qualquer data; isso pode deixar menos espaço livre nas outras semanas. A tela informa essa limitação. A pontuação é uma comparação pelos critérios da simulação; não garante uma rotina ótima ou resultados de saúde. Nenhuma sugestão altera a agenda antes da aprovação.
+
+Na conversa, você pode pedir **“Avalie minha rotina semanal”**, **“Analise minha rotina mensal”** ou **“Analise minhas finanças”**. Cada pedido consulta os registros atuais. Quando nada mudou, alternativas iguais podem continuar sendo o resultado correto; a resposta deve explicar os critérios e impedimentos concretos.
+
+No financeiro, **Conferir itens e projeção mês a mês** mostra as receitas e despesas de cada mês e os valores comprometidos em compras, caixinhas e reserva. A análise:
+
+- usa o vínculo entre uma conta e seu registro de orçamento para evitar duplicação; registros independentes são somados;
+- respeita o primeiro vencimento, recorrência, adiamento e mês do pagamento confirmado;
+- inclui renda variável apenas quando recebida, sem antecipar freelancer e bônus futuros;
+- reduz o comprometimento projetado quando uma compra ou caixinha completa o valor restante;
+- verifica déficits posteriores à compra e exige nova análise se as condições da estratégia mudaram antes da confirmação.
+
+Os cálculos são projeções dos dados cadastrados. Não confirmam saldo bancário, saldo disponível em cada dia, limite do cartão, trânsito, juros ou valores ainda não informados. Revise os registros e gere novamente a análise após qualquer mudança.
+
+### Rotina remota ou presencial
+
+No cadastro ou edição da rotina, escolha **Remota** ou **Presencial**. Em remota, os campos de ida, volta e retorno entre blocos ficam ocultos; ao salvar, os deslocamentos são zerados e a IA não os inclui na agenda. O preparo continua opcional.
+
+Em presencial, informe os minutos de ida e volta; use 0 se não houver tempo de trajeto. Os valores ficam no banco e são usados nas análises semanal e mensal. Rotinas que já tinham deslocamento positivo foram identificadas como presenciais; as demais podem ser classificadas ao editar.
+
+### Seletores de data, hora e filtros de período
+
+Os campos de data abrem um calendário compacto sobre o formulário, sem aumentar o modal. Clique no mês ou ano do calendário para navegar. Use **Hoje** para selecionar a data atual; campos opcionais também permitem limpar a escolha. O financeiro usa o mesmo padrão para selecionar o mês de referência.
+
+Nos horários, escolha a hora e os minutos e clique em **Confirmar horário**. Há atalhos de cinco em cinco minutos e um campo para informar qualquer minuto exato. O formato é de 24 horas. Clique fora ou pressione Esc para fechar o seletor.
+
+Em **Dashboard → Histórico de atividades**, o filtro mantém os últimos sete dias como padrão. Os atalhos incluem hoje, 7, 15, 30, 90 dias e um ano. Para outro intervalo, escolha **De** e **Até** no calendário e clique em **Aplicar**. É possível consultar um único dia ou qualquer período passado de até **365 dias**, incluindo as duas datas. Datas futuras ficam indisponíveis nesse histórico.
+
+### Modelo da assistente e visualização semanal
+
+A configuração atual usa `nvidia/nemotron-3.5-super-vl:free` para conversa e preparação de cadastros. As reservas do provedor são modelos gratuitos com suporte a respostas JSON. A disponibilidade depende do OpenRouter; gratuito não garante ausência de filas ou limites.
+
+O modelo interpreta e explica. O planejador local continua validando horários, preparo, deslocamento e conflitos, e o sistema calcula os valores financeiros. A troca do modelo não substitui essas regras nem dispensa a aprovação das propostas.
+
+Em **Ver como fica → Semana**, consulte a grade de dias e horários. Role dentro do calendário para ver os demais horários e, em telas pequenas, os demais dias. Clique em uma atividade para abrir seus detalhes ou no cabeçalho do dia para ver a programação completa. Os horários anteriores das atividades movidas ficam disponíveis abaixo da grade.
+
+Em **Mês do ciclo**, cada dia apresenta até três atividades e indica quantas outras existem. Clique no dia para abrir outro modal com todos os itens, horários, duração e indicação de atividade nova, mantida, fixa ou alterada. Fechar esse modal retorna à sugestão sem salvar alterações.

@@ -114,3 +114,13 @@ it('sugere horários para rotinas e metas definidas pela IA e só salva após ap
  expect(schedules).toHaveLength(2);expect(new Set(schedules.map(s=>s.dayOfWeek)).size).toBe(2);expect(sessions).toHaveLength(3);
  const next=await api('post','/week/preview',{date},1);expect(next.status).toBe(200);expect(next.body.data.changes.options.every(o=>!o.additions.length)).toBe(true);
 });
+it('analisa finanças pelo chat consultando dados novos sem depender de resposta genérica',async()=>{
+ await prisma.financeEntry.create({data:{userId:users[1],kind:'INCOME',title:'Salário do teste',amountCents:500000}});
+ const first=await api('post','/chat',{message:'Analise minhas finanças'},1);
+ expect(first.status).toBe(200);expect(first.body.data.financeAssessment.months[0].incomeCents).toBe(500000);
+ await prisma.financeEntry.create({data:{userId:users[1],kind:'EXPENSE',title:'Despesa nova do teste',amountCents:50000}});
+ const fresh=await api('post','/chat',{message:'Reavalie minhas finanças'},1);
+ expect(fresh.body.data.financeAssessment.months[0].capacityCents).toBe(400000);
+ expect(fresh.body.data.financeAssessment.months[0].sources.some(row=>row.title==='Despesa nova do teste')).toBe(true);
+ expect(fresh.body.data.message).not.toBe(first.body.data.message);
+});

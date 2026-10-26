@@ -20,6 +20,7 @@ const createRoutine = async (req, res) => {
         userId: req.user.id,
         name,
         type,
+        ...Object.fromEntries(['locationMode','preparationMinutes','outboundMinutes','returnMinutes','travelDuringBreak'].filter(key=>validation.data[key]!==undefined).map(key=>[key,validation.data[key]])),
         ...(isFlexible !== undefined ? {isFlexible} : {}),
         ...(autoSchedule !== undefined ? {autoSchedule} : {}),
         ...(weeklyFrequency !== undefined ? {weeklyFrequency} : {}),
@@ -151,6 +152,7 @@ const updateRoutine = async (req, res) => {
       data: {
         name,
         type,
+        ...Object.fromEntries(['locationMode','preparationMinutes','outboundMinutes','returnMinutes','travelDuringBreak'].filter(key=>validation.data[key]!==undefined).map(key=>[key,validation.data[key]])),
         ...(isFlexible !== undefined ? {isFlexible} : {}),
         ...(autoSchedule !== undefined ? {autoSchedule} : {}),
         ...(weeklyFrequency !== undefined ? {weeklyFrequency} : {}),

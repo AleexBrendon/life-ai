@@ -2,6 +2,8 @@
 const { z } = require("zod");
 
 const createJobSchema = z.object({
+  ...require('../services/commitmentTiming.service').timingFields,
+  travelDuringBreak: z.boolean().optional(),
   name: z
     .string()
     .trim()
@@ -17,6 +19,8 @@ const createJobSchema = z.object({
 
 const updateJobSchema = z
   .object({
+    ...require('../services/commitmentTiming.service').timingFields,
+    travelDuringBreak: z.boolean().optional(),
     name: createJobSchema.shape.name.optional(),
     company: createJobSchema.shape.company,
     position: createJobSchema.shape.position,

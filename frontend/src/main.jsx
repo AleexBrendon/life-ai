@@ -14,6 +14,7 @@ import "./styles/scrollbars.css";
 import "./styles/feedback.css";
 import "./styles/finance-bills.css";
 import "./styles/ai-mvp.css";
+import "./styles/date-time.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -22,4 +23,4 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>,
 );
-
+import "./styles/routine-preview.css";

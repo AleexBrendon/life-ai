@@ -5,8 +5,8 @@ const prisma=require('../../src/database/prisma'),redis=require('../../src/datab
 let userId,token;
 const call=(method,path,body)=>request(app)[method]('/api'+path).set('Authorization',`Bearer ${token}`).send(body);
 const samples={
- rotinas:{name:'Auditoria rotina',type:'Categoria personalizada',isFlexible:true,autoSchedule:false,weeklyFrequency:4,sessionMinutes:40,isActive:false,schedules:[{dayOfWeek:0,startTime:'07:15',endTime:'08:00'}]},
- trabalho:{name:'Auditoria trabalho',company:'Empresa teste',position:'Desenvolvedor',workType:'HYBRID',location:'Local teste',isActive:false,schedules:[{dayOfWeek:6,startTime:'08:00',endTime:'18:00',breakStart:'12:15',breakEnd:'13:30'}],tasks:[{title:'Auditoria tarefa',description:'Descrição completa',project:'Projeto teste',priority:'HIGH'}]},
+ rotinas:{locationMode:'ONSITE',preparationMinutes:60,outboundMinutes:15,returnMinutes:15,travelDuringBreak:true,name:'Auditoria rotina',type:'Categoria personalizada',isFlexible:true,autoSchedule:false,weeklyFrequency:4,sessionMinutes:40,isActive:false,schedules:[{dayOfWeek:0,startTime:'07:15',endTime:'08:00'}]},
+ trabalho:{preparationMinutes:60,outboundMinutes:15,returnMinutes:15,travelDuringBreak:true,name:'Auditoria trabalho',company:'Empresa teste',position:'Desenvolvedor',workType:'HYBRID',location:'Local teste',isActive:false,schedules:[{dayOfWeek:6,startTime:'08:00',endTime:'18:00',breakStart:'12:15',breakEnd:'13:30'}],tasks:[{title:'Auditoria tarefa',description:'Descrição completa',project:'Projeto teste',priority:'HIGH'}]},
  metas:{title:'Auditoria meta',description:'Descrição da meta',targetDate:'2027-12-01',weeklyFrequency:5,sessionMinutes:45,priority:'HIGH',status:'PAUSED',sessions:[{date:'2027-01-10',startTime:'10:00',endTime:'10:45',status:'SKIPPED'}]},
  lembretes:{title:'Auditoria lembrete',description:'Descrição do lembrete',reminderTime:'09:35',recurrence:'WEEKLY',date:'2027-01-10',dayOfWeek:0,reminderState:'PAUSED'},
  imprevistos:{title:'Auditoria imprevisto',description:'Descrição do imprevisto',date:'2027-01-10',startTime:'14:00',endTime:'15:10',priority:'HIGH',status:'CANCELLED'},
@@ -34,12 +34,22 @@ async function verify(kind,id,body){
  return record;
 }
 beforeAll(async()=>{const user=await prisma.user.create({data:{name:'Auditoria isolada',email:`crud-audit-${Date.now()}@example.invalid`,passwordHash:'not-used'}});userId=user.id;token=jwt.sign({sub:String(userId)},process.env.JWT_SECRET,{expiresIn:'10m'})});
+it('exige deslocamento presencial e zera os trajetos ao salvar rotina remota',async()=>{
+ const base={name:'Modalidade da rotina',type:'Estudos',locationMode:'ONSITE',schedules:[]};
+ expect((await call('post','/planner/rotinas',base)).status).toBe(400);
+ const created=await call('post','/planner/rotinas',{...base,preparationMinutes:60,outboundMinutes:15,returnMinutes:15,travelDuringBreak:true});
+ expect(created.status).toBe(201);const id=created.body.data.id;
+ const changed=await call('put',`/planner/rotinas/${id}`,{...base,locationMode:'REMOTE',preparationMinutes:60,outboundMinutes:99,returnMinutes:99,travelDuringBreak:true});
+ expect(changed.status).toBe(200);
+ expect(await prisma.routineItem.findUnique({where:{id}})).toMatchObject({locationMode:'REMOTE',preparationMinutes:60,outboundMinutes:0,returnMinutes:0,travelDuringBreak:false});
+ await call('delete',`/planner/rotinas/${id}`);
+});
 afterAll(async()=>{if(userId)await prisma.user.delete({where:{id:userId}});await prisma.$disconnect();redis.disconnect()});
 for(const kind of Object.keys(entities))it(`persiste todos os campos e opções do formulário de ${kind}, permite limpar e excluir`,async()=>{
  let values=structuredClone(samples[kind]),body=bodyFor(kind,values);
  const created=await call('post','/planner/'+kind,body);expect(created.status,JSON.stringify(created.body)).toBe(201);const id=created.body.data.id;
  let record=await verify(kind,id,body);
- for(const field of entities[kind].fields.filter(field=>field.type==='select'||field.type==='checkbox')){
+ for(const field of entities[kind].fields.filter(field=>['select','choice','checkbox'].includes(field.type))){
   const options=field.options?field.options.map(([value])=>value):[true,false];
   for(const value of options){
    values={...values,[field.key]:value};body=bodyFor(kind,values);

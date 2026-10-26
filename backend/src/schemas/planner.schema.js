@@ -9,7 +9,7 @@ const { createWorkScheduleSchema } = require("../schemas/workSchedule.schema");
 const { createJobTaskSchema } = require("../schemas/job-task.schema");
 const sessionSchema = z.object({ date: z.string().date(), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), status: z.enum(["PENDING", "COMPLETED", "SKIPPED"]).default("PENDING") }).refine(row => row.startTime < row.endTime, { message: "O início deve ser anterior ao fim." });
 const configurations = {
-  rotinas: { model: "routineItem", schema: createRoutineSchema.extend({ isActive: z.boolean().optional() }), children: { schedules: ["routineSchedule", "routineItemId", createRoutineScheduleSchema] } },
+  rotinas: { model: "routineItem", schema: createRoutineSchema.safeExtend({ isActive: z.boolean().optional() }), children: { schedules: ["routineSchedule", "routineItemId", createRoutineScheduleSchema] } },
   trabalho: { model: "job", schema: createJobSchema, children: { schedules: ["workSchedule", "jobId", createWorkScheduleSchema], tasks: ["jobTask", "jobId", createJobTaskSchema] } },
   metas: { model: "goal", schema: goalSchema.extend({ targetDate: z.string().date().nullable().optional(), status: z.enum(["ACTIVE", "COMPLETED", "PAUSED"]).default("ACTIVE") }), children: { sessions: ["goalPlanSession", "goalId", sessionSchema] } },
   lembretes: { model: "reminder", schema: reminderSchema.safeExtend({ reminderState: z.enum(['ACTIVE', 'PAUSED', 'COMPLETED']).optional() }), children: {} },

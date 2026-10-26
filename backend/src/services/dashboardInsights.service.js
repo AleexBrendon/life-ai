@@ -7,8 +7,9 @@ function localParts(timezone){
 // Time comes only from the Kanban timer: each interval is split by local day and hour, clipped to the period.
 function trackTime({taskLogs,byDate,heatmap,now,timezone}){
  const parts=localParts(timezone),perTask=new Map();
+ const keys=[...byDate.keys()],lower=new Date(`${shift(keys[0],-1)}T00:00:00Z`).getTime(),upper=new Date(`${shift(keys.at(-1),2)}T00:00:00Z`).getTime();
  for(const log of taskLogs){
-  let cursor=new Date(log.startedAt).getTime();const end=Math.min(new Date(log.endedAt||now).getTime(),new Date(now).getTime());
+  let cursor=Math.max(new Date(log.startedAt).getTime(),lower);const end=Math.min(new Date(log.endedAt||now).getTime(),new Date(now).getTime(),upper);
   while(cursor<end){
    const local=parts(new Date(cursor)),step=Math.min(end-cursor,(3600-local.secondOfHour)*1000-cursor%1000),day=byDate.get(local.key);
    if(day){const seconds=step/1000;day.seconds+=seconds;heatmap[(new Date(`${local.key}T00:00:00Z`).getUTCDay()+6)%7].seconds[local.hour]+=seconds;
@@ -34,11 +35,23 @@ function buildInsights({endDate,days,routines=[],reminders=[],sessions=[],taskLo
  const activeDays=daily.filter(day=>day.total>0||day.seconds>0).length;
  return {startDate,endDate,days,summary:{completed,total,rate:total?Math.round(completed/total*100):0,minutes,activeDays},daily:daily.map(({seconds,...day})=>({...day,minutes:Math.round(seconds/60),rate:day.total?Math.round(day.completed/day.total*100):null})),categories:Array.from(categories,([name,value])=>({name,value})),heatmap:heatmap.map(row=>({day:row.day,hours:row.seconds.map(seconds=>Math.round(seconds/60))})),tasks};
 }
-async function getInsights(userId,days){
+function resolveInsightRange(input,today){
+ const {validDate}=require('./financeBills.service');
+ const fail=message=>{throw Object.assign(new Error(message),{status:400})};
+ const range=typeof input==='number'?{days:input}:input||{};
+ if(!!range.startDate!==!!range.endDate)fail('Informe as datas inicial e final.');
+ const days=range.startDate?Math.round((new Date(range.endDate+'T00:00:00Z')-new Date(range.startDate+'T00:00:00Z'))/86400000)+1:Number(range.days??7);
+ if(!Number.isInteger(days)||days<1||days>365)fail('Escolha um período de 1 a 365 dias.');
+ const endDate=range.endDate||today,startDate=range.startDate||shift(endDate,1-days);
+ if(!validDate(startDate)||!validDate(endDate))fail('Informe datas válidas.');
+ if(endDate>today)fail('O histórico pode ser consultado até hoje.');
+ return {startDate,endDate,days};
+}
+async function getInsights(userId,input){
  const prisma=require('../database/prisma');
- const timezone='America/Sao_Paulo',now=new Date();
- const endDate=new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
- const startDate=shift(endDate,1-days);const date={gte:new Date(`${startDate}T00:00:00Z`),lt:new Date(`${shift(endDate,1)}T00:00:00Z`)};
+ const profile=await prisma.profile.findUnique({where:{userId},select:{timezone:true}}),now=new Date();let timezone=profile?.timezone||'America/Sao_Paulo';try{new Intl.DateTimeFormat('en',{timeZone:timezone})}catch{timezone='America/Sao_Paulo'}
+ const today=require('./personalPlanning.service').localClock(now,timezone).date;
+ const {startDate,endDate,days}=resolveInsightRange(input,today);const date={gte:new Date(`${startDate}T00:00:00Z`),lt:new Date(`${shift(endDate,1)}T00:00:00Z`)};
  // Generous UTC window; trackTime clips each interval to the local period.
  const windowStart=new Date(`${shift(startDate,-1)}T00:00:00Z`),windowEnd=new Date(`${shift(endDate,2)}T00:00:00Z`);
  const [routines,reminders,sessions,taskLogs]=await Promise.all([
@@ -49,4 +62,4 @@ async function getInsights(userId,days){
  ]);
  return buildInsights({endDate,days,routines,reminders,sessions,taskLogs,now,timezone});
 }
-module.exports={buildInsights,getInsights};
+module.exports={buildInsights,getInsights,resolveInsightRange};

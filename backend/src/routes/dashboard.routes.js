@@ -8,10 +8,8 @@ const router = express.Router();
 
 router.get("/", authMiddleware, dashboard);
 router.get("/insights", authMiddleware, async (req,res)=>{
- const days=Number(req.query.days||7);
- if(![7,14,42].includes(days))return res.status(400).json({success:false,message:"Selecione 7, 14 ou 42 dias."});
- try{const data=await require('../services/dashboardInsights.service').getInsights(req.user.id,days);res.json({success:true,data})}
- catch{res.status(500).json({success:false,message:"Não foi possível carregar os gráficos."})}
+ try{const data=await require('../services/dashboardInsights.service').getInsights(req.user.id,{days:req.query.days,startDate:req.query.startDate,endDate:req.query.endDate});res.json({success:true,data})}
+ catch(error){res.status(error.status||500).json({success:false,message:error.status?error.message:"Não foi possível carregar os gráficos."})}
 });
 
 module.exports = router;

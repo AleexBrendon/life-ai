@@ -30,6 +30,8 @@ describe('Leitura de pedidos de rotina',()=>{
   expect(intentOf('Monte minha rotina com tudo que já cadastrei')).toBe('build');
   expect(intentOf('Reavalie minha rotina cadastrada')).toBe('build');
   expect(intentOf('Organize minha semana por causa do imprevisto')).toBe('week');
+  expect(intentOf('Avalie minha rotina semanal')).toBe('week');
+  expect(intentOf('Analise minha rotina mensal')).toBe('build');
   expect(intentOf('Quero comprar um monitor')).toBe('shopping');
   expect(intentOf('Quero treinar flauta 3 vezes por semana')).toBe('other');
  });

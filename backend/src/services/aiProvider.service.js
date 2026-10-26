@@ -19,11 +19,12 @@ const getClient = () => {
 
 // Free models are often rate-limited or slow; when the configured one fails, try these in order.
 // "openrouter/free" is not a default: it routes to arbitrary models (including safety classifiers).
-const DEFAULT_FALLBACKS = ["minimax/minimax-m3.1-flash:free", "nvidia/nemotron-3.5-lightning:free"];
+const DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl:free";
+const DEFAULT_FALLBACKS = ["google/gemma-4-26b-a4b-it:free", "xingchen-agi/xing4.0-29b-a4b:free"];
 
 function candidateModels(model, maxModels = 3) {
     if (model) return [model];
-    const configured = process.env.OPENROUTER_MODEL || DEFAULT_FALLBACKS[0];
+    const configured = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
     const fallbacks = (process.env.OPENROUTER_FALLBACK_MODELS ?? DEFAULT_FALLBACKS.join(","))
         .split(",").map((name) => name.trim()).filter(Boolean);
     return [...new Set([configured, ...fallbacks])].slice(0, maxModels);
@@ -98,4 +99,5 @@ const generateAIResponse = async ({
 module.exports = {
     generateAIResponse,
     candidateModels,
+    DEFAULT_MODEL,
 };

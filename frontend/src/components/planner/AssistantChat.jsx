@@ -1,3 +1,4 @@
+import BudgetBreakdown from '../ai/BudgetBreakdown';
 import useResponseVisibility from '../../lib/useResponseVisibility';
 import useCancelableRequest from '../../lib/useCancelableRequest';
 import AssistantSetup, { SetupProposal } from "./AssistantSetup";
@@ -15,6 +16,7 @@ export default function AssistantChat() {
   const [reviewVersion,setReviewVersion]=useState(0);
   function suggest(){if(busy)cancelSend();else request.cancel();setBusy(false);setNotice('');setReviewVersion(n=>n+1);setMode('month')}
   const [setupDraft,setSetupDraft]=useState('');
+  const [financeReview,setFinanceReview]=useState(null);
   const [weekly,setWeekly]=useState(null),[shoppingQuery,setShoppingQuery]=useState("");
   const [setupProposal,setSetupProposal]=useState(null),[monthly,setMonthly]=useState(null);
   const [messages, setMessages] = useState([]);
@@ -37,6 +39,7 @@ export default function AssistantChat() {
       const response = await api.post("/ai/chat", { message, history: messages.filter(row=>!row.requestFailure&&(!row.delivery||row.delivery==='sent')).slice(-6).map(({role,content})=>({role,content})), ...(setupProposal?{previousProposalId:setupProposal.id}:{}) },{signal:pending.signal});
       if(!pending.isCurrent())return;
       setMessages(current => [...current.map(row=>row.id===messageId?{...row,delivery:'sent'}:row), { role: 'assistant', content: response.data.message||'Solicitação processada. Confira as sugestões abaixo.' }]);
+      setFinanceReview(response.data.financeAssessment||null);
       if(response.data.weeklyProposal)setWeekly(response.data.weeklyProposal);
       if(response.data.monthlyProposal)setMonthly(response.data.monthlyProposal);
       if(response.data.proposal!==undefined)setSetupProposal(response.data.proposal);
@@ -57,6 +60,7 @@ export default function AssistantChat() {
     {error && <p role="alert" className="reminder-form-error">{error}</p>}
     <form onSubmit={send} className="assistant-composer"><label htmlFor="assistant-message">Sua mensagem</label><textarea id="assistant-message" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!event.repeat && !busy && draft.trim()) event.currentTarget.form.requestSubmit(); } }} maxLength={2000} rows={3} placeholder="Ex.: quero correr 3 vezes por semana de manhã, 40 minutos" disabled={busy} /><div className="assistant-composer-actions">{busy&&<button type="button" className="assistant-cancel-send" onClick={cancelSend}><X size={16}/>Cancelar envio</button>}<button type="submit" disabled={busy || !draft.trim()}><Send size={16} />{busy ? "Enviando..." : "Enviar"}</button></div></form>
     <small className="assistant-note">Enter envia · Shift+Enter quebra a linha. A conversa fica nesta sessão.</small>
+    {financeReview&&<BudgetBreakdown budget={financeReview}/>}
     {weekly&&<WeeklyProposal key={weekly.id} proposal={weekly} onDone={()=>setWeekly(null)} onRefresh={()=>setMode("week")}/>}
     {monthly&&<MonthlyProposal key={monthly.id} proposal={monthly} onDone={()=>setMonthly(null)} onRefresh={suggest}/>}
     {setupProposal&&<SetupProposal key={setupProposal.id} proposal={setupProposal} busy={busy} onDone={action=>{setSetupProposal(null);setMessages(current=>[...current,{role:'assistant',content:action==='applied'?'Pronto, salvei. Quer que eu reorganize a semana inteira com esses horários? Peça “remonte minha rotina”.':'Proposta descartada. Descreva de outro jeito se quiser que eu monte de novo.'}])}}/>}

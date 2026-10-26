@@ -171,3 +171,12 @@ html[data-theme=dark] .app-shell .hydration-strip .hydration-sound:hover { backg
  .app-shell .app-header { height:60px; }
  .app-shell .studio-empty { min-height:160px;padding:20px 14px; }
 }
+.routine-modality { border: 0; padding: 0; margin: 0; min-width: 0; }
+.routine-modality legend { margin-bottom: 8px; font-size: inherit; }
+.routine-modality .studio-view-toggle { display: flex; width: fit-content; gap: 4px; }
+.routine-modality .studio-view-toggle label { position: relative; cursor: pointer; margin: 0; }
+.routine-modality input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.routine-modality span { display: block; padding: 10px 18px; border: 1px solid transparent; border-radius: 8px; }
+.routine-modality input:checked + span { background: var(--assistant-control-hover,#dcebe1); color: var(--assistant-control-text,#28543f); border-color: var(--assistant-control-border,#a9c5b4); }
+.routine-modality input:focus-visible + span { outline: 2px solid var(--assistant-focus,#39865f); outline-offset: 2px; }
+.routine-modality small { display: block; margin-top: 8px; opacity: .8; }

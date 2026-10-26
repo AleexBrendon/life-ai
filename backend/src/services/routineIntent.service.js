@@ -141,7 +141,8 @@ function interpret(message,existing=[]){
 function intentOf(message){
  const text=normalize(message);
  if(/\b(?:comprar|compra|parcel\w*|cartao|orcamento)\b/.test(text))return 'shopping';
- if(/\b(?:semana|imprevisto)\b/.test(text)&&/\b(?:organiz\w*|reorganiz\w*|ajust\w*|replanej\w*|encaix\w*|reorden\w*)\b/.test(text))return 'week';
+ if(/\b(?:mensal|mes|ciclo)\b/.test(text)&&/rotina|agenda|planej|avali|analise/.test(text))return 'build';
+ if(/\b(?:semanal|semana|imprevisto)\b/.test(text)&&/\b(?:organiz\w*|reorganiz\w*|ajust\w*|replanej\w*|encaix\w*|reorden\w*|avali\w*|reavali\w*|analise|revis\w*)\b/.test(text))return 'week';
  if(/\b(?:mont\w*|remont\w*|organiz\w*|reorganiz\w*|refa[cz]\w*|refazer|planej\w*|cri[ae]\w*|melhor\w*|avali\w*|reavali\w*|revis\w*|otimiz\w*|ajust\w*|arrum\w*|gera\w*|sugir\w*|sugest\w*)\b[^.?!]{0,60}\b(?:rotina|agenda|planejamento|dia a dia|semana|horarios|meu dia|meus dias)\b/.test(text))return 'build';
  return 'other';
 }

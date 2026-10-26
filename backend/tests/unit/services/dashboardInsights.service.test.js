@@ -1,8 +1,15 @@
 import {describe,it,expect} from 'vitest';
 const {buildInsights}=require('../../../src/services/dashboardInsights.service');
+const {resolveInsightRange}=require('../../../src/services/dashboardInsights.service');
 const date='2026-10-17T00:00:00Z';
 const task={title:'API de pagamentos',status:'IN_PROGRESS',job:{name:'Freelancer'}};
 describe('Gráficos do dashboard',()=>{
+ it('permite um único dia, intervalos antigos e até um ano de histórico',()=>{
+  expect(resolveInsightRange({days:1},'2026-10-25')).toEqual({startDate:'2026-10-25',endDate:'2026-10-25',days:1});
+  expect(resolveInsightRange({startDate:'2024-02-28',endDate:'2024-03-01'},'2026-10-25')).toMatchObject({days:3});
+  expect(resolveInsightRange({days:365},'2026-10-25').days).toBe(365);
+  for(const input of [{days:366},{days:0},{days:1.5},{startDate:'2026-10-25'},{startDate:'2026-10-26',endDate:'2026-10-27'},{startDate:'2026-10-25',endDate:'2026-10-24'},{startDate:'2026-02-30',endDate:'2026-03-01'}])expect(()=>resolveInsightRange(input,'2026-10-25')).toThrow();
+ });
  it('mantém dias sem registros como lacunas e não fabrica dados',()=>{
   const result=buildInsights({endDate:'2026-10-17',days:7});expect(result.daily).toHaveLength(7);expect(result.daily.every(d=>d.rate===null)).toBe(true);expect(result.summary.completed).toBe(0);expect(result.summary.minutes).toBe(0);expect(result.categories).toEqual([]);expect(result.tasks).toEqual([]);
  });

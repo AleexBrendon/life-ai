@@ -1,3 +1,4 @@
+import {TimePicker,DatePicker} from './ScheduleInputs';
 import {
     Bell,
     CalendarDays,
@@ -927,15 +928,12 @@ export function Reminders() {
                                         Horário
                                     </span>
 
-                                    <input
-                                        type="time"
+                                    <TimePicker
                                         name="reminderTime"
                                         value={
                                             form.reminderTime
                                         }
-                                        onChange={
-                                            handleCreateChange
-                                        }
+                                        onChange={value=>handleCreateChange({target:{name:'reminderTime',value}})}
                                     />
                                 </label>
 
@@ -945,13 +943,10 @@ export function Reminders() {
                                         Data
                                     </span>
 
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         name="date"
                                         value={form.date}
-                                        onChange={
-                                            handleCreateChange
-                                        }
+                                        onChange={value=>handleCreateChange({target:{name:'date',value}})}
                                         disabled={
                                             form.recurrence !==
                                             "NONE"

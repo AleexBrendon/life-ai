@@ -1,3 +1,4 @@
+import {TimePicker} from './ScheduleInputs';
 import { useEffect, useMemo, useState } from "react";
 import {
     BookOpen,
@@ -628,14 +629,13 @@ function Routines() {
                                             <label>
                                                 <span>Início</span>
 
-                                                <input
-                                                    type="time"
+                                                <TimePicker
                                                     value={schedule.startTime}
-                                                    onChange={(event) =>
+                                                    onChange={value=>
                                                         handleScheduleChange(
                                                             schedule.id,
                                                             "startTime",
-                                                            event.target.value,
+                                                            value,
                                                         )
                                                     }
                                                     disabled={creating}
@@ -645,14 +645,13 @@ function Routines() {
                                             <label>
                                                 <span>Término</span>
 
-                                                <input
-                                                    type="time"
+                                                <TimePicker
                                                     value={schedule.endTime}
-                                                    onChange={(event) =>
+                                                    onChange={value=>
                                                         handleScheduleChange(
                                                             schedule.id,
                                                             "endTime",
-                                                            event.target.value,
+                                                            value,
                                                         )
                                                     }
                                                     disabled={creating}

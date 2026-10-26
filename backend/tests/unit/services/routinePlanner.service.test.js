@@ -47,3 +47,8 @@ it('abre a avaliação diária nos três últimos dias do ciclo',()=>{
  const steps=checkinSteps(cycle,'2026-10-30');expect(steps.map(s=>s.date)).toEqual(['2026-10-29','2026-10-30','2026-10-31']);
  expect(steps.map(s=>[s.available,s.answered])).toEqual([[true,true],[true,false],[false,false]]);expect(steps.every(s=>s.questions.length===5)).toBe(true);
 });
+it('protege preparo e deslocamento na semana-modelo mensal',()=>{
+ const current={fixed:ctx.fixed.map(row=>({...row,beforeMinutes:75,afterMinutes:15})),sessions:[],demands:ctx.demands};
+ const {options}=buildOptions(current,prefs,fb);
+ for(const option of options){expect(()=>validateTemplate(current,option,prefs)).not.toThrow();for(const row of option.template.goals.filter(row=>row.dayOfWeek>=1&&row.dayOfWeek<=5))expect(m(row.startTime)>=18*60+30||m(row.endTime)<=6*60+30).toBe(true)}
+});

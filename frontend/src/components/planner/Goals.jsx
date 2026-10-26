@@ -1,3 +1,4 @@
+import {DatePicker} from './ScheduleInputs';
 import {
     BookOpen,
     CalendarDays,
@@ -1021,12 +1022,11 @@ function Goals() {
                                         Prazo
                                     </label>
 
-                                    <input
+                                    <DatePicker
                                         id="goal-target-date"
                                         name="targetDate"
-                                        type="date"
                                         value={goalForm.targetDate}
-                                        onChange={handleGoalFormChange}
+                                        onChange={value=>handleGoalFormChange({target:{name:'targetDate',value}})}
                                     />
                                 </div>
 

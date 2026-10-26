@@ -63,3 +63,17 @@ it('recusa aplicar quando os cadastros mudaram depois da sugestão',async()=>{
  const result=await api('post',`/routine/${response.body.data.id}/apply`,{optionId});expect(result.status).toBe(409);expect(result.body.message).toContain('cadastros mudaram');
  await prisma.routineItem.delete({where:{id:added.id}});
 });
+it('mantém os tempos de preparo nas análises e invalida o mês quando surge um imprevisto',async()=>{
+ const date=new Date();date.setUTCDate(date.getUTCDate()+2);const key=date.toISOString().slice(0,10),dayOfWeek=date.getUTCDay();
+ await prisma.routineItem.create({data:{userId:users[1],name:'Connect com deslocamento',type:'Trabalho',preparationMinutes:60,outboundMinutes:15,returnMinutes:15,schedules:{create:[{dayOfWeek,startTime:'08:00',endTime:'12:00'},{dayOfWeek,startTime:'14:00',endTime:'18:00'}]}}});
+ const weekly=await require('../../../src/services/weeklyPlanner.service').context(users[1],key);
+ const rows=weekly.activities.filter(row=>row.date===key);
+ expect(rows.map(row=>[row.beforeMinutes,row.afterMinutes])).toEqual([[75,0],[0,15]]);
+ const preview=await api('post','/routine/preview',{},1);expect(preview.status).toBe(200);
+ expect(preview.body.data.changes.commitments[0]).toMatchObject({beforeMinutes:75,afterMinutes:15,missing:[]});
+ await prisma.unexpectedEvent.create({data:{userId:users[1],title:'Consulta futura',date:new Date(key),startTime:'10:00',endTime:'11:00',priority:'HIGH',status:'PENDING'}});
+ const rejected=await api('post',`/routine/${preview.body.data.id}/apply`,{optionId:'keep'},1);
+ expect(rejected.status).toBe(409);
+ const refreshed=await api('post','/routine/preview',{},1);
+ expect(refreshed.body.data.changes.dated.some(row=>row.title==='Consulta futura'&&row.date===key)).toBe(true);
+});

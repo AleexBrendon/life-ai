@@ -1,3 +1,5 @@
+import {TimePicker} from '../planner/ScheduleInputs';
+import CommitmentTiming from './CommitmentTiming';
 import { useEffect,useState } from 'react';
 import { CalendarCheck,Check,ClipboardList,Eye,RefreshCw,Sparkles,X } from 'lucide-react';
 import { Dialog } from '../planner/EntityManager';
@@ -37,7 +39,7 @@ export function MonthlyProposal({proposal,onDone,onRefresh}){
  async function decide(optionId){setBusy(true);setError('');try{if(optionId){const r=await api.post(`/ai/routine/${proposal.id}/apply`,{optionId});showFeedback(`Rotina aprovada para ${date(r.data.startDate)} a ${date(r.data.endDate)}.`)}else{await api.post(`/ai/recommendations/${proposal.id}/reject`);showFeedback('Sugestões descartadas.')}setConfirming(false);window.dispatchEvent(new Event('lifeai:agenda-updated'));onDone()}catch(e){setError(e.response?.data?.message||'Não foi possível aplicar. Gere uma nova rotina.');setConfirming(false)}finally{setBusy(false)}}
  const choose=id=>{setSelectedId(id);setPreviewId(null)};
  return <section className="weekly-proposal monthly-proposal"><div className="ai-analysis-meta"><span className="studio-badge">{plan.mode==='assisted'?'Análise assistida por IA':'Planejamento local'}</span><span>Ciclo de {date(plan.period.start)} a {date(plan.period.end)}</span></div>
- <p className="ai-analysis-text">{proposal.reason}</p>
+ <CommitmentTiming items={plan.commitments}/>{plan.limitations?.map(note=><p className="ai-help" key={note}>{note}</p>)}<p className="ai-analysis-text">{proposal.reason}</p>
  <div className="monthly-score"><div><span>Rotina atual</span><strong>{plan.before.score}</strong></div>{plan.options.map(option=><div key={option.id} className={option.id===plan.recommended?'recommended':''}><span>{option.title}</span><strong>{option.metrics.score}</strong></div>)}</div>
  <p className="ai-help">Pontuação de 0 a 100: conflitos, horários tardios, refeições, recuperação entre treinos, sobrecarga do dia e atividades sem horário. Use <b>Ver como fica</b> para ver cada sugestão desenhada na semana e no mês, selecione a que preferir e confirme no final.</p>
  {plan.before.issues.length>0&&<details className="monthly-issues"><summary>O que encontrei na rotina atual ({plan.before.issues.length})</summary><ul>{plan.before.issues.map(text=><li key={text}>{text}</li>)}</ul></details>}
@@ -71,7 +73,7 @@ export default function MonthlyRoutine({reviewOnOpen=false}){
  {cycle&&checkinDone&&!proposal&&<p className="assistant-result-summary">Tudo pronto para montar a rotina do próximo ciclo com base nos seus resultados.</p>}
  <details className="ai-week-preferences" open={!proposal}><summary>Preferências para montar a rotina</summary><div className="ai-planner-controls">
   <label className="studio-field"><span>O que você quer priorizar?</span><textarea rows={2} maxLength={2000} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Ex.: dormir melhor, estudar para a faculdade, correr três vezes por semana." disabled={busy}/></label>
-  <div className="monthly-times"><label className="studio-field"><span>Atividades a partir de</span><input type="time" value={dayStart} onChange={e=>setDayStart(e.target.value)} disabled={busy}/></label><label className="studio-field"><span>Terminar no máximo às</span><input type="time" value={flexEnd} onChange={e=>setFlexEnd(e.target.value)} disabled={busy}/></label></div>
+  <div className="monthly-times"><label className="studio-field"><span>Atividades a partir de</span><TimePicker value={dayStart} onChange={value=>setDayStart(value)} disabled={busy}/></label><label className="studio-field"><span>Terminar no máximo às</span><TimePicker value={flexEnd} onChange={value=>setFlexEnd(value)} disabled={busy}/></label></div>
   <label className="ai-check"><input type="checkbox" checked={meals} onChange={e=>setMeals(e.target.checked)} disabled={busy}/>Reservar almoço (12h–13h) e jantar (19h–19h30)</label>
   <button className="studio-button" type="button" disabled={busy||loading} onClick={generate}>{busy?'Montando sua rotina…':cycle?'Montar rotina do próximo ciclo':'Montar minha rotina do mês'}</button></div></details>
  <div ref={responseRef}/>{busy&&<p role="status" className="ai-help">Avaliando conflitos, sono, descanso, carga de cada dia e o desempenho do ciclo…</p>}{error&&<p role="alert" className="studio-error">{error}</p>}
