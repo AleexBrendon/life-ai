@@ -92,7 +92,7 @@ export default function Kanban() {
   {error && <p className="studio-error" role="alert">{error}</p>}{loading && <p role="status">Carregando tarefas...</p>}
   <div className="studio-kanban-columns">{statuses.map(([status, label]) => { const rows = tasks.filter(task => task.status === status); return <section key={status} className={`studio-kanban-column ${status} ${dragging && dragging !== status ? 'drop-target' : ''}`} onDragOver={e => e.preventDefault()} onDrop={e => drop(e, status)}>
    <header><h3><i />{label}</h3><span>{rows.length}{rows.some(task => task.trackedSeconds || task.runningSince) ? ` · ${clock(columnSeconds(rows)).slice(0, 5)}` : ''}</span></header>
-   <div>{rows.map(task => <article className={`studio-task kanban-row priority-${task.priority} ${task.runningSince ? 'running' : ''}`} key={task.id} draggable={!busy} onDragStart={e => { e.dataTransfer.setData('text/plain', String(task.id)); setDragging(task.status); }} onDragEnd={() => setDragging(null)} onDragOver={e => e.preventDefault()} onDrop={e => drop(e, status, task.id)}>
+   <div className="studio-kanban-list">{rows.map(task => <article className={`studio-task kanban-row priority-${task.priority} ${task.runningSince ? 'running' : ''}`} key={task.id} draggable={!busy} onDragStart={e => { e.dataTransfer.setData('text/plain', String(task.id)); setDragging(task.status); }} onDragEnd={() => setDragging(null)} onDragOver={e => e.preventDefault()} onDrop={e => drop(e, status, task.id)}>
     <button type="button" className="kanban-row-open" onClick={() => { setDialogError(''); setOpenId(task.id); }} aria-label={`Abrir ${task.title}`}>
      <span className={`kanban-priority ${task.priority}`}>{priorityLabel(task.priority)}</span>
      <strong>{task.title}</strong>

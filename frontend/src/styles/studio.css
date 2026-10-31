@@ -99,6 +99,14 @@
 .studio-task h4 { font-size:14px;font-weight:600;line-height:1.6;margin:14px 0 8px;overflow-wrap:anywhere; }
 .studio-task > p { color:#91a08a;font-size:11px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere; }
 .studio-task > select { width:100%;margin-top:12px;padding:8px;border:1px solid #e5eddf;border-radius:8px;color:#7a9473;background:#f9fbf6;font-size:11px; }
+/* Each column scrolls on its own so long lists don't stretch the board; header and add button stay visible. */
+.studio-kanban-column { display:flex;flex-direction:column; }
+.studio-kanban-list { max-height:max(320px,calc(100dvh - 360px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b9c9b4 transparent;margin-right:-6px;padding-right:6px; }
+.studio-kanban-list:empty { display:none; }
+.studio-kanban-add { margin-top:auto; }
+/* Child items (job hours, Kanban tasks, sessions) scroll inside the section so its "Adicionar" button stays in view. */
+.studio-child-rows { max-height:min(420px,50dvh);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b9c9b4 transparent;padding-right:6px;margin-right:-6px; }
+html[data-theme=dark] :is(.studio-kanban-list,.studio-child-rows) { scrollbar-color:#4b5a52 transparent; }
 .studio-column-empty { padding:24px 12px;text-align:center;font-size:11px;color:#9aaa92; }
 .studio-kanban-add { display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px;border:1px dashed #cfdcc7;border-radius:9px;background:transparent;color:#83a076;font-size:11px; }
 .studio-calendar-toolbar { display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px; }

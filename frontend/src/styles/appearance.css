@@ -66,7 +66,20 @@ html[data-theme=dark] .recharts-cartesian-axis-tick text { fill:var(--chart-labe
 html[data-theme=dark] :is(.auth-page,.auth-card,.auth-form,.login-page,.register-page) { background:var(--night-panel) !important;color:var(--night-text) !important; }
 html[data-theme=dark] :is(.login-form-section,.login-form-wrapper,.assistant-composer,.assistant-message,.assistant-plan-review details,.assistant-plan-row,.studio-child-row,.agenda-day-summary,.agenda-preview-facts > div,.agenda-preview-description,.agenda-preview-status,.upcoming-countdown,.hydration-countdown) { background:var(--night-panel) !important;color:var(--night-text);border-color:var(--night-border) !important; }
 html[data-theme=dark] .login-showcase { background:#17231d !important; }
-html[data-theme=dark] :is(.login-input-wrapper,.login-feature,.login-feature-icon,.login-header-icon,.login-eyebrow) { background:#26362c !important;color:#b1d4bd !important;border-color:var(--night-border) !important; }
+html[data-theme=dark] :is(.login-input-wrapper,.login-feature-icon,.login-header-icon) { background:#26362c !important;color:#b1d4bd !important;border-color:var(--night-border) !important; }
+html[data-theme=dark] .login-input-wrapper:focus-within { border-color:#5aa982 !important;box-shadow:0 0 0 3px #5aa98226; }
+/* Specific enough to beat the global dark input rule above, which would draw a second box inside the wrapper. */
+html[data-theme=dark] .login-page .login-input-wrapper input:not([type=checkbox]):not([type=radio]):not([type=range]) { background:transparent !important;border:0 !important;outline:0 !important;box-shadow:none !important;color:var(--night-text) !important; }
+html[data-theme=dark] .login-page .login-input-wrapper input:-webkit-autofill:not([type=checkbox]):not([type=radio]):not([type=range]) { -webkit-text-fill-color:var(--night-text);-webkit-box-shadow:0 0 0 40px #26362c inset !important;caret-color:var(--night-text);transition:background-color 9999s; }
+html[data-theme=dark] .login-field > span { color:#c3d3ca !important; }
+html[data-theme=dark] .login-eyebrow { background:transparent !important;color:#a7f3d0 !important; }
+html[data-theme=dark] .login-feature strong { color:var(--night-text) !important; }
+html[data-theme=dark] .login-feature div span { color:var(--night-muted) !important; }
+html[data-theme=dark] .login-mobile-brand { color:var(--night-text); }
+html[data-theme=dark] .login-error { background:#3a2328 !important;color:#ffbec7 !important;border-color:#71404a !important; }
+html[data-theme=dark] .login-success { background:#21382c !important;color:#b2e6c7 !important;border-color:#395b45 !important; }
+html[data-theme=dark] .login-switch { color:var(--night-muted); }
+html[data-theme=dark] .login-switch button { color:var(--night-accent) !important; }
 html[data-theme=dark] :is(.login-submit,.assistant-composer button[type=submit]) { background:#327b58 !important;color:#fff !important;border-color:#439268 !important; }
 html[data-theme=dark] :is(.mobile-navigation-item,.header-avatar-button,.agenda-day-select,.agenda-period-arrows button,.studio-weekdays span,.agenda-filter-label,.agenda-day-list-info strong,.agenda-preview-facts dd,.assistant-plan-fields dd) { color:var(--night-text) !important; }
 html[data-theme=dark] :is(.mobile-navigation-item-active,.agenda-day-select time.today) { background:#283e33 !important;color:#a0ddbb !important; }
