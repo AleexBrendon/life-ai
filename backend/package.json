@@ -11,7 +11,7 @@
     "test:unit": "vitest run --config vitest.unit.config.js",
     "test:integration": "vitest run tests/integration",
     "test:security": "vitest run tests/security",
-    "start:deploy": "prisma generate && node src/server.js"
+    "start:deploy": "prisma generate && prisma migrate deploy && node src/server.js"
   },
   "keywords": [],
   "author": "",
