@@ -4,7 +4,7 @@ import { Camera, CalendarDays, Bell, UserRound, Droplets, Wallet, Save, LoaderCi
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { DatePicker } from './ScheduleInputs';
-import { useTheme } from '../../lib/ThemeProvider';
+import { useTheme } from '../../lib/theme';
 
 function initial(user) {
  const profile = user.profile || {};

@@ -25,6 +25,21 @@ html[data-theme=dark] .ai-store-links a,html[data-theme=dark] .weekly-assistant-
 html[data-theme=dark] .weekly-assistant-float > header > span { color:#b7ddbf; }
 @media(hover:hover) { .ai-store-links a:hover { filter:brightness(.94); }.weekly-assistant-float > header button:hover { background:#e4eddf; }html[data-theme=dark] .weekly-assistant-float > header button:hover { background:#344b3a; } }
 @media(max-width:650px) { .weekly-assistant-float { top:128px;bottom:92px;right:12px;width:calc(100vw - 24px);max-height:none; }.weekly-assistant-bubble { bottom:90px;right:16px; }.weekly-assistant-content { padding:12px; }.ai-budget-facts > div { flex-wrap:wrap;gap:4px; }.ai-change-list li { gap:8px; }.ai-option { padding:13px; }.assistant-mode-tabs button { flex-basis:40%; } }
+@media(min-width:651px) {
+ .app-main:has(.weekly-assistant-float) .weekly-assistant-float { bottom:calc(24px + min(32vh,220px) + 16px); }
+ .app-main:has(.weekly-assistant-float) .live-notification-stack { bottom:24px;max-height:min(32vh,220px); }
+ .app-main:has(.weekly-assistant-bubble) .live-notification-stack { bottom:84px; }
+}
+@media(max-width:650px) {
+ .app-main:has(.weekly-assistant-float) .weekly-assistant-float { bottom:calc(76px + env(safe-area-inset-bottom) + min(26vh,180px) + 16px); }
+ .app-main:has(.weekly-assistant-float) .live-notification-stack { bottom:calc(76px + env(safe-area-inset-bottom));max-height:min(26vh,180px); }
+ .app-main:has(.weekly-assistant-bubble) .live-notification-stack { bottom:calc(142px + env(safe-area-inset-bottom));max-height:min(30vh,190px); }
+}
+@media(max-height:500px) {
+ .app-main:has(.weekly-assistant-float) .weekly-assistant-float { top:64px;bottom:calc(60px + min(20vh,72px) + 12px); }
+ .app-main:has(.weekly-assistant-float) .live-notification-stack { bottom:60px;max-height:min(20vh,72px); }
+ .app-main:has(.weekly-assistant-bubble) .live-notification-stack { bottom:112px;max-height:min(20vh,72px); }
+}
 /* Assistant controls follow the selected theme, including welcome suggestions. */
 :root {--assistant-control-bg:#edf3ef;--assistant-control-text:#315e48;--assistant-control-border:#ccdcd1;--assistant-control-hover:#dfebe3;--assistant-focus:#39865f}
 html[data-theme=dark] {--assistant-control-bg:#242c30;--assistant-control-text:#d4e4db;--assistant-control-border:#3b4b43;--assistant-control-hover:#314139;--assistant-focus:#8acbaa}

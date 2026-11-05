@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { authApi } from "../../lib/api";
+import { setSessionToken } from "../../lib/session";
 
 function Login({ onAuthenticated }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -115,7 +116,7 @@ function Login({ onAuthenticated }) {
           password,
         });
 
-        localStorage.setItem("lifeai_token", response.data.token);
+        setSessionToken(response.data.token);
         onAuthenticated(response.data.user);
       }
     } catch (requestError) {

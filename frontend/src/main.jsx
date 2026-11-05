@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { FeedbackToastHost } from './components/FeedbackToast';
 import { ThemeProvider } from './lib/ThemeProvider';
+import "@fontsource-variable/inter";
 import "./index.css";
 import "./styles/app-theme.css";
 import "./styles/studio.css";

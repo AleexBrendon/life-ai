@@ -7,31 +7,47 @@ import Planning from "../components/planner/Planning";
 import Login from "../components/auth/Login";
 import FinancePage from '../components/finance/FinancePage';
 import { authApi } from "../lib/api";
+import { endSession, getSessionToken, SESSION_EXPIRED_EVENT, clearSessionToken } from "../lib/session";
 function AppRoutes() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(() => Boolean(getSessionToken()));
+  const [sessionError, setSessionError] = useState(false);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("lifeai_token");
-
-    if (!token) {
+    let active = true;
+    const handleSessionExpired = () => {
+      setUser(null);
+      setSessionError(false);
       setCheckingSession(false);
-      return;
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+
+    if (!getSessionToken()) {
+      return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
     }
 
     authApi.me()
       .then((response) => {
-        setUser(response.data.user)
+        if (active) {
+          setUser(response.data.user);
+          setSessionError(false);
+        }
       })
-      .catch(() => {
-        localStorage.removeItem("lifeai_token");
+      .catch((error) => {
+        if (!active) return;
         setUser(null);
+        setSessionError(error.response?.status !== 401);
       })
       .finally(() => {
-        setCheckingSession(false);
+        if (active) setCheckingSession(false);
       });
-  }, []);
+    return () => {
+      active = false;
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, [restoreAttempt]);
 
   async function handleLogout() {
     try {
@@ -39,7 +55,7 @@ function AppRoutes() {
     } catch (error) {
       console.warn("Não foi possível confirmar a revogação da sessão no servidor.", error.response?.status);
     } finally {
-      localStorage.removeItem("lifeai_token");
+      endSession();
       setUser(null);
       navigate("/dashboard", { replace: true });
     }
@@ -47,6 +63,27 @@ function AppRoutes() {
 
   if (checkingSession) {
     return <div className="app-loading">Carregando sua sessão...</div>;
+  }
+
+  if (sessionError) {
+    return (
+      <main className="session-restore-error">
+        <div>
+          <h1>Não foi possível confirmar sua sessão.</h1>
+          <p>Seus dados de acesso foram preservados. Verifique a conexão e tente novamente.</p>
+          <div>
+            <button type="button" className="studio-button" onClick={() => {
+              setCheckingSession(true);
+              setRestoreAttempt((attempt) => attempt + 1);
+            }}>Tentar novamente</button>
+            <button type="button" className="studio-button secondary" onClick={() => {
+              clearSessionToken();
+              setSessionError(false);
+            }}>Entrar com outra conta</button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!user) {
@@ -65,8 +102,8 @@ function AppRoutes() {
         {["rotinas", "metas", "trabalho", "lembretes"].map(tab => (
           <Route key={tab} path={`/${tab}/*`} element={<Navigate to={`/planejamento?aba=${tab}`} replace />} />
         ))}
-        <Route path="/configuracoes" element={<Navigate to="/planejamento?aba=perfil" replace />} />
-        <Route path="/notificacoes" element={<Navigate to="/planejamento?aba=notificacoes" replace />} />
+        <Route path="/configuracoes" element={<Navigate to="/dashboard?painel=perfil" replace />} />
+        <Route path="/notificacoes" element={<Navigate to="/dashboard?painel=notificacoes" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
@@ -74,6 +111,4 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-
-
 

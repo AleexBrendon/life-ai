@@ -4,17 +4,9 @@
 @import "./styles/simple.css";
 
 :root {
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  color: #0f172a;
-  background: #f8fafc;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background: var(--color-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,14 +19,17 @@
 
 html {
   min-width: 320px;
-  background: #f8fafc;
+  background: var(--color-background);
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #f8fafc;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
 }
 
 button,
@@ -44,6 +39,10 @@ input {
 
 button {
   cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 a {
@@ -58,7 +57,7 @@ a {
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--color-background);
 }
 
 .sidebar {
@@ -8365,4 +8364,3 @@ a {
     font-size: 12px;
   }
 }`n
-

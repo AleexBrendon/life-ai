@@ -1,5 +1,7 @@
 import axios from "axios";
 import { actionFeedback, showFeedback } from './actionFeedback';
+import { dispatchApiDomainEvents } from "./apiDomainEvents";
+import { endSession, getSessionToken } from "./session";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -7,28 +9,19 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("lifeai_token");
+  const token = getSessionToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 api.interceptors.response.use(
   (response) => {
-    if (response.headers['x-activity-notification'] === 'created') window.dispatchEvent(new Event('lifeai:notifications-updated'));
     if (response.data?.success !== false) showFeedback(actionFeedback(response.config));
-    const path=(response.config?.url||'').split('?')[0];
-    if(response.data?.success!==false&&['post','put','patch'].includes(response.config?.method)&&/^\/(?:planner\/imprevistos|unexpected-events)(?:\/\d+)?\/?$/.test(path)){
-      const data=response.data.data;const record=data?.unexpectedEvent||data?.event||data;
-      if(record?.id&&record.date)window.dispatchEvent(new CustomEvent('lifeai:unexpected-saved',{detail:record}));
-    }
-    if(response.data?.success!==false&&/^\/ai\/setup\/\d+\/apply$/.test(path)&&response.data.data?.created?.some(row=>row.kind==='imprevistos')){
-      const ids=new Set(response.data.data.created.filter(row=>row.kind==='imprevistos').map(row=>row.id));
-      api.get('/planner/imprevistos').then(result=>{for(const record of result.data.filter(row=>ids.has(row.id)))window.dispatchEvent(new CustomEvent('lifeai:unexpected-saved',{detail:record}))}).catch(()=>{});
-    }
+    dispatchApiDomainEvents(response, api);
     return response.data;
   },
   (error) => {
-    if (error.response?.status === 401) localStorage.removeItem("lifeai_token");
+    if (error.response?.status === 401) endSession();
     return Promise.reject(error);
   },
 );
@@ -48,13 +41,6 @@ export const lifeApi = {
 
   routines: () => api.get("/routines"),
   createRoutine: (payload) => api.post("/routines", payload),
-
-  routineSchedules: (routineId) =>
-    api.get(`/routines/${routineId}/schedules`),
-
-  createRoutineSchedule: (routineId, payload) =>
-    api.post(`/routines/${routineId}/schedules`, payload),
-
 
   routineSchedules: (routineId) =>
     api.get(`/routines/${routineId}/schedules`),
@@ -116,4 +102,3 @@ export const lifeApi = {
 };
 
 export default api;
-

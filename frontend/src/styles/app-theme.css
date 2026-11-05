@@ -1,59 +1,47 @@
 /* Shared visual system for the authenticated application. */
-.app-shell {
-  --color-brand: #28745b;
-  --color-brand-dark: #1e5945;
-  --color-brand-soft: #edf5f0;
-  --color-text-primary: #243a32;
-  --color-border: #e1e8e3;
-  background: #f5f7f4;
-  color: #243a32;
-}
-.app-shell .app-main { margin-left: 232px; background: #f5f7f4; }
-.app-shell .sidebar { width: 232px; background: #fff; border-right: 1px solid #e1e8e3; color: #627369; }
-.app-shell .sidebar-inner { padding: 30px 18px 20px; }
+.app-shell { background: var(--color-background); color: var(--color-text-primary); }
+.app-shell .app-main { margin-left: var(--sidebar-width); background: var(--color-background); }
+.app-shell .sidebar { width: var(--sidebar-width); background: var(--color-sidebar); border-right: 1px solid var(--color-border); color: var(--color-sidebar-text); }
+.app-shell .sidebar-inner { padding: 24px 16px 16px; }
 .app-shell .sidebar-brand { padding: 0 8px 32px; }
-.app-shell .sidebar-brand-mark { background: #28745b; color: white; border-radius: 13px; box-shadow: none; }
-.app-shell .sidebar-brand-text strong { color: #243a32; font-size: 21px; letter-spacing: -.6px; }
-.app-shell .sidebar-brand-text span { color: #87948c; font-size: 11px; }
-.app-shell .sidebar-section-label { color: #96a198; font-size: 10px; letter-spacing: .14em; }
-.app-shell .sidebar-navigation-list { gap: 7px; }
-.app-shell .sidebar-nav-item { min-height: 46px; color: #6d7b72; border-radius: 10px; font-size: 13px; font-weight: 550; }
-.app-shell .sidebar-nav-item:hover { background: #f3f6f2; color: #28745b; }
-.app-shell .sidebar-nav-item-active { background: #edf5f0; color: #226348; box-shadow: inset 3px 0 #28745b; }
-.app-shell .sidebar-user { border-color: #e1e8e3; }
-.app-shell .sidebar-user-info strong { color: #33483e; }
-.app-shell .sidebar-user-info span { color: #8c988f; }
-.app-shell .sidebar-user-avatar { background: #edf5f0; color: #28745b; }
-.app-shell .app-header { height: 70px; background: #ffffffeb; border-color: #e1e8e3; padding: 0 36px; }
-.app-shell .app-header > strong { font-size: 13px; font-weight: 550; color: #7a877e; }
-.app-shell .header-icon-button { display: grid; place-items: center; border: 1px solid #e1e8e3; background: white; border-radius: 10px; width: 36px; height: 36px; color: #64766b; }
-.app-shell .header-icon-button:hover { background: #edf5f0; color: #28745b; }
-.app-shell .app-content { width: 100%; max-width: 1320px; margin: 0 auto; padding: 36px; }
-.app-shell .simple-intro, .app-shell .day-page-intro { margin: 0 0 28px; }
-.app-shell .simple-intro > span, .app-shell .page-eyebrow { display: block; color: #6d8a78; font-size: 10px; font-weight: 700; letter-spacing: .15em; margin-bottom: 10px; }
-.app-shell .simple-intro h1, .app-shell .day-page-intro h1 { margin: 0; color: #243a32; font-size: clamp(27px, 3vw, 34px); font-weight: 650; letter-spacing: -.045em; line-height: 1.2; }
-.app-shell .simple-intro p, .app-shell .day-page-intro p { margin: 10px 0 0; color: #7c8980; font-size: 14px; line-height: 1.6; }
+.app-shell .sidebar-brand-mark { background: var(--color-brand); color: #fff; border-radius: 12px; box-shadow: none; }
+.app-shell .sidebar-brand-text strong { color: var(--color-text-primary); font-size: 20px; letter-spacing: -.6px; }
+.app-shell .sidebar-brand-text span { color: var(--color-text-muted); font-size: 12px; }
+.app-shell .sidebar-section-label { color: var(--color-text-muted); font-size: 11px; letter-spacing: .12em; }
+.app-shell .sidebar-navigation-list { gap: 4px; }
+.app-shell .sidebar-nav-item { min-height: 44px; color: var(--color-sidebar-text); border-radius: var(--radius-control); font-size: 14px; font-weight: 500; }
+.app-shell .sidebar-nav-item:hover { background: var(--color-sidebar-hover); color: var(--color-brand); }
+.app-shell .sidebar-nav-item-active { background: var(--color-sidebar-active); color: var(--color-brand-dark); box-shadow: inset 3px 0 var(--color-brand); }
+.app-shell .sidebar-user { border-color: var(--color-border); }
+.app-shell .sidebar-user-info strong { color: var(--color-text-primary); }
+.app-shell .sidebar-user-info span { color: var(--color-text-secondary); }
+.app-shell .sidebar-user-avatar { background: var(--color-brand-soft); color: var(--color-brand); }
+.app-shell .app-header { height: var(--header-height); background: rgb(255 255 255 / 96%); border-color: var(--color-border); padding: 0 32px; }
+.app-shell .app-header > strong { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+.app-shell .header-icon-button { display: grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-control); width: 40px; height: 40px; color: var(--color-text-secondary); }
+.app-shell .header-icon-button:hover { background: var(--color-brand-soft); color: var(--color-brand); }
+.app-shell .app-content { width: 100%; max-width: 1320px; margin: 0 auto; padding: 32px; }
+.app-shell .simple-intro, .app-shell .day-page-intro { margin: 0 0 24px; }
+.app-shell .simple-intro > span, .app-shell .page-eyebrow { display: block; color: var(--color-text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .1em; margin-bottom: 8px; }
+.app-shell .simple-intro h1, .app-shell .day-page-intro h1 { margin: 0; color: var(--color-text-primary); font-size: clamp(28px, 3vw, 32px); font-weight: 600; letter-spacing: -.035em; line-height: 1.2; }
+.app-shell .simple-intro p, .app-shell .day-page-intro p { margin: 8px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
 .app-shell h2 { color: #2e4337; }
-.app-shell .simple-tabs { display: flex; gap: 24px; padding: 0; margin: 0 0 28px; border: 0; border-bottom: 1px solid #dce5de; border-radius: 0; background: transparent; overflow-x: auto; }
-.app-shell .simple-tabs button { position: relative; flex: none; min-height: 46px; padding: 0 2px 14px; background: transparent; border-radius: 0; color: #849087; font-size: 13px; }
-.app-shell .simple-tabs button[aria-current="page"] { background: transparent; color: #28745b; }
-.app-shell .simple-tabs button[aria-current="page"]::after { position: absolute; content: ''; bottom: 0; left: 0; right: 0; height: 3px; border-radius: 3px; background: #28745b; }
 .app-shell .planner-page, .app-shell .my-day-page { max-width: none; width: 100%; padding: 0; margin: 0; }
 .app-shell .planner-heading { align-items: center; gap: 16px; margin-bottom: 24px; }
-.app-shell .planner-heading h1, .app-shell .settings-page > h1 { font-size: 20px; font-weight: 650; color: #2e4337; letter-spacing: -.025em; }
-.app-shell .planner-heading p { color: #7c8980; font-size: 13px; }
-.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary) { min-height: 40px; padding: 0 18px; border-radius: 9px; border: 1px solid #28745b; background: #28745b; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 2px 3px #204f3910; }
-.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary):hover { background: #1e5945; border-color: #1e5945; transform: none; }
-.app-shell :is(.routine-card, .goal-row, .routines-summary, .goal-stat, .other-stats > article, .my-day-progress, .my-day-focus, .day-main-schedule, .day-tip, .simple-stat, .simple-agenda, .reminder-card, .work-card, .settings-profile, .settings-row) { border: 1px solid #e1e8e3; border-radius: 14px; background: #fff; box-shadow: 0 2px 4px #213a2a03; }
+.app-shell .planner-heading h1, .app-shell .settings-page > h1 { font-size: var(--font-size-page-title); font-weight: 600; color: var(--color-text-primary); letter-spacing: -.025em; }
+.app-shell .planner-heading p { color: var(--color-text-secondary); font-size: 15px; }
+.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary) { min-height: 44px; padding: 0 18px; border-radius: var(--radius-control); border: 1px solid var(--color-brand); background: var(--color-brand); color: #fff; font-size: 14px; font-weight: 600; box-shadow: none; }
+.app-shell :is(.planner-primary, .primary-button, .settings-save, .reminder-create-actions .primary):hover { background: var(--color-brand-dark); border-color: var(--color-brand-dark); transform: none; }
+.app-shell :is(.routine-card, .goal-row, .routines-summary, .goal-stat, .other-stats > article, .my-day-progress, .my-day-focus, .day-main-schedule, .day-tip, .simple-stat, .simple-agenda, .reminder-card, .work-card, .settings-profile, .settings-row) { border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-card); }
 .app-shell .routine-card { padding: 22px; }
-.app-shell .routine-card-top h2 { font-size: 16px; font-weight: 650; }
+.app-shell .routine-card-top h2 { font-size: var(--font-size-card-title); font-weight: 600; }
 .app-shell .routine-card:hover { border-color: #b9cdbf; box-shadow: 0 5px 16px #233f2c08; transform: none; }
 .app-shell .routines-summary { padding: 20px 24px; }
 .app-shell .routine-grid { gap: 18px; }
 .app-shell .other-stats { gap: 16px; }
 .app-shell :is(.planner-filter, .planner-tabs) { gap: 8px; }
-.app-shell :is(.planner-filter, .planner-tabs) button { font-size: 12px; border-radius: 8px; }
-.app-shell :is(.planner-filter, .planner-tabs) button.active { color: #28745b; background: #edf5f0; border-color: #d6e7dc; }
+.app-shell :is(.planner-filter, .planner-tabs) button { min-height: 40px; font-size: 13px; border-radius: var(--radius-control); }
+.app-shell :is(.planner-filter, .planner-tabs) button.active { color: var(--color-brand-dark); background: var(--color-brand-soft); border-color: var(--color-border); }
 .app-shell :is(input, select, textarea) { accent-color: #28745b; }
 .app-shell :is(input, select, textarea):focus { outline-color: #28745b; border-color: #79a58a; }
 .app-shell :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #28745b; outline-offset: 3px; }
@@ -94,18 +82,18 @@
 @media (max-width: 1100px) {
  .app-shell .app-main { margin-left: 210px; }
  .app-shell .sidebar { width: 210px; }
- .app-shell .app-content { padding: 26px; }
+ .app-shell .app-content { padding: 24px; }
  .app-shell .my-day-overview, .app-shell .my-day-content { grid-template-columns: 1fr; }
  .app-shell .my-day-progress { flex-wrap: wrap; }
 }
 @media (max-width: 800px) {
  .app-shell .sidebar { display: none; }
  .app-shell .app-main { margin-left: 0; }
- .app-shell .app-header { padding: 0 20px; height: 60px; }
- .app-shell .app-content { padding: 24px 18px 100px; }
- .app-shell .mobile-navigation { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; inset: auto 0 0; z-index: 40; background: #fffffff5; border-top: 1px solid #e1e8e3; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); backdrop-filter: blur(12px); }
- .app-shell .mobile-navigation-item { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px; color: #8a978e; font-size: 10px; border-radius: 9px; }
- .app-shell .mobile-navigation-item-active { background: #edf5f0; color: #28745b; }
+ .app-shell .app-header { padding: 0 16px; height: 60px; }
+ .app-shell .app-content { padding: 24px 16px calc(104px + env(safe-area-inset-bottom)); }
+ .app-shell .mobile-navigation { display: grid; grid-auto-columns: minmax(56px, 1fr); grid-auto-flow: column; grid-template-columns: unset; position: fixed; inset: auto 0 0; z-index: 40; background: rgb(255 255 255 / 96%); border-top: 1px solid var(--color-border); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); backdrop-filter: blur(12px); }
+ .app-shell .mobile-navigation-item { display: flex; min-height: 52px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 4px 2px; color: var(--color-text-secondary); font-size: 11px; border-radius: var(--radius-control); }
+ .app-shell .mobile-navigation-item-active { background: var(--color-brand-soft); color: var(--color-brand-dark); }
  .app-shell .simple-tabs { gap: 24px; }
  .app-shell .dashboard-date { display: none; }
 }
@@ -120,6 +108,37 @@
  .app-shell .simple-agenda > header { align-items: start; flex-direction: column; gap: 8px; }
  .app-shell .my-day-progress, .app-shell .my-day-focus { padding: 20px; }
 }
+
+@media (max-width: 480px) {
+ .app-shell .app-header { padding-inline: 12px; }
+ .app-shell .app-header > strong { display: none; }
+ .app-shell .header-actions { width: 100%; justify-content: space-between; gap: 4px; }
+ .app-shell .header-icon-button, .app-shell .header-avatar-button { width: 40px; min-width: 40px; height: 40px; }
+ .app-shell .assistant-trigger, .app-shell .logout-button { min-width: 40px; min-height: 40px; justify-content: center; padding-inline: 8px; }
+}
+
+.login-page { background:var(--color-background);font-family:var(--font-family); }
+.login-showcase { background:linear-gradient(145deg,var(--color-brand-dark),#24332d); }
+.login-brand-icon { background:var(--color-brand); }
+.login-eyebrow { color:#d5eee0; }
+.login-showcase-copy h1 span { color:#b5dfc7; }
+.login-showcase-copy p { color:#e0e9e3; }
+.login-feature div span { color:#d0ddd5; }
+.login-form-section { background:var(--color-background); }
+.login-mobile-brand { color:var(--color-text-primary); }
+.login-header h2 { color:var(--color-text-primary);font-weight:600; }
+.login-header p { color:var(--color-text-secondary);font-size:15px; }
+.login-header-icon { background:var(--color-brand-soft);color:var(--color-brand); }
+.login-input-wrapper { border-color:var(--color-border);border-radius:var(--radius-control);background:var(--color-surface); }
+.login-input-wrapper:focus-within { border-color:var(--color-brand);box-shadow:0 0 0 3px rgb(40 116 91 / 14%); }
+.login-input-wrapper input { color:var(--color-text-primary);font-family:var(--font-family);font-size:15px; }
+.login-input-wrapper input::placeholder { color:var(--color-text-muted); }
+.login-submit { border:1px solid var(--color-brand);border-radius:var(--radius-control);background:var(--color-brand);font-family:var(--font-family); }
+.login-submit:hover:not(:disabled) { background:var(--color-brand-dark);border-color:var(--color-brand-dark);box-shadow:none;transform:none; }
+.login-error { border-color:#efcbd0;background:var(--color-danger-soft);color:var(--color-danger);font-size:14px; }
+.login-success { border-color:#cce5d3;background:var(--color-success-soft);color:var(--color-success); }
+.login-switch { color:var(--color-text-secondary);font-size:14px; }
+.login-switch button { color:var(--color-brand-dark); }
 
 /* Forms and dialogs use the same spacing and controls across every planner tab. */
 .app-shell :is(.modal-overlay, .routine-modal-overlay, .goal-modal-overlay) {

@@ -1,17 +1,21 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-
-const ThemeContext = createContext(null);
+import { useEffect, useState } from 'react';
+import { ThemeContext } from './theme';
 const key = 'lifeai:appearance';
 function savedTheme() {
-  try { const value = localStorage.getItem(key); return ['light', 'dark', 'system'].includes(value) ? value : 'dark'; }
-  catch { return 'dark'; }
+  try { const value = localStorage.getItem(key); return ['light', 'dark', 'system'].includes(value) ? value : 'light'; }
+  catch { return 'light'; }
 }
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(savedTheme);
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
-      document.documentElement.dataset.theme = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
+      const appearance = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
+      document.documentElement.dataset.theme = appearance;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute(
+        'content',
+        appearance === 'dark' ? '#14181b' : '#f6f7f5',
+      );
     };
     apply();
     try { localStorage.setItem(key, theme); } catch { /* The theme still works without storage. */ }
@@ -20,4 +24,3 @@ export function ThemeProvider({ children }) {
   }, [theme]);
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }
-export const useTheme = () => useContext(ThemeContext);

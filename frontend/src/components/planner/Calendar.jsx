@@ -10,6 +10,8 @@ import AgendaEventCard from './AgendaEventCard';
 import AgendaDayList from './AgendaDayList';
 import { useUserPreferences } from '../../lib/UserPreferences';
 
+const statusLabels={COMPLETED:'Concluída',SKIPPED:'Pulada neste dia',PENDING:'Pendente',MISSED:'Não realizada',CURRENT:'Em andamento',LATE:'Atrasada'};
+
 export default function Calendar(){
  const [params]=useSearchParams();
  const dateParam=params.get('data')||'';
@@ -19,16 +21,35 @@ export default function Calendar(){
  const preferences = user?.profile;
  const timezone = preferences?.timezone || 'America/Sao_Paulo';
  const weekStart = preferences?.weekStartsOn ?? 1;
- useEffect(()=>{if(user){setView(preferences?.calendarView||'month');setSelected(requestedDate||localDateKey(new Date(),timezone));}},[user?.id,preferences?.calendarView,timezone,requestedDate]);
- const [selected,setSelected]=useState(requestedDate||localDateKey(new Date(),timezone)),[view,setView]=useState('month'),[filter,setFilter]=useState('all'),[resources,setResources]=useState({}),[items,setItems]=useState([]),[revision,setRevision]=useState(0),[error,setError]=useState(''),[loading,setLoading]=useState(true),[editor,setEditor]=useState(null),[deleting,setDeleting]=useState(null),[newKind,setNewKind]=useState('rotinas'),[busy,setBusy]=useState(false);
+ const [now,setNow]=useState(()=>new Date());
+ const [selectedOverride,setSelected]=useState(requestedDate);
+ const selected=requestedDate||selectedOverride||localDateKey(now,timezone);
+ const [viewOverride,setView]=useState(null);
+ const view=viewOverride||preferences?.calendarView||'month';
+ const [filter,setFilter]=useState('all');
+ const [resources,setResources]=useState({});
+ const [revision,setRevision]=useState(0);
+ const [loadedRevision,setLoadedRevision]=useState(-1);
+ const [activityResult,setActivityResult]=useState({date:'',revision:-1,items:[]});
+ const [error,setError]=useState('');
+ const [editor,setEditor]=useState(null);
+ const [deleting,setDeleting]=useState(null);
+ const [newKind,setNewKind]=useState('rotinas');
+ const [busy,setBusy]=useState(false);
+ const loading=loadedRevision!==revision;
+ const items=activityResult.date===selected&&activityResult.revision===revision?activityResult.items:[];
+ const targetType=params.get('tipo');
+ const targetItem=params.get('item');
+ useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),30000);return()=>clearInterval(timer)},[]);
  useEffect(()=>{const reload=()=>setRevision(r=>r+1);window.addEventListener('lifeai:agenda-updated',reload);return()=>window.removeEventListener('lifeai:agenda-updated',reload)},[]);
- useEffect(()=>{let active=true;setLoading(true);setError('');Promise.all(Object.keys(entities).map(async kind=>[kind,(await api.get(`/planner/${kind}`)).data])).then(result=>{if(active)setResources(Object.fromEntries(result))}).catch(()=>{if(active)setError('Não foi possível carregar a agenda.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[revision]);
- useEffect(()=>{let active=true;setItems([]);api.get('/activity-status',{params:{date:selected}}).then(r=>{if(active)setItems(r.data)}).catch(()=>{if(active)setError('Não foi possível carregar as atividades do dia.')});return()=>{active=false}},[selected,revision]);
- useEffect(()=>{if(!loading)document.querySelector('.studio-day-event.notification-target')?.scrollIntoView({block:'nearest',behavior:'smooth'});},[loading,selected,params.get('tipo'),params.get('item')]);
+ useEffect(()=>{let active=true;Promise.all(Object.keys(entities).map(async kind=>[kind,(await api.get(`/planner/${kind}`)).data])).then(result=>{if(active){setResources(Object.fromEntries(result));setError('')}}).catch(()=>{if(active)setError('Não foi possível carregar a agenda.')}).finally(()=>{if(active)setLoadedRevision(revision)});return()=>{active=false}},[revision]);
+ useEffect(()=>{let active=true;api.get('/activity-status',{params:{date:selected}}).then(r=>{if(active)setActivityResult({date:selected,revision,items:r.data})}).catch(()=>{if(active)setError('Não foi possível carregar as atividades do dia.')});return()=>{active=false}},[selected,revision]);
+ useEffect(()=>{if(!loading)document.querySelector('.studio-day-event.notification-target')?.scrollIntoView({block:'nearest',behavior:'smooth'});},[loading,selected,targetType,targetItem]);
  const [preview,setPreview]=useState(null),[dayList,setDayList]=useState(null);
  const eventsFor=day=>scheduledEvents(resources,day,timezone);
  const [skipping,setSkipping]=useState(null),[skipReason,setSkipReason]=useState(''),[skipError,setSkipError]=useState('');
- const today=localDateKey(new Date(),timezone);
+ const today=localDateKey(now,timezone);
+ const currentTime=new Intl.DateTimeFormat('pt-BR',{timeZone:timezone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now);
  // Share of a past day's routine occurrences marked as completed, shown as a mark in the cell corner.
  // full: every routine completed · none: nothing completed or skipped (the day went blank) · partial: anything in between.
  const routineProgress=day=>{if(day>=today)return null;const rows=eventsFor(day).filter(event=>event.kind==='rotinas').map(event=>({key:event.key,title:event.title,time:event.time,status:event.status||'PENDING',skipReason:event.parent.routineExecutions?.find(row=>row.routineScheduleId===event.sourceId&&row.date.slice(0,10)===day)?.skipReason||null}));if(!rows.length)return null;const done=rows.filter(row=>row.status==='COMPLETED').length,acted=rows.filter(row=>['COMPLETED','SKIPPED','MISSED'].includes(row.status)).length;return {day,rows,done,total:rows.length,percent:Math.round(done/rows.length*100),level:done===rows.length?'full':acted===0?'none':'partial'}};
@@ -38,7 +59,7 @@ export default function Calendar(){
  function refresh(){setEditor(null);setDeleting(null);window.dispatchEvent(new Event('lifeai:agenda-updated'))}
  async function updateStatus(event,status){setBusy(true);setError('');try{await api.put('/activity-status',{kind:event.kind,sourceId:event.sourceId,date:selected,status});refresh()}catch(error){setError(error.response?.data?.message||'Não foi possível atualizar a atividade.')}finally{setBusy(false)}}
  async function skip(e){e.preventDefault();setBusy(true);setSkipError('');try{await api.put('/activity-status',{kind:skipping.kind,sourceId:skipping.sourceId,date:selected,status:'SKIPPED',skipReason});setSkipping(null);refresh()}catch(error){setSkipError(error.response?.data?.message||'Não foi possível pular a atividade.')}finally{setBusy(false)}}
- function statusOf(event){return items.find(item=>item.kind===event.kind&&item.sourceId===event.sourceId)?.status||({RESOLVED:'COMPLETED',CANCELLED:'SKIPPED'}[event.status]||event.status||'PENDING');}
+ function statusOf(event){const status=items.find(item=>item.kind===event.kind&&item.sourceId===event.sourceId)?.status||({RESOLVED:'COMPLETED',CANCELLED:'SKIPPED'}[event.status]||event.status||'PENDING');if(status!=='PENDING'||selected!==today)return status;if(event.end&&event.time<=currentTime&&currentTime<event.end)return 'CURRENT';if(event.time<currentTime)return 'LATE';return status;}
  const selectedDate=new Date(selected+'T12:00:00Z');
  const completedCount=selectedEvents.filter(event=>statusOf(event)==='COMPLETED').length;
  const dayEvents=eventsFor(selected);
@@ -53,7 +74,22 @@ export default function Calendar(){
  <div className="studio-calendar-add"><label className="studio-field"><span>Adicionar ao dia</span><select aria-label="Tipo de nova atividade" value={newKind} onChange={e=>setNewKind(e.target.value)}>{Object.entries(entities).map(([id,config])=><option key={id} value={id}>{config.title}</option>)}</select></label><button type="button" className="studio-button" onClick={()=>setEditor({kind:newKind,item:null})}><Plus size={15}/>Adicionar</button></div>
  <div className="studio-day-scroll" role="region" aria-label="Atividades do dia" tabIndex={0} key={selected}>
  {!loading&&!selectedEvents.length&&<div className="agenda-day-empty"><CalendarDays size={27}/><strong>{dayEvents.length?'Nada por aqui com este filtro':'Seu dia tem espaço livre'}</strong><p>{dayEvents.length?'Escolha outro tipo para ver os compromissos.':'Adicione uma atividade para começar a planejar.'}</p></div>}
- {selectedEvents.map(event=>{const status=statusOf(event);return <article className={`studio-day-event ${event.kind} ${status.toLowerCase()} ${params.get('tipo')===event.kind&&Number(params.get('item'))===event.sourceId?'notification-target':''}`} key={event.key}><div className="agenda-event-head"><time><Clock3 size={13}/>{event.time}{event.end&&` – ${event.end}`}</time><span className="agenda-event-type">{entities[event.kind].singular}</span></div><h3>{event.title}</h3><div className="agenda-event-meta"><span className={`agenda-state ${status.toLowerCase()}`}><i/>{({COMPLETED:'Concluída',SKIPPED:'Pulada neste dia',PENDING:'Pendente',MISSED:'Não realizada'})[status]||'Pendente'}</span><div className="agenda-event-tools"><button type="button" title="Editar cadastro" disabled={busy} aria-label={`Editar ${event.title}`} onClick={()=>setEditor({kind:event.kind,item:event.parent})}><Pencil size={14}/></button><button type="button" title="Excluir cadastro" disabled={busy} aria-label={`Excluir ${event.title}`} onClick={()=>setDeleting({kind:event.kind,item:event.parent})}><Trash2 size={14}/></button></div></div><div className="studio-activity-actions" aria-label={`Status de ${event.title}`}>{status!=='COMPLETED'&&<button type="button" className="agenda-complete" disabled={busy||loading} onClick={()=>updateStatus(event,'COMPLETED')}><Check size={14}/>Concluir</button>}{status!=='SKIPPED'&&<button type="button" disabled={busy||loading} onClick={()=>{setSkipping(event);setSkipReason('');setSkipError('')}}><SkipForward size={14}/>Pular</button>}{status!=='PENDING'&&<button type="button" disabled={busy||loading} onClick={()=>updateStatus(event,'PENDING')}><RotateCcw size={14}/>Pendente</button>}</div></article>})}</div></aside></div>
+ {selectedEvents.map(event=>{
+  const status=statusOf(event);
+  return <article className={`studio-day-event ${event.kind} ${status.toLowerCase()} ${params.get('tipo')===event.kind&&Number(params.get('item'))===event.sourceId?'notification-target':''}`} key={event.key}>
+   <div className="agenda-event-head"><time><Clock3 size={14}/>{event.time}{event.end&&` – ${event.end}`}</time><span className="agenda-event-type">{entities[event.kind].singular}</span></div>
+   <h3>{event.title}</h3>
+   <div className="agenda-event-meta">
+    <span className={`agenda-state ${status.toLowerCase()}`}><i aria-hidden="true"/>{statusLabels[status]||'Pendente'}</span>
+    <div className="agenda-event-tools"><button type="button" title="Editar cadastro" disabled={busy} aria-label={`Editar ${event.title}`} onClick={()=>setEditor({kind:event.kind,item:event.parent})}><Pencil size={16}/></button><button type="button" title="Excluir cadastro" disabled={busy} aria-label={`Excluir ${event.title}`} onClick={()=>setDeleting({kind:event.kind,item:event.parent})}><Trash2 size={16}/></button></div>
+   </div>
+   <div className="studio-activity-actions" aria-label={`Status de ${event.title}`}>
+    {status!=='COMPLETED'&&<button type="button" className="agenda-complete" disabled={busy||loading} onClick={()=>updateStatus(event,'COMPLETED')}><Check size={16}/>Concluir</button>}
+    {status!=='SKIPPED'&&<button type="button" disabled={busy||loading} onClick={()=>{setSkipping(event);setSkipReason('');setSkipError('')}}><SkipForward size={16}/>Pular</button>}
+    {status!=='PENDING'&&<button type="button" disabled={busy||loading} onClick={()=>updateStatus(event,'PENDING')}><RotateCcw size={16}/>Pendente</button>}
+   </div>
+  </article>
+ })}</div></aside></div>
 
  {dayList&&<AgendaDayList date={dayList} events={eventsFor(dayList)} onClose={()=>setDayList(null)} onOpen={event=>{setPreview({event,date:dayList,returnToDayList:true});setDayList(null)}}/>}
  {preview&&<AgendaEventCard key={`${preview.date}-${preview.event.key}`} {...preview} onClose={()=>{if(preview.returnToDayList)setDayList(preview.date);setPreview(null)}} onUpdated={()=>window.dispatchEvent(new Event('lifeai:agenda-updated'))} onEdit={item=>{setEditor({kind:preview.event.kind,item});setPreview(null)}}/>}
@@ -61,6 +97,3 @@ export default function Calendar(){
  {skipping&&<Dialog title="Pular atividade neste dia?" subtitle={skipping.title} busy={busy} onClose={()=>setSkipping(null)}><form onSubmit={skip}><fieldset className="studio-editor-body" disabled={busy}><p>A atividade será marcada como pulada em {new Date(`${selected}T12:00:00Z`).toLocaleDateString('pt-BR',{timeZone:'UTC'})}. Os próximos dias continuam programados.</p><label className="studio-field"><span>Motivo (opcional)</span><textarea rows={3} maxLength={500} value={skipReason} onChange={e=>setSkipReason(e.target.value)} placeholder="Ex.: preciso descansar hoje"/></label>{skipError&&<p className="studio-error" role="alert">{skipError}</p>}</fieldset><footer><button type="button" className="studio-button secondary" disabled={busy} onClick={()=>setSkipping(null)}>Cancelar</button><button type="submit" className="studio-button" disabled={busy}>{busy?'Salvando...':'Pular somente neste dia'}</button></footer></form></Dialog>}
  </section>;
 }
-
-
-
