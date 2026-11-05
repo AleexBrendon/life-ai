@@ -12,4 +12,4 @@ COPY src ./src
 
 EXPOSE 3010
 
-CMD ["sh", "-c", "npx prisma generate && npm start"]
+CMD ["npm", "run", "start:deploy"]
