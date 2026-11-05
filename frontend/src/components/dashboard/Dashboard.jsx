@@ -6,6 +6,11 @@ import { lifeApi } from '../../lib/api';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setClock(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -47,7 +52,7 @@ export default function Dashboard() {
   });
   const total = summary.totalActivities ?? (summary.totalScheduledRoutines + summary.totalScheduledReminders);
   const percentage = total ? Math.min(100, Math.round(summary.completed / total * 100)) : 0;
-  const now = new Intl.DateTimeFormat('pt-BR', { timeZone: data.timezone || 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const now = new Intl.DateTimeFormat('pt-BR', { timeZone: data.timezone || 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(clock);
   const next = agenda.find(item => !item.done && !item.skipped && item.time >= now);
   const stats = [
     ['Rotinas de hoje', summary.totalScheduledRoutines, 'atividades programadas', CalendarDays],
@@ -59,7 +64,7 @@ export default function Dashboard() {
     ? `/agenda?data=${data.date}&tipo=${next.kind}&item=${next.sourceId}`
     : `/agenda?data=${data.date}`;
   return <section className="overview-page dashboard-refined">
-    <div className="dashboard-welcome"><div className="simple-intro"><span>VISÃO GERAL</span><h1>Dashboard</h1><p>Sua agenda, seu progresso e as próximas atividades.</p></div><div className="dashboard-header-actions"><time className="dashboard-date" dateTime={data.date}><CalendarDays size={16}/>{new Date(`${data.date}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}</time><Link className="studio-button" to="/agenda">Minha agenda <ArrowUpRight size={16}/></Link></div></div>
+    <div className="dashboard-welcome"><div className="simple-intro"><span>VISÃO GERAL</span><h1>Dashboard</h1><p>Sua agenda, seu progresso e as próximas atividades.</p></div><div className="dashboard-header-actions"><time className="dashboard-date" dateTime={data.date}><CalendarDays size={16}/>{new Date(`${data.date}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}</time><Link className="studio-button secondary" to="/agenda">Minha agenda <ArrowUpRight size={16}/></Link></div></div>
     <article className="dashboard-next-feature" aria-label="Próximo compromisso">
       <div>
         <span className="studio-eyebrow">{next ? 'PRÓXIMO COMPROMISSO' : 'SEU DIA, NO SEU RITMO'}</span>

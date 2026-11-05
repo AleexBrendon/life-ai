@@ -230,13 +230,13 @@ html[data-theme=dark] .app-shell .hydration-strip .hydration-sound { color:#bdd8
 html[data-theme=dark] .app-shell .hydration-strip .hydration-sound:hover { background:#344c3d; }
 @media(max-width:600px) { .app-shell .hydration-strip { gap:10px;padding-block:12px; }.app-shell .hydration-strip > a { flex-basis:100%; }.app-shell .hydration-strip .hydration-sound { margin-left:auto; } }
 @media(max-width:480px) { .notification-toolbar { align-items:stretch;flex-direction:column;gap:12px; }.notification-toolbar .studio-view-toggle { align-self:flex-start; }.notification-toolbar > .studio-button { width:100%; } }
-/* Compact density without shrinking the calendar or interaction targets. */
+/* Shared density: preserve readable text and comfortable interaction targets. */
 .app-shell .app-header { height:62px;padding-inline:var(--space-page); }
 .app-shell .sidebar-inner { padding:24px 16px 16px; }
 .app-shell .sidebar-brand { padding-bottom:24px; }
 .app-shell .sidebar-navigation-list { gap:4px; }
-.app-shell .simple-tabs { padding:4px;gap:6px; }
-.app-shell .simple-tabs button { padding:8px 12px;min-height:38px; }
+.app-shell .simple-tabs { padding:8px;gap:8px; }
+.app-shell .simple-tabs button { padding:8px 16px;min-height:44px; }
 .app-shell .dashboard-total { min-height:82px;padding:16px var(--space-card);gap:12px; }
 .app-shell .dashboard-refined .overview-event { padding:14px 0;gap:12px; }
 .app-shell .studio-record h3 { margin:14px 0 8px; }
@@ -259,7 +259,7 @@ html[data-theme=dark] .app-shell .hydration-strip .hydration-sound:hover { backg
 .agenda-day-list-intro { padding:16px 18px 0; }
 @media(max-width:900px) { :root { --space-page:20px;--space-card:16px; } }
 @media(max-width:600px) {
- :root { --space-page:14px;--space-section:16px;--space-card:14px;--space-gap:10px; }
+ :root { --space-page:16px;--space-section:24px;--space-card:16px;--space-gap:16px; }
  .app-shell .dashboard-total { min-height:80px;padding:14px; }
  .app-shell .app-header { height:60px; }
  .app-shell .studio-empty { min-height:160px;padding:20px 14px; }
@@ -273,3 +273,17 @@ html[data-theme=dark] .app-shell .hydration-strip .hydration-sound:hover { backg
 .routine-modality input:checked + span { background: var(--assistant-control-hover,#dcebe1); color: var(--assistant-control-text,#28543f); border-color: var(--assistant-control-border,#a9c5b4); }
 .routine-modality input:focus-visible + span { outline: 2px solid var(--assistant-focus,#39865f); outline-offset: 2px; }
 .routine-modality small { display: block; margin-top: 8px; opacity: .8; }
+
+/* Readable agenda controls and aligned data on every supported viewport. */
+.app-shell .agenda-redesign .studio-day-event { padding:var(--space-3);border-radius:var(--radius-card); }
+.app-shell .agenda-redesign .studio-day-event h3 { font-size:16px;font-weight:600;line-height:1.5; }
+.app-shell .agenda-redesign .agenda-event-head time { font-size:14px;min-width:6ch;font-variant-numeric:tabular-nums; }
+.app-shell .agenda-redesign :is(.agenda-state,.agenda-event-type) { font-size:12px; }
+.app-shell .agenda-redesign .studio-activity-actions button { font-size:14px;min-height:44px;padding:8px 16px; }
+.app-shell .agenda-redesign .agenda-event-tools button { width:44px;height:44px; }
+.app-shell :is(.studio-record-meta,.studio-badge,.studio-field > span) { font-size:13px; }
+.app-shell :is(.finance-record,.finance-stats,.agenda-day-list-item,time) { font-variant-numeric:tabular-nums; }
+.agenda-day-list-item time { min-width:6ch;flex-shrink:0; }
+@media (prefers-reduced-motion:reduce) {
+ *,*::before,*::after { scroll-behavior:auto !important;animation-duration:.01ms !important;transition-duration:.01ms !important; }
+}

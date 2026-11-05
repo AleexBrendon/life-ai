@@ -15,6 +15,8 @@ const {
 const authMiddleware = require("../middlewares/auth.middleware");
 
 const router = express.Router();
+const { createAuthRateLimit } = require('../middlewares/authRateLimit.middleware');
+router.use(['/login', '/register'], createAuthRateLimit());
 
 router.post("/register", (req, res, next) => {
   const result = registerSchema.safeParse(req.body);

@@ -10,13 +10,24 @@ router.use('/:kind', (req, res, next) => {
   if (!req.plannerConfig) return res.status(404).json({ success: false, message: "Área não encontrada." });
   next();
 });
-const include = config => {
+const { plannerQuerySchema, executionDateFilter } = require('../schemas/plannerQuery.schema');
+const include = (config, query = {}) => {
  const relations = Object.fromEntries(Object.keys(config.children).map(key => [key, true]));
- if (config.model === "routineItem") relations.routineExecutions = { select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true, skipReason: true } };
+ if (config.model === "routineItem") relations.routineExecutions = { where: executionDateFilter(query), select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true, skipReason: true } };
  return Object.keys(relations).length ? relations : undefined;
 };
 router.get('/:kind', async (req, res) => {
-  try { const config = req.plannerConfig; const data = await prisma[config.model].findMany({ where: { userId: req.user.id }, include: include(config), orderBy: { createdAt: "asc" } }); res.json({ success: true, data }); }
+  const parsed = plannerQuerySchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ success: false, message: 'Revise os filtros e a paginação.' });
+  const query = parsed.data;
+  try {
+    const config = req.plannerConfig;
+    const data = await prisma[config.model].findMany({
+      where: { userId: req.user.id }, include: include(config, query), orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      ...(query.limit !== undefined ? { take: query.limit } : {}), ...(query.offset !== undefined ? { skip: query.offset } : {}),
+    });
+    res.json({ success: true, data });
+  }
   catch { res.status(500).json({ success: false, message: "Não foi possível carregar os registros." }); }
 });
 async function save(req, res) {

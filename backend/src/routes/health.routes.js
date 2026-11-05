@@ -4,7 +4,8 @@ const redis = require("../database/redis");
 
 const router = express.Router();
 
-router.get("/health", async (req, res) => {
+router.get('/live', (req, res) => res.json({ success: true, services: { api: 'online' } }));
+router.get(['/', '/ready', '/health'], async (req, res) => {
   let postgres = "offline";
   let redisStatus = "offline";
 

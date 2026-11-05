@@ -29,15 +29,13 @@ async function getUpcomingActivities(userId, now = new Date(), knownProfile) {
  }
  return result.sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
 }
+const { deliverUpcomingNotifications } = require('./upcomingDelivery.service');
 async function sendUpcomingNotifications(now = new Date(), onlyUserId) {
- const users=await prisma.user.findMany({where:{...(onlyUserId?{id:onlyUserId}:{}),OR:[{profile:{is:null}},{profile:{is:{notifyUpcoming:true}}}]},select:{id:true,profile:{select:{timezone:true,notifyUpcoming:true}}}});
- for(const user of users){
-  const items=await getUpcomingActivities(user.id,now,user.profile);
-  for(const item of items){
-   if(item.remainingMs<=240000)continue;
-   await prisma.notification.upsert({where:{dedupKey:item.key},update:{},create:{userId:user.id,dedupKey:item.key,type:'UPCOMING',priority:'HIGH',title:`Em 5 minutos · ${item.title.slice(0,100)}`,message:`${item.title.slice(0,150)} começa às ${item.time} em ${item.date.split('-').reverse().join('/')}. Abra a atividade para acompanhar na agenda.`,entityType:item.kind,entityId:item.id,scheduledAt:new Date(item.startsAt)}});
-  }
- }
+ const started = Date.now();
+ return deliverUpcomingNotifications(now, onlyUserId, {
+  db: prisma, upcoming: getUpcomingActivities,
+  clock: () => new Date(now.getTime() + Date.now() - started),
+ });
 }
 function startUpcomingNotifications() {
  let running=false;

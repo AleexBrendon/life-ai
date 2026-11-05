@@ -4,10 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "test:unit": "vitest run --config vitest.unit.config.js",
+    "test:integration": "vitest run tests/integration",
+    "test:security": "vitest run tests/security"
   },
   "keywords": [],
   "author": "",
@@ -35,4 +38,3 @@
     "vitest": "^4.1.11"
   }
 }
-
