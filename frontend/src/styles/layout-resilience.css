@@ -1,0 +1,23 @@
+/* Allow long user content to wrap inside flex and grid columns. */
+.app-shell, .studio-dialog, .workspace-panel { overflow-wrap:anywhere; }
+.app-shell :is(.app-content,.sidebar-inner,.sidebar-bottom,.sidebar-user,.sidebar-user-info), .studio-dialog > header > div { min-width:0; }
+.app-shell .sidebar-bottom { grid-template-columns:minmax(0,1fr); }
+.app-shell .sidebar-user-info { flex:1; }
+.app-shell .sidebar-user-info strong { white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5; }
+.app-shell .sidebar-inner { overflow-y:auto; }
+.app-shell .sidebar-navigation { flex-shrink:0; }
+.app-shell :is(.studio-section-heading,.studio-child-section > header,.studio-toolbar) { flex-wrap:wrap; }
+.app-shell :is(.studio-section-heading,.studio-child-section > header,.studio-toolbar) > *, .app-shell :is(.overview-event,.studio-task,.agenda-day-list-item,.finance-entry) > * { min-width:0; }
+.app-shell :is(.studio-button,.studio-badge), .studio-dialog .studio-button { max-width:100%;white-space:normal;overflow-wrap:anywhere; }
+.app-shell .studio-button, .studio-dialog .studio-button { padding-block:10px; }
+.app-shell .studio-button svg, .studio-dialog .studio-button svg { flex-shrink:0; }
+.studio-dialog footer { flex-wrap:wrap; }
+.app-shell .studio-search { min-width:0;max-width:100%; }
+.app-shell .studio-search input { min-width:0; }
+.app-shell :is(.overview-side,.overview-main,.studio-calendar-main,.studio-calendar-detail,.settings-layout > *,.notification-layout > *) { min-width:0; }
+@media(max-width:600px) {
+ .app-shell .studio-toolbar { align-items:stretch; }
+ .app-shell .studio-toolbar > nav { max-width:100%; }
+ .app-shell .studio-search { width:100%; }
+ .app-shell .studio-search input { flex:1; }
+}

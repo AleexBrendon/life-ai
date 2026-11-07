@@ -25,3 +25,4 @@ createRoot(document.getElementById("root")).render(
   </StrictMode>,
 );
 import "./styles/routine-preview.css";
+import "./styles/layout-resilience.css";

@@ -97,3 +97,16 @@ button.debt-record:hover {background:var(--chart-grid)}
 .debt-option-grid .ai-option>.studio-button {margin-top:auto}
 .debt-results {margin-top:16px}
 @media(max-width:700px){.debt-option-grid {grid-template-columns:1fr}.debt-planning>.studio-section-heading {align-items:stretch}}
+/* Complete daily list with wrapping names, categories and amounts. */
+.bill-day-detail-row { display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;min-width:0;padding:14px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface);color:var(--color-text-primary);text-align:left;font:inherit;overflow-wrap:anywhere; }
+.bill-day-detail-row .bill-list-title { flex:1 1 100%; }
+.bill-day-detail-row > strong { margin-left:auto;min-width:0; }
+.bill-day-detail-row:hover { border-color:var(--color-brand); }
+.bill-day-details .bill-list { max-height:none;overflow:visible; }
+.bill-calendar-entry small, .bill-list-title small, .bill-facts dd, .bill-history li, .bill-chart-legend li { overflow-wrap:anywhere; }
+.bill-calendar-entry span { white-space:normal;overflow-wrap:anywhere; }
+.bill-more { max-width:100%;text-align:left;overflow-wrap:anywhere; }
+.bill-calendar > header > div, .bill-chart-legend li > span, .bill-facts > div { min-width:0; }
+.bill-list-row > strong { min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere; }
+.bill-detail-heading > strong { max-width:100%;overflow-wrap:anywhere; }
+@media(max-width:400px) { .bill-stats { grid-template-columns:minmax(0,1fr); }.bill-toolbar .studio-view-toggle button { white-space:normal;min-width:0; }.bill-list-row { padding:12px; } }
