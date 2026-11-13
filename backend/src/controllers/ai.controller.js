@@ -1,6 +1,12 @@
 const prisma = require("../database/prisma");
 const { buildAIRecommendation } = require("../services/aiOrchestrator.service");
 const { executeAIAction } = require("../services/aiActionExecutor.service");
+const { createRecommendationApprover } = require('../services/recommendationApproval.service');
+const approve = createRecommendationApprover({
+    prisma,
+    getDay: require('../services/dashboard.service').getDashboard,
+    executeAction: executeAIAction,
+});
 const {
     recommendationRequestSchema,
     recommendationListSchema,
@@ -8,7 +14,7 @@ const {
 
 const parseId = (value) => {
     const id = Number(value);
-    return Number.isInteger(id) && id > 0 ? id : null;
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
 };
 
 const createRecommendation = async (req, res) => {
@@ -72,35 +78,13 @@ const approveRecommendation = async (req, res) => {
     if (!recommendationId) return res.status(400).json({ success: false, message: "ID da recomendação inválido." });
 
     try {
-        const result = await prisma.$transaction(async (db) => {
-            const recommendation = await db.aiRecommendation.findFirst({
-                where: { id: recommendationId, userId: req.user.id, status: "PENDING" },
-            });
-            if (!recommendation) throw new Error("Recomendação pendente não encontrada.");
-
-            const execution = await executeAIAction({
-                userId: req.user.id,
-                date: recommendation.date,
-                action: {
-                    type: recommendation.action,
-                    target: { type: recommendation.targetType, id: recommendation.targetId },
-                    payload: recommendation.changes,
-                    reason: recommendation.reason,
-                    confidence: recommendation.confidence,
-                },
-                db,
-            });
-
-            const approved = await db.aiRecommendation.update({
-                where: { id: recommendation.id },
-                data: { status: "APPROVED", approvedAt: new Date(), executedAt: new Date(), result: execution },
-            });
-            return { recommendation: approved, execution };
-        });
+        const result = await approve({ userId: req.user.id, recommendationId });
 
         return res.status(200).json({ success: true, data: result });
     } catch (error) {
-        return res.status(409).json({ success: false, message: error.message || "Não foi possível aprovar a recomendação." });
+        if (error.status === 409) return res.status(409).json({ success: false, message: error.message });
+        console.error('Falha ao aprovar recomendação:', error.code || error.name);
+        return res.status(500).json({ success: false, message: 'Não foi possível aprovar a recomendação. Tente novamente.' });
     }
 };
 

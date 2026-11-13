@@ -1,8 +1,7 @@
-const prisma = require("../database/prisma");
 const { localClock } = require('./personalPlanning.service');
 const { PROJECT_START, canOccurOn } = require('../utils/agendaStart');
 
-const getDashboard = async ({ userId, date, now = new Date(), db = prisma }) => {
+const getDashboard = async ({ userId, date, now = new Date(), db = require('../database/prisma') }) => {
     const profile = await db.profile.findUnique({ where: { userId }, select: { timezone: true } });
     let timezone = profile?.timezone || 'America/Sao_Paulo';
     let today;

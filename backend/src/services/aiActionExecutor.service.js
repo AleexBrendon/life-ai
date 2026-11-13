@@ -1,5 +1,3 @@
-const prisma = require("../database/prisma");
-
 const getExecutionDate = (date) => {
     if (date instanceof Date) return date;
     if (typeof date === "string") return new Date(`${date}T00:00:00.000Z`);
@@ -7,7 +5,7 @@ const getExecutionDate = (date) => {
     throw new Error("Data de execução inválida.");
 };
 
-const executeRoutineScheduleChange = async ({ userId, action, date, resultType, db = prisma }) => {
+const executeRoutineScheduleChange = async ({ userId, action, date, resultType, db }) => {
     const routineId = action.target.id;
     const { newStartTime, newEndTime } = action.payload;
 
@@ -26,7 +24,10 @@ const executeRoutineScheduleChange = async ({ userId, action, date, resultType, 
     });
     if (!routine) throw new Error("Rotina não encontrada.");
 
-    const schedule = routine.schedules.find((item) => item.dayOfWeek === executionDate.getUTCDay());
+    const candidates = routine.schedules.filter(item => item.dayOfWeek === executionDate.getUTCDay()
+        && (action.payload.routineScheduleId === undefined || item.id === action.payload.routineScheduleId));
+    if (candidates.length > 1) throw new Error('A rotina possui mais de um horário nesta data. Informe a ocorrência correta.');
+    const schedule = candidates[0];
     if (!schedule) throw new Error("Horário da rotina não encontrado para esta data.");
 
     const existingExecution = await db.routineExecution.findUnique({
@@ -65,8 +66,8 @@ const executeRoutineScheduleChange = async ({ userId, action, date, resultType, 
         executed: true,
         target: { type: "ROUTINE", id: routine.id },
         changes: {
-            previousStartTime: schedule.startTime,
-            previousEndTime: schedule.endTime,
+            previousStartTime: existingExecution?.startTime || schedule.startTime,
+            previousEndTime: existingExecution?.endTime || schedule.endTime,
             newStartTime: execution.startTime,
             newEndTime: execution.endTime,
         },
@@ -74,7 +75,7 @@ const executeRoutineScheduleChange = async ({ userId, action, date, resultType, 
     };
 };
 
-const executeAIAction = async ({ userId, action, date, db = prisma }) => {
+const executeAIAction = async ({ userId, action, date, db = require('../database/prisma') }) => {
     if (!Number.isInteger(userId)) throw new Error("ID do usuário inválido.");
     if (!action || typeof action !== "object") throw new Error("Ação da IA inválida.");
 
