@@ -2,6 +2,7 @@ import axios from "axios";
 import { actionFeedback, showFeedback } from './actionFeedback';
 import { dispatchApiDomainEvents } from "./apiDomainEvents";
 import { endSession, getSessionToken } from "./session";
+import { requestTimeout } from './requestFeedback';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -9,6 +10,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (!config.timeout) config.timeout = requestTimeout(config.url, config.method);
   const token = getSessionToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -34,7 +36,7 @@ export const authApi = {
 };
 
 export const lifeApi = {
-  dashboard: () => api.get("/dashboard"),
+  dashboard: (config) => api.get("/dashboard", config),
   today: () => api.get("/day/today"),
   profile: () => api.get("/users/me"),
   updateProfile: (payload) => api.put("/users/me", payload),

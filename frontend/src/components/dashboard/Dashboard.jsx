@@ -3,16 +3,21 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CheckCheck, Target, BriefcaseBusiness, ArrowUpRight, Sparkles, CalendarCheck2 } from 'lucide-react';
 import { lifeApi } from '../../lib/api';
+import { dashboardAgenda, highlightedActivity } from './dashboardAgenda';
+import { localDateKey } from '../planner/calendarUtils';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setClock(new Date()), 30000);
-    return () => clearInterval(timer);
+    const refreshClock = () => { if (!document.hidden) setClock(new Date()); };
+    document.addEventListener('visibilitychange', refreshClock);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', refreshClock); };
   }, []);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const dateKey = localDateKey(clock, data?.timezone || 'America/Sao_Paulo');
   useEffect(() => {
     const reload = () => {
       setError(false);
@@ -22,38 +27,20 @@ export default function Dashboard() {
     return () => window.removeEventListener("lifeai:agenda-updated", reload);
   }, []);
   useEffect(() => {
-    let active = true;
-    lifeApi.dashboard().then(response => { if (active) setData(response.data); })
-      .catch(() => { if (active) setError(true); });
-    return () => { active = false; };
-  }, [attempt]);
+    const controller = new AbortController();
+    lifeApi.dashboard({ signal: controller.signal }).then(response => {
+      if (!controller.signal.aborted) { setData(response.data); setError(false); }
+    }).catch(() => { if (!controller.signal.aborted) setError(true); });
+    return () => controller.abort();
+  }, [attempt, dateKey]);
   if (error) return <div role="alert" className="studio-empty"><p>Não foi possível carregar o dashboard.</p><button className="studio-button" onClick={() => { setError(false); setAttempt(value => value + 1); }}>Tentar novamente</button></div>;
-  if (!data) return <p role="status" className="studio-empty">Carregando seu resumo...</p>;
+  if (!data || data.date !== dateKey) return <p role="status" className="studio-empty">Carregando seu resumo...</p>;
   const summary = data.summary;
-  const agenda = [
-    ...data.routines.scheduled.flatMap(routine => routine.schedules.map(schedule => {
-      const execution = data.routines.executions.find(item => item.routineScheduleId === schedule.id);
-      return { id: `routine-${schedule.id}`, time: execution?.startTime || schedule.startTime, title: routine.name, type: 'Rotina', tone: 'routine', done: execution?.status === 'COMPLETED' };
-    })),
-    ...data.reminders.scheduled.map(item => ({ id: `reminder-${item.id}`, time: item.reminderTime, title: item.title, type: 'Lembrete', tone: 'reminder', done: data.reminders.executions.some(e => e.reminderId === item.id && e.status === 'COMPLETED') })),
-    ...data.work.map(item => ({ id: `work-${item.id}`, time: item.startTime, title: item.job.name, type: 'Trabalho', tone: 'work' })),
-    ...(data.goals?.sessions || []).map(item => ({ id: `goal-${item.id}`, time: item.startTime, title: item.goal.title, type: 'Meta', tone: 'goal', done: item.status === 'COMPLETED' })),
-    ...data.unexpectedEvents.map(item => ({ id: `event-${item.id}`, time: item.startTime, title: item.title, type: 'Imprevisto', tone: 'event', done: ['RESOLVED', 'CANCELLED'].includes(item.status) })),
-  ].sort((a, b) => a.time.localeCompare(b.time)).map(item => {
-    const [prefix, sourceId] = item.id.split('-');
-    const kind = {routine:'rotinas',reminder:'lembretes',work:'trabalho',goal:'metas',event:'imprevistos'}[prefix];
-    const activity = data.activities?.find(row => row.kind === kind && row.sourceId === Number(sourceId));
-    return {
-      ...item,
-      kind,
-      sourceId: Number(sourceId),
-      ...(activity ? {done:activity.status==='COMPLETED',skipped:activity.status==='SKIPPED'} : {}),
-    };
-  });
+  const agenda = dashboardAgenda(data);
   const total = summary.totalActivities ?? (summary.totalScheduledRoutines + summary.totalScheduledReminders);
   const percentage = total ? Math.min(100, Math.round(summary.completed / total * 100)) : 0;
   const now = new Intl.DateTimeFormat('pt-BR', { timeZone: data.timezone || 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(clock);
-  const next = agenda.find(item => !item.done && !item.skipped && item.time >= now);
+  const next = highlightedActivity(agenda, now);
   const stats = [
     ['Rotinas de hoje', summary.totalScheduledRoutines, 'atividades programadas', CalendarDays],
     ['Concluídas', summary.completed, 'atividades do dia', CheckCheck],
@@ -65,10 +52,10 @@ export default function Dashboard() {
     : `/agenda?data=${data.date}`;
   return <section className="overview-page dashboard-refined">
     <div className="dashboard-welcome"><div className="simple-intro"><span>VISÃO GERAL</span><h1>Dashboard</h1><p>Sua agenda, seu progresso e as próximas atividades.</p></div><div className="dashboard-header-actions"><time className="dashboard-date" dateTime={data.date}><CalendarDays size={16}/>{new Date(`${data.date}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}</time><Link className="studio-button secondary" to="/agenda">Minha agenda <ArrowUpRight size={16}/></Link></div></div>
-    <article className="dashboard-next-feature" aria-label="Próximo compromisso">
+    <article className="dashboard-next-feature" aria-label={next?.current ? 'Compromisso em andamento' : 'Próximo compromisso'}>
       <div>
-        <span className="studio-eyebrow">{next ? 'PRÓXIMO COMPROMISSO' : 'SEU DIA, NO SEU RITMO'}</span>
-        {next ? <><time>{next.time}</time><h2>{next.title}</h2><p>{next.type}</p></> : <><h2>Você tem espaço para planejar.</h2><p>Nenhuma outra atividade prevista para hoje.</p></>}
+        <span className="studio-eyebrow">{next?.current ? 'EM ANDAMENTO' : next ? 'PRÓXIMO COMPROMISSO' : 'SEU DIA, NO SEU RITMO'}</span>
+        {next ? <><time>{next.time}{next.end ? ` – ${next.end}` : ''}</time><h2>{next.title}</h2><p>{next.type}</p></> : <><h2>Você tem espaço para planejar.</h2><p>Nenhuma outra atividade prevista para hoje.</p></>}
       </div>
       <Link to={nextTarget}>{next ? 'Abrir compromisso' : 'Planejar meu dia'} <ArrowUpRight size={16}/></Link>
     </article>

@@ -51,6 +51,14 @@
 .studio-dialog > header p { font-size:13px;color:var(--color-text-secondary);line-height:1.7;margin:0; }
 .studio-dialog > header > button { width:32px;height:32px;flex-shrink:0;display:grid;place-items:center;background:#fff;border:1px solid #dfe8e0;border-radius:9px;color:#91a196; }
 .studio-editor-body { padding:26px 28px;margin:0;border:0;min-width:0; }
+.editor-planning-options { margin-top:24px;padding:16px;border:1px solid var(--color-border);border-radius:12px; }
+.editor-planning-options summary { cursor:pointer;min-height:44px;display:list-item;padding:10px 0;font-size:14px;font-weight:600; }
+.editor-planning-options > p { color:var(--color-text-secondary);font-size:13px;line-height:1.6;margin:8px 0 16px; }
+.editor-error-summary { margin-bottom:24px;scroll-margin-top:120px; }
+.editor-error-summary p { margin:8px 0; }
+.editor-error-summary ul { padding-left:20px; }
+.editor-error-summary button { color:inherit;background:none;border:0;text-decoration:underline;min-height:44px;text-align:left;line-height:1.5; }
+.editor-error-summary:focus { outline:2px solid currentColor;outline-offset:4px; }
 .studio-editor-body > p { font-size:14px;line-height:1.8;color:#7a8f7d; }
 .studio-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px; }
 .studio-field { display:flex;flex-direction:column;gap:8px;min-width:0; }

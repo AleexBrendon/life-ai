@@ -6,7 +6,6 @@ const title = (key = 'title', label = 'Título', maxLength = 150) => f(key, labe
 const description = maxLength => f('description', 'Descrição', 'textarea', { maxLength });
 const active = f('isActive', 'Ativo', 'checkbox', { default: true });
 const aiTime = f('autoSchedule', 'Deixar a IA definir o horário (sugere horários livres na reavaliação, salvos só após aprovação)', 'checkbox', { default: false });
-const state = f('status', 'Status', 'select', { options: statuses, default: 'TODO' });
 const schedule = [f('dayOfWeek', 'Dia', 'select', { number: true, options: weekdays.map((label, i) => [i, label]), default: 1 }), f('startTime', 'Início', 'time', { required: true }), f('endTime', 'Fim', 'time', { required: true })];
 const travelFields = [f('preparationMinutes','Tempo para se arrumar (min)','number',{min:0,max:180,nullable:true}),f('outboundMinutes','Deslocamento de ida (min)','number',{min:0,max:180,nullable:true,when:v=>v.locationMode? v.locationMode==='ONSITE':v.workType!=='REMOTE',requiredWhen:v=>v.locationMode==='ONSITE'}),f('returnMinutes','Deslocamento de volta (min)','number',{min:0,max:180,nullable:true,when:v=>v.locationMode?v.locationMode==='ONSITE':v.workType!=='REMOTE',requiredWhen:v=>v.locationMode==='ONSITE'})];
 export const entities = {
