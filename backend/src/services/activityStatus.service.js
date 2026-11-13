@@ -1,8 +1,17 @@
 const { z } = require('zod');
 const { getDashboard } = require('./dashboard.service');
+const { activitySnapshot, recordChange } = require('./changeHistory.service');
 const activitySchema = z.object({ kind: z.enum(['rotinas', 'trabalho', 'lembretes', 'metas', 'imprevistos']), sourceId: z.number().int().positive(), date: z.string().date(), status: z.enum(['PENDING', 'COMPLETED', 'SKIPPED']), skipReason: z.string().trim().max(500).optional() });
 const fail = (message, status = 409) => { throw Object.assign(new Error(message), { status }); };
 async function setActivityStatus({ db, userId, input, expectedStatus }) {
+  const parsed = activitySchema.parse(input);
+  const before = await activitySnapshot(db, userId, parsed.kind, parsed.sourceId, parsed.date);
+  const result = await writeActivityStatus({ db, userId, input: parsed, expectedStatus });
+  const after = await activitySnapshot(db, userId, parsed.kind, parsed.sourceId, parsed.date);
+  await recordChange(db, { userId, action: 'ACTIVITY_STATUS', kind: parsed.kind, sourceId: parsed.sourceId, date: parsed.date, before, after, reversible: true });
+  return result;
+}
+async function writeActivityStatus({ db, userId, input, expectedStatus }) {
   const { kind, sourceId, date: key, status, skipReason } = activitySchema.parse(input);
   const date = new Date(key + 'T00:00:00Z');
   const day = await getDashboard({ userId, date: key, db });

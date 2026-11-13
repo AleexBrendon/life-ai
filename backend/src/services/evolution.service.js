@@ -97,7 +97,7 @@ function createEvolutionService(db, { now = () => new Date() } = {}) {
       return db.$transaction(async tx => {
       const user = await tx.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, createdAt: true, profile: true } });
       if (!user) fail('Usuário não encontrado.', 404);
-      const models = ['routineItem', 'routineExecution', 'reminder', 'reminderExecution', 'unexpectedEvent', 'activityExecution', 'waterIntake', 'financeEntry', 'financeBill', 'notification', 'aiRecommendation', 'routineCycle', 'routineCheckin', 'weeklyReview'];
+      const models = ['routineItem', 'routineExecution', 'reminder', 'reminderExecution', 'unexpectedEvent', 'activityExecution', 'waterIntake', 'financeEntry', 'financeBill', 'notification', 'aiRecommendation', 'routineCycle', 'routineCheckin', 'weeklyReview', 'changeEvent'];
       const records = {};
       for (const model of models) records[model] = await tx[model].findMany({ where: { userId }, ...(model === 'routineItem' ? { include: { schedules: true } } : model === 'financeBill' ? { include: { occurrences: { include: { history: true } } } } : {}) });
       records.jobs = await tx.job.findMany({ where: { userId }, include: { schedules: true, tasks: { include: { timeLogs: true, events: true } } } });

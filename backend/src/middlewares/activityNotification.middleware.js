@@ -5,6 +5,7 @@ function describe(req, body) {
  if (!['POST','PUT','PATCH','DELETE'].includes(req.method) || !req.user?.id || path.startsWith('/api/notifications') || path.startsWith('/api/auth')) return null;
  if (path === '/api/ai/chat' || path === '/api/ai/setup/preview' && !body.data?.proposal) return null;
  if (['/api/ai/week/preview','/api/ai/shopping/analyze'].includes(path)) return null;
+ if (path === '/api/productivity/reschedule/preview') return null;
  if (req.method === 'POST' && path.replace(/\/$/, '') === '/api/personal/water/intakes') return null;
  const pieces = path.split('/').filter(Boolean);
  const area = path.startsWith('/api/users') ? 'Configurações'

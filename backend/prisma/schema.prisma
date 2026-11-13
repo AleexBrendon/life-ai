@@ -40,6 +40,38 @@
     pushSubscriptions PushSubscription[]
     weeklyReviews WeeklyReview[]
     syncReceipts SyncReceipt[]
+    changeEvents ChangeEvent[]
+    schedulePreviews ScheduleChangePreview[]
+  }
+
+  model ChangeEvent {
+    id Int @id @default(autoincrement())
+    userId Int
+    action String
+    kind String
+    sourceId Int
+    date String?
+    before Json
+    after Json
+    reversible Boolean @default(false)
+    undoneAt DateTime?
+    createdAt DateTime @default(now())
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@index([userId, id])
+    @@index([userId, kind, sourceId, id])
+  }
+
+  model ScheduleChangePreview {
+    id String @id @default(uuid())
+    userId Int
+    input Json
+    fingerprint String
+    status String @default("PENDING")
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@index([userId, createdAt])
+    @@index([expiresAt])
   }
 
   model ActivityExecution {

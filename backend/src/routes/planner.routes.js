@@ -3,6 +3,7 @@ const { z } = require("zod");
 const prisma = require("../database/prisma");
 const auth = require("../middlewares/auth.middleware");
 const { configurations } = require("../schemas/planner.schema");
+const { recordChange } = require('../services/changeHistory.service');
 const router = express.Router();
 router.use(auth);
 router.use('/:kind', (req, res, next) => {
@@ -62,7 +63,9 @@ async function save(req, res) {
   }
   try {
     const data = await prisma.$transaction(async tx => {
-      if (id && !(await tx[config.model].findFirst({ where: { id, userId: req.user.id } }))) throw new Error("NOT_FOUND");
+      const relations=Object.fromEntries(Object.keys(config.children).map(key=>[key,true]));
+      const previous=id?await tx[config.model].findFirst({where:{id,userId:req.user.id},include:relations}):null;
+      if (id && !previous) throw new Error("NOT_FOUND");
       // Validate ownership before changing or removing any nested record.
       for (const rows of Object.values(children)) for (const row of rows) {
         if (row.id && (!id || !(await tx[row.model].findFirst({ where: { id: row.id, [row.foreignKey]: id } })))) throw new Error("NOT_FOUND");
@@ -89,12 +92,14 @@ async function save(req, res) {
           else await tx[model].create({ data: values });
         }
       }
+      const saved=await tx[config.model].findUnique({where:{id:record.id},include:relations});
+      await recordChange(tx,{userId:req.user.id,action:id?'PLANNER_UPDATE':'PLANNER_CREATE',kind:config.model,sourceId:record.id,before:{row:previous},after:{row:saved},reversible:false});
       return tx[config.model].findUnique({ where: { id: record.id }, include: include(config) });
-    }, { timeout: 20000 });
+    }, { isolationLevel:'Serializable', timeout: 20000 });
     res.status(id ? 200 : 201).json({ success: true, data });
   } catch (error) {
-    const status = error.message === "NOT_FOUND" ? 404 : error.code === "P2002" ? 409 : 500;
-    res.status(status).json({ success: false, message: status === 404 ? "Registro não encontrado." : status === 409 ? "Há horários repetidos. Revise os agendamentos." : "Não foi possível salvar. Nenhuma alteração foi aplicada." });
+    const status = error.message === "NOT_FOUND" ? 404 : ['P2002','P2034'].includes(error.code) ? 409 : 500;
+    res.status(status).json({ success: false, message: status === 404 ? "Registro não encontrado." : error.code === 'P2034' ? 'A agenda mudou durante a edição. Atualize e tente novamente.' : status === 409 ? "Há horários repetidos. Revise os agendamentos." : "Não foi possível salvar. Nenhuma alteração foi aplicada." });
   }
 }
 router.post('/:kind', save);
@@ -102,8 +107,15 @@ router.put('/:kind/:id', save);
 router.delete('/:kind/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ success: false, message: "Registro inválido." });
-  try { const result = await prisma[req.plannerConfig.model].deleteMany({ where: { id, userId: req.user.id } }); return res.status(result.count ? 200 : 404).json({ success: !!result.count, message: result.count ? "Registro excluído." : "Registro não encontrado." }); }
-  catch { res.status(500).json({ success: false, message: "Não foi possível excluir." }); }
+  try { const found=await prisma.$transaction(async tx=>{
+    const config=req.plannerConfig,relations=Object.fromEntries(Object.keys(config.children).map(key=>[key,true]));
+    const previous=await tx[config.model].findFirst({where:{id,userId:req.user.id},include:relations});
+    if(!previous)return false;
+    await tx[config.model].delete({where:{id}});
+    await recordChange(tx,{userId:req.user.id,action:'PLANNER_DELETE',kind:config.model,sourceId:id,before:{row:previous},after:{row:null},reversible:false});
+    return true;
+  },{isolationLevel:'Serializable',timeout:20000});return res.status(found?200:404).json({success:found,message:found?'Registro excluído.':'Registro não encontrado.'}); }
+  catch(error) { res.status(error.code==='P2034'?409:500).json({ success: false, message:error.code==='P2034'?'O registro mudou durante a exclusão. Atualize e tente novamente.':"Não foi possível excluir." }); }
 });
 module.exports = router;
 

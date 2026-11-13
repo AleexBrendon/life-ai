@@ -16,7 +16,8 @@
     "test:evolution": "node --test tests/backend/evolution.test.cjs",
     "push:keys": "node -e \"import('web-push').then(m=>console.log(JSON.stringify(m.generateVAPIDKeys(),null,2)))\"",
     "db:check-integrity": "node scripts/check-database-integrity.cjs",
-    "start:deploy": "prisma generate && prisma migrate deploy && node src/server.js"
+    "start:deploy": "prisma generate && prisma migrate deploy && node src/server.js",
+    "test:productivity": "node --test tests/backend/productivity.test.cjs"
   },
   "keywords": [],
   "author": "",
