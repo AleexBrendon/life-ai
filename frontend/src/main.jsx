@@ -26,3 +26,4 @@ createRoot(document.getElementById("root")).render(
 );
 import "./styles/routine-preview.css";
 import "./styles/layout-resilience.css";
+import "./styles/evolution.css";

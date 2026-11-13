@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { Droplets, Volume2, VolumeX, X } from 'lucide-react';
 import api from '../../lib/api';
 import { createPortal } from 'react-dom';
 import { useNotificationFeedback } from '../../lib/NotificationFeedback';
 import { hydrationAlarm } from '../planner/hydrationAlarm';
+const toastHostSnapshot = () => document.getElementById('lifeai-water-toast');
+const subscribeToastHost = callback => { const observer = new MutationObserver(callback); observer.observe(document.body, { childList: true, subtree: true }); return () => observer.disconnect(); };
 
 export default function HydrationAlarm() {
  const [data, setData] = useState(null), [now, setNow] = useState(new Date()), [handled, setHandled] = useState('');
  const {sound,toggleSound}=useNotificationFeedback();
- const [toastHost,setToastHost]=useState(null);
- useEffect(()=>{setToastHost(document.getElementById('lifeai-water-toast'))},[]);
+ const toastHost=useSyncExternalStore(subscribeToastHost,toastHostSnapshot,()=>null);
  const [error, setError] = useState(''), [busy, setBusy] = useState(false), [online, setOnline] = useState(false);
  useEffect(() => {
   let active = true;
@@ -37,7 +38,7 @@ export default function HydrationAlarm() {
   finally { setBusy(false); }
  }
  return <section className="hydration-strip" aria-label="Alarme de água">
- <Link to="/planejamento?aba=agua"><Droplets size={17}/><strong>Água</strong><span>{!data ? 'Carregando…' : !online ? 'Sem conexão' : alarm.label}</span></Link>
+ <Link to="/planejamento?aba=agua"><Droplets size={17}/><strong>Água</strong><span>{!data ? navigator.onLine ? 'Carregando…' : 'Disponível online' : !online ? 'Sem conexão' : alarm.label}</span></Link>
  {data && <span className="hydration-strip-total">{(data.totalMl / 1000).toLocaleString('pt-BR')} / {(data.plan.goalMl / 1000).toLocaleString('pt-BR')} L</span>}
  <button type="button" className="studio-button hydration-strip-drink" disabled={busy||!data||!online} onClick={drink}><Droplets size={16}/>{busy?'Registrando…':'Já bebi 250 ml'}</button>
  <button type="button" className="hydration-sound" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Desativar som das notificações' : 'Ativar som do alarme de água'}>{sound ? <Volume2 size={16}/> : <VolumeX size={16}/>}<span>{sound ? 'Som ligado' : 'Ativar som'}</span></button>

@@ -1,13 +1,16 @@
 // Real browser smoke checks with CDP. All API calls use synthetic data.
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { createServer } from 'vite';
+import { createServer, preview as startPreview } from 'vite';
+import { evolutionReply, runEvolutionQA, seedSession } from './evolution-qa.mjs';
+const evolutionMode = process.argv.includes('--evolution');
+const iconsMode = process.argv.includes('--icons');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const browserPath = process.env.FRONTEND_BROWSER_PATH || [
@@ -34,7 +37,7 @@ const evaluate = async expression => {
   return result.result.value;
 };
 async function waitFor(expression) {
-  for (let index = 0; index < 200; index++) { if (await evaluate(`Boolean(${expression})`)) return; await pause(50); }
+  for (let index = 0; index < 200; index++) { if (await evaluate(`Promise.resolve(${expression}).then(Boolean)`)) return; await pause(50); }
   throw new Error('UI timeout: ' + expression);
 }
 const clickText = text => evaluate(`Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()===${JSON.stringify(text)}).click()`);
@@ -70,8 +73,8 @@ function apiResponse(url, method) {
 }
 
 try {
-  server = await createServer({ root, define: { 'import.meta.env.VITE_API_URL': JSON.stringify('/api') }, server: { host: '127.0.0.1', port: 0, strictPort: false } });
-  await server.listen();
+  server = evolutionMode ? await startPreview({ root, preview: { host: '127.0.0.1', port: 0, strictPort: false } }) : await createServer({ root, define: { 'import.meta.env.VITE_API_URL': JSON.stringify('/api') }, server: { host: '127.0.0.1', port: 0, strictPort: false } });
+  if (!evolutionMode) await server.listen();
   const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
   browser = spawn(browserPath, ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
   const endpoint = await new Promise((resolve, reject) => {
@@ -90,17 +93,35 @@ try {
       if (message.error) callbacks?.reject(new Error(message.error.message)); else callbacks?.resolve(message.result);
     } else if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails.text);
     else if (message.method === 'Fetch.requestPaused') {
+      try {
       const { requestId, request } = message.params;
       if (new URL(request.url).pathname.startsWith('/api/')) {
-        const reply = apiResponse(request.url, request.method);
+        const reply = (evolutionMode ? evolutionReply(request) : null) || apiResponse(request.url, request.method);
         await send('Fetch.fulfillRequest', { requestId, responseCode: reply.status || 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(JSON.stringify(reply.body)).toString('base64') });
       } else if (new URL(request.url).origin !== origin) await send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' });
       else await send('Fetch.continueRequest', { requestId });
+      } catch (error) { if (!error.message.includes('Invalid InterceptionId')) exceptions.push(error.message); }
     }
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*', requestStage: 'Request' }] });
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await send('Page.addScriptToEvaluateOnNewDocument', { source: `const RealDate=Date;globalThis.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-11-13T13:30:00Z']))}static now(){return new RealDate('2026-11-13T13:30:00Z').getTime()}}` });
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: `const RealDate=Date;globalThis.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-11-13T13:30:00Z']))}static now(){return new RealDate('2026-11-13T13:30:00Z').getTime()}};${evolutionMode ? seedSession : ''}` });
+  if (iconsMode) {
+    const svg = await readFile(path.join(root, 'public/lifeai-icon.svg'), 'utf8');
+    await send('Page.navigate', { url: 'about:blank' });
+    const tree = await send('Page.getFrameTree');
+    await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+    for (const size of [512, 192, 180]) {
+      await send('Emulation.setDeviceMetricsOverride', { width: size, height: size, deviceScaleFactor: 1, mobile: false });
+      await send('Page.setDocumentContent', { frameId: tree.frameTree.frame.id, html: `<html><body style="margin:0">${svg.replace('viewBox=', `width="${size}" height="${size}" viewBox=`)}</body></html>` });
+      await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+      const picture = await send('Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width: size, height: size, scale: 1 } });
+      await writeFile(path.join(root, `public/lifeai-icon-${size}.png`), Buffer.from(picture.data, 'base64'));
+    }
+    console.log('Ícones PNG 512, 192 e 180 gerados a partir do SVG vetorial.');
+  } else if (evolutionMode) {
+    await runEvolutionQA({ send, evaluate, waitFor, clickText, capture, origin, profile });
+  } else {
   await send('Page.navigate', { url: `${origin}/tests/ui/fixture.html` });
   await waitFor("document.querySelector('dialog[open] #metas-title')");
   await goalTitle(); await clickText('Cancelar');
@@ -152,6 +173,8 @@ try {
   await waitFor("document.querySelector('.editor-planning-options').open && document.querySelector('#rotinas-weeklyFrequency')");
   assert.deepEqual(exceptions, []);
   console.log('UI aprovada: confirmação por Cancelar/X/Escape, descarte, preservação, seletores de data/hora, erro/foco, salvamento, opções de IA, destaque em andamento e largura mobile/desktop.');
+  }
+  assert.deepEqual(exceptions, []);
   console.log('Screenshots: ' + profile);
 } catch (error) {
   if (socket?.readyState === WebSocket.OPEN) {
@@ -162,6 +185,6 @@ try {
   throw error;
 } finally {
   socket?.close(); browser?.kill();
-  await server?.close();
+  if (server?.close) await server.close(); else if (server?.httpServer) await new Promise(resolve => server.httpServer.close(resolve));
   // Artifacts remain in the uniquely named OS temporary directory for inspection.
 }

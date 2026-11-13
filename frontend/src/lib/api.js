@@ -3,6 +3,7 @@ import { actionFeedback, showFeedback } from './actionFeedback';
 import { dispatchApiDomainEvents } from "./apiDomainEvents";
 import { endSession, getSessionToken } from "./session";
 import { requestTimeout } from './requestFeedback';
+import { accountId, cacheResponse, offlineEnabled, offlineResponse } from './offlineStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -11,19 +12,26 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (!config.timeout) config.timeout = requestTimeout(config.url, config.method);
+  config.accountAtRequest = accountId();
+  if (!navigator.onLine && offlineEnabled()) config.adapter = offlineResponse;
   const token = getSessionToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 api.interceptors.response.use(
-  (response) => {
-    if (response.data?.success !== false) showFeedback(actionFeedback(response.config));
+  async (response) => {
+    try { await cacheResponse(response); } catch (error) { if (response.config.requireOfflineCache) throw error; }
+    if (response.data?.offlineQueued) showFeedback('Ação salva neste dispositivo. Envie as pendências quando houver conexão.');
+    else if (response.data?.success !== false && !response.offline) showFeedback(actionFeedback(response.config));
     dispatchApiDomainEvents(response, api);
     return response.data;
   },
-  (error) => {
-    if (error.response?.status === 401) endSession();
+  async (error) => {
+    if (error.response?.status === 401 && error.config?.headers?.Authorization === `Bearer ${getSessionToken()}`) endSession();
+    if (!error.response && error.code !== 'ERR_CANCELED' && error.config?.method === 'get' && offlineEnabled()) {
+      try { const cached = await offlineResponse(error.config); window.dispatchEvent(new Event('lifeai:offline-read')); return cached.data; } catch { /* The original network error remains actionable. */ }
+    }
     return Promise.reject(error);
   },
 );

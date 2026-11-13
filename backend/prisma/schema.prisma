@@ -33,6 +33,13 @@
     routineCheckins    RoutineCheckin[]
     jobTaskTimeLogs    JobTaskTimeLog[]
     jobTaskEvents      JobTaskEvent[]
+    calendarConnections CalendarConnection[]
+    calendarImports CalendarImport[]
+    calendarLinks CalendarLink[]
+    pushPreference PushPreference?
+    pushSubscriptions PushSubscription[]
+    weeklyReviews WeeklyReview[]
+    syncReceipts SyncReceipt[]
   }
 
   model ActivityExecution {
@@ -337,6 +344,7 @@
     status      String
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    calendarLink CalendarLink?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -409,6 +417,7 @@
     hydrationConfirmedAt DateTime?
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    pushDeliveries PushDelivery[]
 
     @@index([userId])
     @@index([userId, isRead])
@@ -456,6 +465,7 @@
 
     user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
     sessions GoalPlanSession[]
+    milestones GoalMilestone[]
 
     @@index([userId, status])
   }
@@ -471,6 +481,7 @@
     updatedAt DateTime @updatedAt
 
     goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+    progressEntries MilestoneProgress[]
 
     @@index([goalId, date])
     @@unique([goalId, date, startTime])
@@ -514,3 +525,120 @@
     @@unique([cycleId, step])
     @@index([userId])
   }
+
+model CalendarConnection {
+  id Int @id @default(autoincrement())
+  userId Int
+  name String
+  encryptedUrl String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+model CalendarImport {
+  id Int @id @default(autoincrement())
+  userId Int
+  sourceKey String
+  name String
+  rows Json
+  fingerprint String
+  status String @default("PENDING")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+model CalendarLink {
+  id Int @id @default(autoincrement())
+  userId Int
+  sourceKey String
+  externalKey String
+  eventId Int? @unique
+  lastAppliedHash String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event UnexpectedEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  @@unique([userId, sourceKey, externalKey])
+}
+model PushPreference {
+  userId Int @id
+  enabled Boolean @default(false)
+  quietEnabled Boolean @default(true)
+  quietStart String @default("22:00")
+  quietEnd String @default("07:00")
+  upcoming Boolean @default(true)
+  hydration Boolean @default(true)
+  actions Boolean @default(false)
+  showDetails Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model PushSubscription {
+  id Int @id @default(autoincrement())
+  userId Int
+  endpoint String @unique
+  keys Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries PushDelivery[]
+  @@index([userId])
+}
+model PushDelivery {
+  id Int @id @default(autoincrement())
+  notificationId Int
+  subscriptionId Int
+  status String @default("PENDING")
+  attempts Int @default(0)
+  lockedUntil DateTime?
+  sentAt DateTime?
+  errorCode String?
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  @@unique([notificationId, subscriptionId])
+  @@index([status, lockedUntil])
+}
+model WeeklyReview {
+  id Int @id @default(autoincrement())
+  userId Int
+  weekStart DateTime @db.Date
+  metrics Json
+  suggestions Json
+  accepted Json @default("[]")
+  notes String @default("")
+  status String @default("DRAFT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, weekStart])
+}
+model GoalMilestone {
+  id Int @id @default(autoincrement())
+  goalId Int
+  title String
+  unit String @default("unidades")
+  target Float
+  createdAt DateTime @default(now())
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  entries MilestoneProgress[]
+  @@index([goalId])
+}
+model MilestoneProgress {
+  id Int @id @default(autoincrement())
+  milestoneId Int
+  sessionId Int?
+  amount Float
+  note String @default("")
+  createdAt DateTime @default(now())
+  milestone GoalMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  session GoalPlanSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  @@unique([milestoneId, sessionId])
+  @@index([sessionId])
+}
+model SyncReceipt {
+  id Int @id @default(autoincrement())
+  userId Int
+  operationId String
+  hash String
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operationId])
+}

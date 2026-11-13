@@ -8,6 +8,7 @@ import { UserPreferencesProvider } from '../../lib/UserPreferences';
 import { NotificationFeedbackProvider } from '../../lib/NotificationFeedback';
 import NotificationToasts from './NotificationToasts';
 import WeeklyAssistantFloat from '../ai/WeeklyAssistantFloat';
+import OfflineBanner from './OfflineBanner';
 
 function AppShell({ onLogout }) {
   return (
@@ -16,6 +17,7 @@ function AppShell({ onLogout }) {
 
       <div className="app-main">
         <Header onLogout={onLogout} />
+        <OfflineBanner />
         <HydrationAlarm />
 
         <main className="app-content">

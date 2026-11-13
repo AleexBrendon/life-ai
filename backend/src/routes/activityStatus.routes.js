@@ -1,56 +1,19 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const prisma = require('../database/prisma');
-const auth = require('../middlewares/auth.middleware');
 const { getDashboard } = require('../services/dashboard.service');
-router.use(auth);
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
- const parsed = new Date(`${value}T00:00:00Z`);
- return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+const { activitySchema, setActivityStatus } = require('../services/activityStatus.service');
+router.use(require('../middlewares/auth.middleware'));
+router.get('/', async (req,res) => {
+ const parsed=z.string().date().safeParse(req.query.date);
+ if(!parsed.success)return res.status(400).json({success:false,message:'Informe uma data válida.'});
+ try{const day=await getDashboard({userId:req.user.id,date:parsed.data});res.json({success:true,data:day.activities})}
+ catch{res.status(500).json({success:false,message:'Não foi possível carregar o progresso do dia.'})}
 });
-const schema = z.object({
- kind: z.enum(['rotinas', 'trabalho', 'lembretes', 'metas', 'imprevistos']), sourceId: z.number().int().positive(),
- date: dateSchema, status: z.enum(['PENDING', 'COMPLETED', 'SKIPPED']), skipReason: z.string().trim().max(500).optional(),
+router.put('/', async (req,res) => {
+ const parsed=activitySchema.safeParse(req.body);
+ if(!parsed.success)return res.status(400).json({success:false,message:'Revise a data, a atividade e o status informado.'});
+ try{const data=await prisma.$transaction(db=>setActivityStatus({db,userId:req.user.id,input:parsed.data}),{isolationLevel:'Serializable'});res.json({success:true,data})}
+ catch(error){const status=error.code==='P2034'?409:error.status||500;res.status(status).json({success:false,message:error.status?error.message:status===409?'A atividade mudou. Atualize e tente novamente.':'Não foi possível atualizar a atividade.'})}
 });
-router.get('/', async (req, res) => {
- const parsed = dateSchema.safeParse(req.query.date);
- if (!parsed.success) return res.status(400).json({ success: false, message: 'Informe uma data válida.' });
- try { const data = await getDashboard({ userId: req.user.id, date: parsed.data }); res.json({ success: true, data: data.activities }); }
- catch { res.status(500).json({ success: false, message: 'Não foi possível carregar o progresso do dia.' }); }
-});
-router.put('/', async (req, res) => {
- const parsed = schema.safeParse(req.body);
- if (!parsed.success) return res.status(400).json({ success: false, message: 'Revise a data, a atividade e o status informado.' });
- const { kind, sourceId, date: key, status, skipReason } = parsed.data;
- const userId = req.user.id, date = new Date(`${key}T00:00:00Z`), weekday = date.getUTCDay();
- try {
-  const day = await getDashboard({ userId, date: key });
-  if (!day.activities.some(activity => activity.kind === kind && activity.sourceId === sourceId)) return res.status(404).json({ success: false, message: 'A atividade ainda não estava programada para essa data.' });
-  const data = await prisma.$transaction(async tx => {
-   const changes = { status, completedAt: status === 'COMPLETED' ? new Date() : null, skipReason: status === 'SKIPPED' ? skipReason || null : null };
-   const missing = () => { throw Object.assign(new Error('Atividade não encontrada nesta data.'), { status: 404 }); };
-   if (kind === 'rotinas') {
-    const schedule = await tx.routineSchedule.findFirst({ where: { id: sourceId, dayOfWeek: weekday, routineItem: { userId, isActive: true } } });
-    if (!schedule) missing();
-    return tx.routineExecution.upsert({ where: { userId_routineScheduleId_date: { userId, routineScheduleId: sourceId, date } }, create: { userId, routineItemId: schedule.routineItemId, routineScheduleId: sourceId, date, startTime: schedule.startTime, endTime: schedule.endTime, ...changes }, update: changes });
-   }
-   if (kind === 'lembretes') {
-    const reminder = await tx.reminder.findFirst({ where: { id: sourceId, userId, isActive: true, OR: [{ recurrence: 'DAILY' }, { recurrence: 'WEEKLY', dayOfWeek: weekday }, { recurrence: 'NONE', date }] } });
-    if (!reminder) missing();
-    const { skipReason: unused, ...reminderChanges } = changes;
-    return tx.reminderExecution.upsert({ where: { userId_reminderId_date: { userId, reminderId: sourceId, date } }, create: { userId, reminderId: sourceId, date, ...reminderChanges }, update: reminderChanges });
-   }
-   if (kind === 'metas') {
-    const result = await tx.goalPlanSession.updateMany({ where: { id: sourceId, date, goal: { userId } }, data: { status } });
-    if (!result.count) missing();
-    return { status };
-   }
-   if (kind === 'trabalho') {
-    if (!await tx.workSchedule.findFirst({ where: { id: sourceId, dayOfWeek: weekday, job: { userId, isActive: true } } })) missing();
-   } else if (!await tx.unexpectedEvent.findFirst({ where: { id: sourceId, userId, date } })) missing();
-   return tx.activityExecution.upsert({ where: { userId_kind_sourceId_date: { userId, kind, sourceId, date } }, create: { userId, kind, sourceId, date, ...changes }, update: changes });
-  });
-  res.json({ success: true, data });
- } catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Não foi possível atualizar a atividade.' }); }
-});
-module.exports = router;
+module.exports=router;

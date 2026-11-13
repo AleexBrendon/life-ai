@@ -46,6 +46,7 @@ app.use("/api/personal", require("./routes/personalPlanning.routes"));
 app.use('/api/personal/debt-plans',require('./routes/debtPurchase.routes'));
 app.use('/api/personal/finance-bills',require('./routes/financeBills.routes'));
 app.use('/api/activity-status', require('./routes/activityStatus.routes'));
+app.use('/api/evolution', require('./routes/evolution.routes'));
 
 app.use(require('./middlewares/error.middleware'));
 

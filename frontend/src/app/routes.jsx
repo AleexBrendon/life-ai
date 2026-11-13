@@ -1,11 +1,12 @@
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import Dashboard from "../components/dashboard/Dashboard";
 import Calendar from "../components/planner/Calendar";
 import Planning from "../components/planner/Planning";
 import Login from "../components/auth/Login";
 import FinancePage from '../components/finance/FinancePage';
+const EvolutionPage = lazy(() => import('../components/evolution/EvolutionPage'));
 import { authApi } from "../lib/api";
 import { endSession, getSessionToken, SESSION_EXPIRED_EVENT, clearSessionToken } from "../lib/session";
 function AppRoutes() {
@@ -97,6 +98,7 @@ function AppRoutes() {
         <Route path="/agenda" element={<Calendar />} />
         <Route path="/planejamento" element={<Planning />} />
         <Route path="/financeiro" element={<FinancePage />} />
+        <Route path="/evolucao" element={<Suspense fallback={<p role="status">Carregando recursos…</p>}><EvolutionPage /></Suspense>} />
         <Route path="/meu-dia" element={<Navigate to="/agenda" replace />} />
         <Route path="/calendario" element={<Navigate to="/agenda" replace />} />
         {["rotinas", "metas", "trabalho", "lembretes"].map(tab => (

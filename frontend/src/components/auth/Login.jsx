@@ -12,6 +12,7 @@ import {
 
 import { authApi } from "../../lib/api";
 import { setSessionToken } from "../../lib/session";
+import { rememberAccount } from '../../lib/offlineStore';
 
 function Login({ onAuthenticated }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -117,6 +118,7 @@ function Login({ onAuthenticated }) {
         });
 
         setSessionToken(response.data.token);
+        rememberAccount(response.data.user);
         onAuthenticated(response.data.user);
       }
     } catch (requestError) {

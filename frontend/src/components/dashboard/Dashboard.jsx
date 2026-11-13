@@ -34,6 +34,7 @@ export default function Dashboard() {
     return () => controller.abort();
   }, [attempt, dateKey]);
   if (error) return <div role="alert" className="studio-empty"><p>Não foi possível carregar o dashboard.</p><button className="studio-button" onClick={() => { setError(false); setAttempt(value => value + 1); }}>Tentar novamente</button></div>;
+  if (data && data.date !== dateKey && !navigator.onLine) return <div role="status" className="studio-empty"><p>Não há resumo salvo para hoje neste dispositivo. Conecte-se para atualizar.</p><Link to={`/agenda?data=${data.date}`}>Abrir a última agenda salva</Link></div>;
   if (!data || data.date !== dateKey) return <p role="status" className="studio-empty">Carregando seu resumo...</p>;
   const summary = data.summary;
   const agenda = dashboardAgenda(data);

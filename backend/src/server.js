@@ -10,6 +10,7 @@ const server = app.listen(port, () => {
   timers.push(require('./services/hydrationReminder.service').startHydrationReminders());
   timers.push(require('./services/upcomingNotification.service').startUpcomingNotifications());
   timers.push(require('./services/routinePlanner.service').startCheckinNotifications());
+  timers.push(require('./services/pushDelivery.service').startPushDelivery(prisma));
 });
 let stopping = false;
 async function shutdown() {
