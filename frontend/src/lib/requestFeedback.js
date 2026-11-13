@@ -6,6 +6,7 @@ export function requestTimeout(url = '', method = 'get') {
 
 export function requestErrorMessage(error, fallback = 'Não foi possível salvar. Tente novamente.') {
   if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    if (['get','head'].includes(error.config?.method?.toLowerCase())) return 'A consulta demorou mais do que o esperado. Tente novamente em instantes.';
     return 'A resposta demorou mais do que o esperado. Confira se a alteração foi salva antes de tentar novamente.';
   }
   if (!error.response) return 'Não foi possível conectar ao sistema. Verifique sua conexão e tente novamente.';

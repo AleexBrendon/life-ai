@@ -9,7 +9,7 @@
 .app-shell :is(.studio-section-heading,.studio-child-section > header,.studio-toolbar) { flex-wrap:wrap; }
 .app-shell :is(.studio-section-heading,.studio-child-section > header,.studio-toolbar) > *, .app-shell :is(.overview-event,.studio-task,.agenda-day-list-item,.finance-entry) > * { min-width:0; }
 .app-shell :is(.studio-button,.studio-badge), .studio-dialog .studio-button { max-width:100%;white-space:normal;overflow-wrap:anywhere; }
-.app-shell .studio-button, .studio-dialog .studio-button { padding-block:10px; }
+.app-shell .studio-button, .studio-dialog .studio-button { padding:8px 14px;min-height:44px;line-height:1.4; }
 .app-shell .studio-button svg, .studio-dialog .studio-button svg { flex-shrink:0; }
 .studio-dialog footer { flex-wrap:wrap; }
 .app-shell .studio-search { min-width:0;max-width:100%; }
@@ -20,4 +20,16 @@
  .app-shell .studio-toolbar > nav { max-width:100%; }
  .app-shell .studio-search { width:100%; }
  .app-shell .studio-search input { flex:1; }
+}
+
+/* Related controls keep consistent spacing when they wrap. */
+.app-shell :is(.personal-actions,.studio-activity-actions,.agenda-preview-actions,.assistant-composer-actions),
+.studio-dialog footer { gap:8px; }
+.app-shell .studio-record-top > div { gap:8px; }
+.app-shell .assistant-welcome { display:flex;flex-wrap:wrap;justify-content:center;gap:12px; }
+.app-shell .assistant-welcome > :is(h2,p) { flex-basis:100%;margin:0; }
+.app-shell .assistant-welcome > svg { margin-inline:calc(50% - 14px);flex-shrink:0; }
+.app-shell .assistant-welcome > button { margin:0; }
+@media(max-width:600px) {
+ .app-shell .studio-record-top button { width:44px;height:44px; }
 }

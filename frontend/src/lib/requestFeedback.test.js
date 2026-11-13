@@ -19,3 +19,5 @@ test('normaliza erros em texto ou objetos sem expor objetos como mensagem', () =
     { field: 'title', message: 'Inválido' }, { field: 'date', message: 'Revise a data' },
   ]);
 });
+
+test('consulta com timeout não sugere conferir uma gravação',()=>{assert.match(requestErrorMessage({code:'ECONNABORTED',config:{method:'get'}}),/A consulta demorou/);});

@@ -8,10 +8,11 @@ const stores=[
 ];
 function allowedProductUrl(value){try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password&&(!url.port||url.port==='443')&&stores.some(s=>s.hosts.includes(url.hostname.toLowerCase()))&&!/\.(?:exe|zip|pdf)(?:$|\?)/i.test(url.pathname)}catch{return false}}
 const decode=text=>String(text).replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Math.min(Number(n),0x10ffff)));
-async function readPublic(url,{search=false}={}){
+async function readPublic(url,{search=false,signal}={}){
+ const requestSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(6000)]):AbortSignal.timeout(6000);
  if(!search&&!allowedProductUrl(url))throw Error('UNSUPPORTED_STORE');
  for(let redirect=0;redirect<3;redirect++){
-  const response=await fetch(url,{redirect:'manual',signal:AbortSignal.timeout(6000),headers:{'User-Agent':'LifeAI/1.0 (public product metadata; no automated purchases)','Accept':'text/html,application/rss+xml,application/xml;q=0.8'}});
+  const response=await fetch(url,{redirect:'manual',signal:requestSignal,headers:{'User-Agent':'LifeAI/1.0 (public product metadata; no automated purchases)','Accept':'text/html,application/rss+xml,application/xml;q=0.8'}});
   if(response.status>=300&&response.status<400){const next=new URL(response.headers.get('location')||'',url);if(search?!['www.bing.com','html.duckduckgo.com'].includes(next.hostname):!allowedProductUrl(next.href))throw Error('UNSUPPORTED_REDIRECT');url=next.href;continue;}
   if(!response.ok)throw Error('STORE_UNAVAILABLE');
   const reader=response.body.getReader();let text='',bytes=0;const decoder=new TextDecoder();
@@ -46,14 +47,16 @@ async function searchProducts({query,urls=[],minReviews=100,minRating=4.5,minSal
  const cacheKey=JSON.stringify({query,urls});let result=cache.get(cacheKey);
  if(!result||Date.now()-result.timestamp>300000){
   const candidates=new Set(urls.filter(allowedProductUrl)),warnings=[];
+  const signal=AbortSignal.timeout(18000);
   if(!urls.length){
    const q=query+' ('+stores.slice(0,5).map(s=>'site:'+s.hosts[0]).join(' OR ')+')';
-   try{const {text}=await readPublic('https://www.bing.com/search?format=rss&q='+encodeURIComponent(q),{search:true});for(const match of text.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)){const link=match[1].match(/<link>([\s\S]*?)<\/link>/i)?.[1];if(link&&allowedProductUrl(decode(link)))candidates.add(decode(link));if(candidates.size>=6)break}}catch{}
-   if(!candidates.size)try{const {text}=await readPublic('https://html.duckduckgo.com/html/?q='+encodeURIComponent(q),{search:true});for(const match of text.matchAll(/href\s*=\s*["']([^"']+)["']/gi)){let link=decode(match[1]);try{const parsed=new URL(link,'https://html.duckduckgo.com');if(['duckduckgo.com','html.duckduckgo.com'].includes(parsed.hostname)&&parsed.searchParams.has('uddg'))link=parsed.searchParams.get('uddg')}catch{}if(allowedProductUrl(link))candidates.add(link);if(candidates.size>=6)break}}catch{}
+   try{const {text}=await readPublic('https://www.bing.com/search?format=rss&q='+encodeURIComponent(q),{search:true,signal});for(const match of text.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)){const link=match[1].match(/<link>([\s\S]*?)<\/link>/i)?.[1];if(link&&allowedProductUrl(decode(link)))candidates.add(decode(link));if(candidates.size>=6)break}}catch{}
+   if(!candidates.size)try{const {text}=await readPublic('https://html.duckduckgo.com/html/?q='+encodeURIComponent(q),{search:true,signal});for(const match of text.matchAll(/href\s*=\s*["']([^"']+)["']/gi)){let link=decode(match[1]);try{const parsed=new URL(link,'https://html.duckduckgo.com');if(['duckduckgo.com','html.duckduckgo.com'].includes(parsed.hostname)&&parsed.searchParams.has('uddg'))link=parsed.searchParams.get('uddg')}catch{}if(allowedProductUrl(link))candidates.add(link);if(candidates.size>=6)break}}catch{}
    if(!candidates.size)warnings.push('A busca pública não retornou anúncios verificáveis. Use os links de busca das lojas ou cole links de produtos para verificação.');
   }
-  const offers=[];for(let offset=0;offset<Math.min(6,candidates.size);offset+=2){const batch=[...candidates].slice(offset,offset+2);await Promise.all(batch.map(async url=>{try{const page=await readPublic(url);const product=extractProduct(page.text,page.url);if(product)offers.push(product);else warnings.push('Uma loja não publicou dados estruturados suficientes para verificar o anúncio.')}catch{warnings.push('Uma página bloqueou ou não permitiu a consulta automática.')} }));}
-  if(cache.size>=40)cache.delete(cache.keys().next().value);result={timestamp:Date.now(),offers,warnings:[...new Set(warnings)]};cache.set(cacheKey,result);
+  const offers=[];for(let offset=0;offset<Math.min(6,candidates.size);offset+=2){const batch=[...candidates].slice(offset,offset+2);await Promise.all(batch.map(async url=>{try{const page=await readPublic(url,{signal});const product=extractProduct(page.text,page.url);if(product)offers.push(product);else warnings.push('Uma loja não publicou dados estruturados suficientes para verificar o anúncio.')}catch{warnings.push('Uma página bloqueou ou não permitiu a consulta automática.')} }));}
+  if(signal.aborted)warnings.push('A consulta às lojas atingiu o limite de tempo. Os resultados disponíveis foram preservados; tente novamente ou cole um link direto.');
+  if(cache.size>=40)cache.delete(cache.keys().next().value);result={timestamp:Date.now(),offers,warnings:[...new Set(warnings)]};if(!signal.aborted)cache.set(cacheKey,result);
  }
  const offers=result.offers.map(offer=>({...offer,meetsReviewCriteria:offer.rating!==null&&offer.reviewCount!==null&&offer.rating>=minRating&&offer.reviewCount>=minReviews,meetsSalesCriteria:offer.salesCount!==null&&offer.salesCount>=minSales})).sort((a,b)=>Number(b.meetsReviewCriteria&&b.meetsSalesCriteria)-Number(a.meetsReviewCriteria&&a.meetsSalesCriteria)||(a.priceCents??Infinity)-(b.priceCents??Infinity));
  return {offers,warnings:result.warnings,checkedAt:new Date(result.timestamp).toISOString(),stores:stores.map(({id,name,search})=>({id,name,url:search(query)})),criteria:{minReviews,minRating,minSales},note:'Domínio da loja não confirma vendedor oficial de um marketplace. Avaliações e vendas só aparecem quando publicadas e verificáveis; frete, impostos e parcelamento devem ser conferidos no checkout.'};
