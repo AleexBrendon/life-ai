@@ -12,6 +12,7 @@ import '../../src/styles/spacing.css';
 import '../../src/styles/scrollbars.css';
 import '../../src/styles/date-time.css';
 import '../../src/styles/layout-resilience.css';
+import '../../src/styles/identity.css';
 
 export default function Fixture() {
   const [state, setState] = useState('editing');

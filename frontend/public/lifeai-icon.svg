@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <title>LifeAI</title>
-  <rect width="64" height="64" rx="16" fill="#216653"/>
-  <path d="M19 18v27h24" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M31 33C29 21 39 15 49 14c0 12-6 21-18 19Z" fill="#B9ECCB"/>
-  <path d="m32 31 11-11" stroke="#216653" stroke-width="3" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="16" fill="#202327"/>
+  <path d="M19 18v27h24" stroke="#F3F4F6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31 33C29 21 39 15 49 14c0 12-6 21-18 19Z" fill="#F5C451"/>
+  <path d="m32 31 11-11" stroke="#202327" stroke-width="3" stroke-linecap="round"/>
 </svg>

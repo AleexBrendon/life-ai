@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { ThemeContext } from './theme';
 const key = 'lifeai:appearance';
 function savedTheme() {
-  try { const value = localStorage.getItem(key); return ['light', 'dark', 'system'].includes(value) ? value : 'light'; }
-  catch { return 'light'; }
+  try { const value = localStorage.getItem(key); return ['light', 'dark', 'system'].includes(value) ? value : 'dark'; }
+  catch { return 'dark'; }
 }
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(savedTheme);
@@ -14,7 +14,7 @@ export function ThemeProvider({ children }) {
       document.documentElement.dataset.theme = appearance;
       document.querySelector('meta[name="theme-color"]')?.setAttribute(
         'content',
-        appearance === 'dark' ? '#14181b' : '#f6f7f5',
+        appearance === 'dark' ? '#151719' : '#F2F3F5',
       );
     };
     apply();

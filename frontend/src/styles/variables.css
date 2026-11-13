@@ -2,17 +2,17 @@
   color-scheme: light;
 
   /* Brand and semantic states */
-  --color-brand: #28745b;
-  --color-brand-dark: #1e5945;
-  --color-brand-soft: #edf5f0;
+  --color-brand: #4d4e50;
+  --color-brand-dark: #3b3c3e;
+  --color-brand-soft: #f0f1f3;
   --color-info: #245f96;
   --color-info-soft: #edf4fb;
   --color-pending: #895b13;
   --color-pending-soft: #fff5df;
   --color-danger: #a52c3b;
   --color-danger-soft: #fff0f1;
-  --color-success: #246746;
-  --color-success-soft: #eaf5ee;
+  --color-success: #454648;
+  --color-success-soft: #eff0f2;
   --color-purple: #73549a;
   --color-purple-soft: #f2eef8;
   --color-orange: #9a5c1f;
@@ -22,16 +22,16 @@
   --color-background: #f6f7f5;
   --color-surface: #ffffff;
   --color-surface-muted: #f0f3f0;
-  --color-text-primary: #24332d;
-  --color-text-secondary: #606e66;
-  --color-text-muted: #6c7871;
-  --color-border: #dde4de;
-  --color-border-light: #e8ede8;
+  --color-text-primary: #2b2c2e;
+  --color-text-secondary: #666769;
+  --color-text-muted: #717274;
+  --color-border: #e0e1e3;
+  --color-border-light: #eaebed;
   --color-sidebar: #ffffff;
   --color-sidebar-hover: #f3f6f3;
-  --color-sidebar-active: #edf5f0;
-  --color-sidebar-text: #606e66;
-  --color-sidebar-muted: #6c7871;
+  --color-sidebar-active: #f0f1f3;
+  --color-sidebar-text: #666769;
+  --color-sidebar-muted: #717274;
 
   /* Typography */
   --font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
@@ -69,9 +69,9 @@
   --header-height: 70px;
 
   /* Data visualization */
-  --chart-grid: #e8ede8;
-  --chart-label: #606e66;
+  --chart-grid: #eaebed;
+  --chart-label: #666769;
   --chart-tooltip: #ffffff;
-  --chart-border: #dde4de;
+  --chart-border: #e0e1e3;
   --heat-empty: #f0f3f0;
 }

@@ -9,7 +9,9 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer, preview as startPreview } from 'vite';
 import { evolutionReply, runEvolutionQA, seedSession } from './evolution-qa.mjs';
+import { identityReply, runIdentityQA } from './identity-qa.mjs';
 const evolutionMode = process.argv.includes('--evolution');
+const identityMode = process.argv.includes('--identity');
 const iconsMode = process.argv.includes('--icons');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -96,7 +98,7 @@ try {
       try {
       const { requestId, request } = message.params;
       if (new URL(request.url).pathname.startsWith('/api/')) {
-        const reply = (evolutionMode ? evolutionReply(request) : null) || apiResponse(request.url, request.method);
+        const reply = (identityMode ? identityReply(request) : null) || (evolutionMode || identityMode ? evolutionReply(request) : null) || apiResponse(request.url, request.method);
         await send('Fetch.fulfillRequest', { requestId, responseCode: reply.status || 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(JSON.stringify(reply.body)).toString('base64') });
       } else if (new URL(request.url).origin !== origin) await send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' });
       else await send('Fetch.continueRequest', { requestId });
@@ -105,7 +107,7 @@ try {
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*', requestStage: 'Request' }] });
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await send('Page.addScriptToEvaluateOnNewDocument', { source: `const RealDate=Date;globalThis.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-11-13T13:30:00Z']))}static now(){return new RealDate('2026-11-13T13:30:00Z').getTime()}};${evolutionMode ? seedSession : ''}` });
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: `const RealDate=Date;globalThis.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-11-13T13:30:00Z']))}static now(){return new RealDate('2026-11-13T13:30:00Z').getTime()}};${evolutionMode || identityMode ? seedSession : ''}` });
   if (iconsMode) {
     const svg = await readFile(path.join(root, 'public/lifeai-icon.svg'), 'utf8');
     await send('Page.navigate', { url: 'about:blank' });
@@ -119,6 +121,8 @@ try {
       await writeFile(path.join(root, `public/lifeai-icon-${size}.png`), Buffer.from(picture.data, 'base64'));
     }
     console.log('Ícones PNG 512, 192 e 180 gerados a partir do SVG vetorial.');
+  } else if (identityMode) {
+    await runIdentityQA({ send, evaluate, waitFor, clickText, capture, origin });
   } else if (evolutionMode) {
     await runEvolutionQA({ send, evaluate, waitFor, clickText, capture, origin, profile });
   } else {
@@ -162,6 +166,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: `${origin}/tests/ui/fixture.html?view=dashboard` });
   await waitFor("document.querySelector('[aria-label=\"Compromisso em andamento\"]')?.textContent.includes('Treinar flauta')");
+  await clickText('Explorar análises');
   await waitFor("document.body.textContent.includes('Sem registros neste período')");
   await waitFor("document.querySelector('.overview-page')?.contains(document.elementFromPoint(100,100))");
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);

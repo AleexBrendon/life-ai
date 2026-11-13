@@ -1,5 +1,5 @@
-:root { --picker-bg:#fff;--picker-text:#263e34;--picker-muted:#78877e;--picker-border:#dce5df;--picker-soft:#f0f5f1;--picker-accent:#287557; }
-html[data-theme=dark] { --picker-bg:#20292c;--picker-text:#e2ebe6;--picker-muted:#9baea3;--picker-border:#3b4b45;--picker-soft:#2b3933;--picker-accent:#348361; }
+:root { --picker-bg:#fff;--picker-text:#313234;--picker-muted:#7f8082;--picker-border:#e0e1e3;--picker-soft:#f2f3f5;--picker-accent:#4e4f51; }
+html[data-theme=dark] { --picker-bg:#20292c;--picker-text:#e5e6e8;--picker-muted:#a3a4a6;--picker-border:#424345;--picker-soft:#313234;--picker-accent:#5a5b5d; }
 .picker-control { position:relative;min-width:0;width:100%; }
 .schedule-time.picker-control { display:block;padding:0;border:0;min-height:0;background:transparent !important; }
 .picker-control > input.picker-validation { position:absolute !important;opacity:0;pointer-events:none;width:1px !important;height:1px !important;min-height:0 !important;padding:0 !important;border:0 !important;inset:0; }

@@ -3,13 +3,13 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
-  Leaf,
   LockKeyhole,
   Mail,
   Sparkles,
   UserRound,
 } from "lucide-react";
 
+import BrandMark from '../ui/BrandMark';
 import { authApi } from "../../lib/api";
 import { setSessionToken } from "../../lib/session";
 import { rememberAccount } from '../../lib/offlineStore';
@@ -145,7 +145,7 @@ function Login({ onAuthenticated }) {
         <div className="login-showcase-content">
           <div className="login-brand">
             <span className="login-brand-icon">
-              <Leaf size={20} />
+              <BrandMark size={32} />
             </span>
 
             <span>LifeAI</span>
@@ -203,7 +203,7 @@ function Login({ onAuthenticated }) {
           <div className="login-orbit login-orbit-two" />
 
           <div className="login-orbit-center">
-            <Leaf size={30} />
+            <BrandMark size={40} />
           </div>
         </div>
       </section>
@@ -212,7 +212,7 @@ function Login({ onAuthenticated }) {
         <div className="login-form-wrapper">
           <div className="login-mobile-brand">
             <span className="login-brand-icon">
-              <Leaf size={18} />
+              <BrandMark size={28} />
             </span>
 
             <span>LifeAI</span>

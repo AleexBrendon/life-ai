@@ -56,7 +56,7 @@ export async function runEvolutionQA({ send, evaluate, waitFor, clickText, captu
   await clickText('Notificações push'); await waitFor("document.body.textContent.includes('Preferências da conta')");
   assert.equal(await evaluate("Array.from(document.querySelectorAll('button')).find(el=>el.textContent==='Ativar push neste dispositivo').disabled"), true);
   await evaluate("Array.from(document.querySelectorAll('label')).find(el=>el.textContent.includes('Mostrar títulos')).querySelector('input').click()");
-  await clickText('Salvar preferências'); await waitFor("document.body.textContent.includes('Preferências da conta')");
+  await clickText('Salvar preferências'); await waitFor("Array.from(document.querySelectorAll('button')).some(el=>el.textContent==='Salvar preferências' && !el.disabled)");
   assert.equal(preference.showDetails, true);
   await clickText('Dados e offline'); await waitFor("document.body.textContent.includes('Ativar e salvar dados offline')");
   await clickText('Ativar e salvar dados offline'); await waitFor("document.body.textContent.includes('Dados do dia e cadastros salvos neste dispositivo.')");

@@ -1,6 +1,6 @@
 /* One scrollbar treatment for pages, panels, calendars and dialogs. */
-:root { --scroll-thumb:#b9c2bc;--scroll-hover:#929f96;--scroll-active:#75877b; }
-html[data-theme=dark] { --scroll-thumb:#505a55;--scroll-hover:#707c74;--scroll-active:#8c9a90; }
+:root { --scroll-thumb:#bdbec0;--scroll-hover:#98999b;--scroll-active:#7d7e80; }
+html[data-theme=dark] { --scroll-thumb:#545557;--scroll-hover:#757678;--scroll-active:#929395; }
 html,html * { scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) transparent !important; }
 @supports selector(::-webkit-scrollbar) {
  html,html * { scrollbar-width:auto !important;scrollbar-color:auto !important; }
