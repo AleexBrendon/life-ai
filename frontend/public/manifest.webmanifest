@@ -1,0 +1,15 @@
+{
+  "name": "LifeAI — Planejamento pessoal",
+  "short_name": "LifeAI",
+  "lang": "pt-BR",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#28745b",
+  "icons": [
+    { "src": "/lifeai-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/lifeai-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/lifeai-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

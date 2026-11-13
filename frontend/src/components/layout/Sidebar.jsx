@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import BrandMark from '../ui/BrandMark';
 import { useUserPreferences, UserAvatar } from '../../lib/UserPreferences';
 
 import {
@@ -29,7 +30,7 @@ function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-inner">
         <div className="sidebar-brand">
-          <div className="sidebar-brand-mark">L</div>
+          <BrandMark size={38} />
 
           <div className="sidebar-brand-text">
             <strong>LifeAI</strong>

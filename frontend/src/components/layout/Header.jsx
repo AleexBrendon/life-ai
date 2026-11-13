@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, Settings as SettingsIcon, Sparkles, X, LogOut, Volume2, VolumeX } from "lucide-react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import BrandMark from '../ui/BrandMark';
 import { navigationItems } from "../../config/navigation";
 import { ProfileSettings, NotificationCenter } from "../planner/AccountPanels";
 import AssistantChat from "../planner/AssistantChat";
@@ -30,7 +31,7 @@ export default function Header({ onLogout }) {
   }, [key, panel]);
   const Content = panel?.[1];
   return <>
-    <header className="app-header"><strong>{navigationItems.find(item => item.path === pathname)?.label || "LifeAI"}</strong><div className="header-actions">
+    <header className="app-header"><Link to="/dashboard" className="header-brand" aria-label="LifeAI — ir para o dashboard"><BrandMark size={30} /><strong>{navigationItems.find(item => item.path === pathname)?.label || "LifeAI"}</strong></Link><div className="header-actions">
       <button onClick={() => open("ia")} className="assistant-trigger" aria-label="Conversar com a IA"><Sparkles size={17} /><span>Assistente IA</span></button>
       <button onClick={() => open("notificacoes")} className="header-icon-button notification-bell" aria-label={`Notificações${unread ? `, ${unread} não lidas` : ''}`}><Bell size={20} />{unread > 0 && <span className="notification-count">{unread > 99 ? '99+' : unread}</span>}</button>
       <button type="button" onClick={toggleSound} className="header-icon-button notification-sound-toggle" aria-pressed={sound} title={sound?'Silenciar notificações':'Ativar som das notificações'} aria-label={sound?'Silenciar notificações':'Ativar som das notificações'}>{sound?<Volume2 size={20}/>:<VolumeX size={20}/>}</button>

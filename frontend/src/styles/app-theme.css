@@ -5,6 +5,11 @@
 .app-shell .sidebar-inner { padding: 24px 16px 16px; }
 .app-shell .sidebar-brand { padding: 0 8px 32px; }
 .app-shell .sidebar-brand-mark { background: var(--color-brand); color: #fff; border-radius: 12px; box-shadow: none; }
+.brand-mark { display:block;flex-shrink:0;object-fit:contain; }
+.header-brand { display:inline-flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none; }
+.header-brand strong { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.header-brand:focus-visible { outline:2px solid var(--color-brand);outline-offset:5px;border-radius:8px; }
+@media(max-width:600px) { .header-brand strong { display:none; } }
 .app-shell .sidebar-brand-text strong { color: var(--color-text-primary); font-size: 20px; letter-spacing: -.6px; }
 .app-shell .sidebar-brand-text span { color: var(--color-text-muted); font-size: 12px; }
 .app-shell .sidebar-section-label { color: var(--color-text-muted); font-size: 11px; letter-spacing: .12em; }
