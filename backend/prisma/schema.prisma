@@ -181,6 +181,8 @@
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([userId])
   }
 
   model JobTask {
@@ -236,6 +238,7 @@
     user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@index([taskId, createdAt])
+    @@index([userId])
   }
 
   model WorkSchedule {
@@ -251,6 +254,8 @@
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([jobId])
   }
 
   model RoutineItem {
@@ -275,6 +280,8 @@
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([userId])
   }
 
   model RoutineSchedule {
@@ -289,6 +296,8 @@
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([routineItemId])
   }
 
   model RoutineExecution {
@@ -312,6 +321,8 @@
 
     @@unique([userId, routineScheduleId, date])
     @@index([userId, date])
+    @@index([routineItemId])
+    @@index([routineScheduleId])
   }
 
   model UnexpectedEvent {
@@ -372,6 +383,7 @@
 
     @@unique([userId, reminderId, date])
     @@index([userId, date])
+    @@index([reminderId])
   }
 
   model Notification {

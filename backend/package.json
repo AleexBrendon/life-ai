@@ -11,6 +11,8 @@
     "test:unit": "vitest run --config vitest.unit.config.js",
     "test:integration": "vitest run tests/integration",
     "test:security": "vitest run tests/security",
+    "test:database": "node --test tests/database/integrity.test.cjs",
+    "db:check-integrity": "node scripts/check-database-integrity.cjs",
     "start:deploy": "prisma generate && prisma migrate deploy && node src/server.js"
   },
   "keywords": [],
@@ -34,6 +36,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.4.3",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",
     "vitest": "^4.1.11"
