@@ -222,6 +222,77 @@ html[data-theme=dark] .dashboard-refined .dashboard-total .dashboard-total-icon 
 .login-page .login-showcase-copy h1 > span { color:#f5c451; }
 .login-page .login-input-wrapper input:-webkit-autofill,html[data-theme=dark] .login-page .login-input-wrapper input:-webkit-autofill { -webkit-text-fill-color:var(--color-text-primary);-webkit-box-shadow:0 0 0 40px var(--color-surface) inset!important;caret-color:var(--color-text-primary); }
 
+/* Shared alignment: one control height and predictable rows of actions. */
+:root { --control-height:44px;--control-gap:12px; }
+:is(.app-shell,.workspace-panel,.studio-dialog) :is(.studio-button,.ui-button) {
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+  min-height:var(--control-height);gap:8px;padding:10px 16px;line-height:22px;
+}
+:is(.app-shell,.workspace-panel,.studio-dialog) :is(.studio-button,.ui-button) svg { flex-shrink:0; }
+:is(.studio-form-grid,.studio-profile-fields) { column-gap:16px;row-gap:20px; }
+.studio-field { gap:8px;margin:0; }
+.studio-field > :is(span,.schedule-label) { min-height:20px;line-height:20px;margin:0; }
+.studio-field small { line-height:1.5; }
+.studio-field.check { align-self:start;margin-top:28px; }
+.studio-field.check > input { flex-shrink:0;margin:0; }
+.studio-field.check > span { min-width:0; }
+:is(.app-shell,.workspace-panel,.studio-dialog) .studio-icon { width:44px;height:44px;min-width:44px;padding:0;box-sizing:border-box; }
+.app-shell .studio-search { display:flex;align-items:center;box-sizing:border-box;min-height:44px; }
+.app-shell .studio-search input { height:42px;min-height:0;line-height:22px;padding-block:10px; }
+:is(.studio-section-heading,.studio-child-section > header,.bill-list-toolbar,.dashboard-welcome) { gap:16px; }
+:is(.studio-section-heading,.studio-toolbar,.bill-toolbar,.bill-list-toolbar) > * { min-width:0; }
+.studio-section-heading > :is(.ai-inline-actions,.personal-actions) { margin:0; }
+:is(.ai-inline-actions,.personal-actions,.evolution-actions,.notification-item-actions) { display:flex;flex-wrap:wrap;align-items:center;gap:var(--control-gap); }
+.ai-inline-actions { justify-content:flex-end;align-items:stretch; }
+.studio-toolbar,.bill-toolbar { align-items:center;gap:16px; }
+.studio-toolbar > nav,.bill-toolbar > nav { margin-bottom:0; }
+.bill-month { align-items:center;gap:8px; }
+.bill-month > label { display:block;flex:1;min-width:0;max-width:250px;margin:0; }
+.studio-child-row > .studio-button { margin-top:16px; }
+.studio-child-row > .studio-remove { display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:12px 0 0 auto;padding:8px 12px; }
+.studio-record .studio-record-link { margin-top:auto; }
+.evolution-panel { margin:24px auto; }
+.evolution-panel > .studio-field { margin:20px 0 24px; }
+.evolution-panel > h3 { margin:24px 0 16px;line-height:1.5; }
+.evolution-card :is(fieldset,form) > .studio-button { margin-top:20px; }
+.evolution-card .evolution-actions { align-items:flex-end; }
+.evolution-actions > .studio-field { margin:0; }
+.evolution-actions > .studio-button { align-self:flex-end; }
+.studio-dialog footer { align-items:center;gap:12px; }
+.studio-dialog footer > .studio-button { min-width:120px; }
+.workspace-panel-heading { gap:16px; }
+.workspace-panel-heading > h2 { min-width:0; }
+.workspace-panel-heading > button { flex-shrink:0; }
+.notification-center .notification-toolbar { flex-direction:column;align-items:stretch;gap:8px; }
+.notification-center .notification-read-all { align-self:flex-end; }
+.notification-center .studio-view-toggle { box-sizing:border-box;margin:0; }
+.app-shell .header-actions { align-items:center;gap:8px; }
+.app-shell :is(.header-icon-button,.header-avatar-button,.logout-button,.assistant-trigger) { box-sizing:border-box;min-height:44px; }
+.app-shell :is(.header-icon-button,.header-avatar-button) { display:grid;place-items:center;width:44px;height:44px;flex-shrink:0; }
+.app-shell .header-avatar-button .user-avatar { margin:0; }
+
+@media(max-width:900px) {
+  .studio-section-heading > .ai-inline-actions { flex-basis:100%;justify-content:flex-start; }
+}
+@media(max-width:600px) {
+  .studio-form-grid { row-gap:18px; }
+  .studio-field.check { margin-top:0; }
+  .studio-dialog footer { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch; }
+  .studio-dialog footer > .studio-button { width:100%;min-width:0; }
+  .studio-dialog footer > .studio-button:only-child { grid-column:1 / -1; }
+  .studio-section-heading > .ai-inline-actions { display:grid;grid-template-columns:minmax(0,1fr);width:100%; }
+  .studio-section-heading > .ai-inline-actions .studio-button { width:100%; }
+  .evolution-actions { align-items:stretch; }
+  .evolution-actions > .studio-field { flex-basis:100%; }
+  .evolution-card :is(fieldset,form) > .studio-button { width:100%; }
+  .bill-toolbar .bill-month { display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px; }
+  .bill-month > label { max-width:none; }
+  .notification-center .studio-view-toggle { display:grid;grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .notification-center .studio-view-toggle button:first-child { grid-column:1 / -1; }
+  .app-shell .header-actions { gap:6px; }
+  .app-shell :is(.header-icon-button,.header-avatar-button) { width:40px;height:44px; }
+}
+
 html[data-theme=dark] .app-shell .sidebar-nav-item-active,
 html[data-theme=dark] .app-shell .sidebar-nav-item-active:hover { background:var(--accent-soft)!important;color:var(--accent)!important;border-color:color-mix(in srgb,var(--accent) 24%,transparent)!important; }
 html[data-theme=dark] .app-shell .notification-count { background:var(--action-bg)!important;color:var(--action-text)!important; }
@@ -252,7 +323,7 @@ html[data-theme=dark] .app-shell .mobile-navigation-item-active { color:var(--ac
   :root { --space-page:16px;--space-card:18px; }
   .app-shell .app-header { padding-inline:12px; }
   .app-shell .header-actions { gap:3px; }
-  .app-shell :is(.header-icon-button,.header-avatar-button) { width:36px; }
+  .app-shell :is(.header-icon-button,.header-avatar-button) { width:40px; }
   .app-shell .notification-sound-toggle { display:none; }
   .app-shell .hydration-strip { gap:8px;padding-block:8px; }
   .app-shell .hydration-strip > a { flex-basis:100%;font-size:11px;gap:8px; }

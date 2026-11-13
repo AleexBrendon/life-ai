@@ -23,6 +23,6 @@ Os tokens da identidade estão em `frontend/src/styles/identity.css`, carregado 
 
 `npm test`, `npm run build`, `npm run test:ui`, `npm run test:evolution-ui` e `npm run test:identity-ui`, executados em `frontend`.
 
-A revisão de identidade usa dados fictícios e percorre as áreas em 1440 e 390 pixels, nos temas claro e escuro. Verifica largura, filtros, leitura de notificações, Escape e login, produzindo capturas em diretório temporário. A verificação de evolução cobre os fluxos existentes, incluindo fila offline e isolamento entre contas. Isso não substitui teste de push real ou uma auditoria completa de acessibilidade.
+A revisão de identidade usa dados fictícios e percorre as áreas em 1440, 768, 390 e 320 pixels, nos temas claro e escuro. Verifica largura, altura dos campos, alinhamento de nome/data no perfil, separação das ações de marcos, filtros, leitura de notificações, Escape e login, produzindo capturas em diretório temporário. A verificação de evolução cobre os fluxos existentes, incluindo fila offline e isolamento entre contas. Isso não substitui teste de push real ou uma auditoria completa de acessibilidade.
 
 Esta entrega trata da apresentação e da organização da informação. Novas funcionalidades, sincronização adicional e personalização do dashboard ficam para a etapa seguinte.

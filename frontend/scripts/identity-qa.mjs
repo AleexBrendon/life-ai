@@ -22,6 +22,10 @@ export async function runIdentityQA({send,evaluate,waitFor,clickText,capture,ori
   const navigate=route=>send('Page.navigate',{url:origin+route});
   const ready=async()=>{await waitFor("document.querySelector('.app-shell') && document.querySelector('main h1')");await evaluate('document.fonts.ready');};
   const checkWidth=async(label)=>assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,`Overflow: ${label}`);
+  const checkControls=async(label)=>{
+    const mismatches=await evaluate(`Array.from(document.querySelectorAll('.studio-field > input:not([type=checkbox]):not([type=radio]):not([type=file]),.studio-field > select,.studio-field .picker-trigger')).filter(el=>el.getBoundingClientRect().width>10).map(el=>({label:el.closest('.studio-field').textContent.trim().slice(0,60),height:el.getBoundingClientRect().height})).filter(el=>Math.abs(el.height-44)>1)`);
+    assert.deepEqual(mismatches,[],`Altura de campos: ${label}`);
+  };
   const routes=[
     ['dashboard','/dashboard'],['agenda','/agenda'],['rotinas','/planejamento?aba=rotinas'],
     ['metas','/planejamento?aba=metas'],['trabalho','/planejamento?aba=trabalho'],
@@ -36,12 +40,14 @@ export async function runIdentityQA({send,evaluate,waitFor,clickText,capture,ori
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.studio-button:not(.secondary)')).backgroundColor"),'rgb(245, 196, 81)');
   for(const theme of ['dark','light']) {
     await evaluate(`localStorage.setItem('lifeai:appearance',${JSON.stringify(theme)})`);
-    for(const width of [1440,390]) {
+    for(const width of [1440,768,390,320]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:1000,deviceScaleFactor:1,mobile:width===390});
       for(const [label,route] of routes) {
         await navigate(route);await ready();
         await waitFor("!document.querySelector('main').textContent.includes('Carregando')");
         await checkWidth(`${label}-${theme}-${width}`);
+        await checkControls(`${label}-${theme}-${width}`);
+        if(label==='evolucao-metas')assert.equal(await evaluate(`(()=>{const grid=document.querySelector('form.evolution-card .studio-form-grid'),button=document.querySelector('form.evolution-card fieldset > .studio-button');return button.getBoundingClientRect().top-grid.getBoundingClientRect().bottom>=16})()`),true,'Separação da ação de criar marco');
         await capture(`${label}-${theme}-${width}.png`,true);
       }
       await navigate('/dashboard?painel=notificacoes');await ready();
@@ -57,6 +63,8 @@ export async function runIdentityQA({send,evaluate,waitFor,clickText,capture,ori
       await navigate('/dashboard?painel=perfil');await ready();
       await waitFor("document.querySelector('.appearance-options')");
       await checkWidth(`perfil-${theme}-${width}`);
+      await checkControls(`perfil-${theme}-${width}`);
+      if(width>=768)assert.equal(await evaluate(`(()=>{const fields=Array.from(document.querySelectorAll('.profile-settings .studio-form-grid .studio-field'));const first=fields[0].querySelector('input'),second=fields[1].querySelector('.picker-trigger');return Math.abs(first.getBoundingClientRect().top-second.getBoundingClientRect().top)<1})()`),true,'Alinhamento de nome e data de nascimento');
       await capture(`perfil-${theme}-${width}.png`,true);
       await navigate('/dashboard?painel=ia');await ready();
       await waitFor("document.querySelector('.assistant-mode-tabs')");

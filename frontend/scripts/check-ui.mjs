@@ -151,6 +151,7 @@ try {
   assert.equal(await evaluate('document.activeElement.id'), 'metas-title');
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);
   await capture('editor-mobile.png');
+  assert.equal(await evaluate("(()=>{const buttons=[...document.querySelectorAll('.studio-dialog footer > .studio-button')];return buttons.every(button=>Math.abs(button.getBoundingClientRect().height-buttons[0].getBoundingClientRect().height)<1)})()"),true,'Ações do diálogo devem ter a mesma altura mesmo com quebra de texto');
   failSave = false; await clickText('Salvar alterações');
   await waitFor("document.body.textContent.includes('Cadastro salvo')");
   await send('Page.navigate', { url: `${origin}/tests/ui/fixture.html` });

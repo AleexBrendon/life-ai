@@ -3,7 +3,7 @@ html[data-theme=dark] { --picker-bg:#20292c;--picker-text:#e5e6e8;--picker-muted
 .picker-control { position:relative;min-width:0;width:100%; }
 .schedule-time.picker-control { display:block;padding:0;border:0;min-height:0;background:transparent !important; }
 .picker-control > input.picker-validation { position:absolute !important;opacity:0;pointer-events:none;width:1px !important;height:1px !important;min-height:0 !important;padding:0 !important;border:0 !important;inset:0; }
-.picker-control .picker-trigger,.range-filter .picker-trigger { display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--picker-border);border-radius:10px;color:var(--picker-text);background:var(--picker-bg);font:inherit;font-size:13px;text-align:left;cursor:pointer; }
+.picker-control .picker-trigger,.range-filter .picker-trigger { display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;height:44px;min-height:44px;padding:10px 12px;border:1px solid var(--picker-border);border-radius:10px;color:var(--picker-text);background:var(--picker-bg);font:inherit;font-size:14px;line-height:22px;text-align:left;cursor:pointer; }
 .picker-trigger > span { flex:1;min-width:0;font-variant-numeric:tabular-nums;text-transform:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .picker-trigger > svg { flex:none;color:var(--picker-muted); }
 .picker-trigger small,.picker-placeholder { color:var(--picker-muted);font-size:12px; }
