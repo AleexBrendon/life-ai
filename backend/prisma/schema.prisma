@@ -191,6 +191,12 @@
     weekStartsOn       Int       @default(1)
     notifyActions      Boolean   @default(true)
     notifyUpcoming     Boolean   @default(true)
+    breakfastStart     String    @default("07:00")
+    breakfastEnd       String    @default("07:30")
+    lunchStart         String    @default("12:00")
+    lunchEnd           String    @default("13:00")
+    dinnerStart        String    @default("19:00")
+    dinnerEnd          String    @default("19:30")
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -312,6 +318,7 @@
     autoSchedule Boolean @default(false)
     weeklyFrequency Int @default(3)
     sessionMinutes Int @default(30)
+    mealType String?
 
     user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     schedules         RoutineSchedule[]
@@ -321,6 +328,7 @@
     updatedAt DateTime @updatedAt
 
     @@index([userId])
+    @@unique([userId, mealType])
   }
 
   model RoutineSchedule {

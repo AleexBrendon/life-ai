@@ -1,0 +1,10 @@
+ALTER TABLE "Profile"
+ ADD COLUMN "breakfastStart" TEXT NOT NULL DEFAULT '07:00',
+ ADD COLUMN "breakfastEnd" TEXT NOT NULL DEFAULT '07:30',
+ ADD COLUMN "lunchStart" TEXT NOT NULL DEFAULT '12:00',
+ ADD COLUMN "lunchEnd" TEXT NOT NULL DEFAULT '13:00',
+ ADD COLUMN "dinnerStart" TEXT NOT NULL DEFAULT '19:00',
+ ADD COLUMN "dinnerEnd" TEXT NOT NULL DEFAULT '19:30';
+
+ALTER TABLE "RoutineItem" ADD COLUMN "mealType" TEXT;
+CREATE UNIQUE INDEX "RoutineItem_userId_mealType_key" ON "RoutineItem"("userId", "mealType");

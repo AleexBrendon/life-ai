@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, CalendarDays, Bell, UserRound, Droplets, Wallet, Save, LoaderCircle, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
-import { DatePicker } from './ScheduleInputs';
+import { DatePicker, TimePicker } from './ScheduleInputs';
 import { useTheme } from '../../lib/theme';
 
 function initial(user) {
  const profile = user.profile || {};
  return { name:user.name, birthDate:profile.birthDate?.slice(0,10)||'', timezone:profile.timezone||'America/Sao_Paulo', occupation:profile.occupation||'', relationshipStatus:profile.relationshipStatus||'', hasChildren:profile.hasChildren||false,
-  avatarData:profile.avatarData||null,calendarView:profile.calendarView||'month',weekStartsOn:profile.weekStartsOn??1,notifyActions:profile.notifyActions??true,notifyUpcoming:profile.notifyUpcoming??true };
+  avatarData:profile.avatarData||null,calendarView:profile.calendarView||'month',weekStartsOn:profile.weekStartsOn??1,notifyActions:profile.notifyActions??true,notifyUpcoming:profile.notifyUpcoming??true,
+  breakfastStart:profile.breakfastStart||'07:00',breakfastEnd:profile.breakfastEnd||'07:30',lunchStart:profile.lunchStart||'12:00',lunchEnd:profile.lunchEnd||'13:00',dinnerStart:profile.dinnerStart||'19:00',dinnerEnd:profile.dinnerEnd||'19:30' };
 }
 async function preparePhoto(file) {
  if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5*1024*1024) throw new Error('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');
@@ -53,7 +54,13 @@ export default function ProfileSettings() {
  <label className="studio-field wide"><span>E-mail da conta</span><input type="email" value={email} readOnly/><small className="settings-help">Usado para entrar no sistema.</small></label><label className="studio-field check"><input type="checkbox" checked={form.hasChildren} onChange={e=>set('hasChildren',e.target.checked)}/><span>Tenho filhos</span></label></div></section>
  <section className="settings-section"><header><CalendarDays size={18}/><div><h3>Agenda e horários</h3><p>Personalize a organização do seu calendário.</p></div></header><div className="studio-form-grid">
  <label className="studio-field wide"><span>Fuso horário *</span><select value={form.timezone} onChange={e=>set('timezone',e.target.value)}>{[...new Set(['America/Sao_Paulo','America/Manaus','America/Recife','America/Rio_Branco','America/Belem','America/Cuiaba','America/Noronha','Europe/Lisbon','UTC',form.timezone])].map(zone=><option key={zone}>{zone}</option>)}</select></label>
- <p className="ai-help">Minha agenda abre sempre na semana. Use os botões Dia e Mês no calendário para mudar a visualização.</p><label className="studio-field"><span>A semana começa em</span><select value={form.weekStartsOn} onChange={e=>set('weekStartsOn',Number(e.target.value))}><option value={1}>Segunda-feira</option><option value={0}>Domingo</option></select></label></div></section>
+ <p className="ai-help">Minha agenda abre sempre na semana. Use os botões Dia e Mês no calendário para mudar a visualização.</p><label className="studio-field"><span>A semana começa em</span><select value={form.weekStartsOn} onChange={e=>set('weekStartsOn',Number(e.target.value))}><option value={1}>Segunda-feira</option><option value={0}>Domingo</option></select></label>
+ <div className="studio-field wide"><strong>Refeições diárias</strong><small className="settings-help">A rotina mensal da IA adiciona estes horários a todos os dias quando você aprova uma proposta.</small></div>
+ {[
+  ['Café da manhã','breakfastStart','breakfastEnd'],
+  ['Almoço','lunchStart','lunchEnd'],
+  ['Jantar','dinnerStart','dinnerEnd'],
+ ].map(([label,start,end])=><div className="monthly-times wide" key={start}><label className="studio-field"><span>{label} · início</span><TimePicker value={form[start]} onChange={value=>set(start,value)}/></label><label className="studio-field"><span>{label} · fim</span><TimePicker value={form[end]} onChange={value=>set(end,value)}/></label></div>)}</div></section>
  <section className="settings-section"><header><Bell size={18}/><div><h3>Notificações</h3><p>Acompanhe o que mudou na sua conta.</p></div></header><label className="settings-toggle"><div><strong>Avisos das minhas alterações</strong><p>Cadastros, edições, exclusões, conclusões, skips, retomadas e ações da IA. Não altera os alarmes de água.</p></div><input type="checkbox" checked={form.notifyActions} onChange={e=>set('notifyActions',e.target.checked)}/></label><label className="settings-toggle upcoming-toggle"><div><strong>Avisar 5 minutos antes</strong><p>Receber no sino um aviso antes do início das atividades pendentes na agenda.</p></div><input type="checkbox" checked={form.notifyUpcoming} onChange={e=>set('notifyUpcoming',e.target.checked)}/></label></section>
  <section className="settings-section"><header><Droplets size={18}/><div><h3>Preferências específicas</h3><p>Metas e valores ficam nas respectivas áreas.</p></div></header><div className="settings-shortcuts"><Link to="/planejamento?aba=agua"><Droplets size={17}/>Meta de água e alarmes</Link><Link to="/planejamento?aba=financas"><Wallet size={17}/>Orçamento e caixinhas</Link></div></section>
  </fieldset>{error&&<p className="studio-error" role="alert">{error}</p>}{notice&&<FeedbackToast key={notice + revision} message={notice}/>}<div className="settings-action-footer"><small className="settings-save-status">{dirty ? <><span/>Alterações não salvas</> : <><Check size={14}/>Tudo salvo</>}</small><div className="settings-save-actions"><button type="button" className="settings-discard-button" disabled={busy||photoBusy||!dirty} onClick={()=>{setForm(saved);setError('');setNotice('Alterações descartadas.')}}>Descartar</button><button type="submit" className="settings-submit-button" disabled={busy||photoBusy||!dirty}>{busy ? <LoaderCircle size={17} className="settings-save-spinner"/> : <Save size={17}/>}<span>{busy?'Salvando…':'Salvar alterações'}</span></button></div></div></form>;

@@ -26,6 +26,12 @@ const getMe = async (req, res) => {
             weekStartsOn: true,
             notifyActions: true,
             notifyUpcoming: true,
+            breakfastStart: true,
+            breakfastEnd: true,
+            lunchStart: true,
+            lunchEnd: true,
+            dinnerStart: true,
+            dinnerEnd: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -74,7 +80,7 @@ const updateMe = async (req, res) => {
     }
 
     const profileData = {};
-    for (const key of ['avatarData','calendarView','weekStartsOn','notifyActions','notifyUpcoming']) {
+    for (const key of ['avatarData','calendarView','weekStartsOn','notifyActions','notifyUpcoming','breakfastStart','breakfastEnd','lunchStart','lunchEnd','dinnerStart','dinnerEnd']) {
       if (req.body[key] !== undefined) profileData[key] = req.body[key];
     }
 
@@ -138,6 +144,12 @@ const updateMe = async (req, res) => {
             weekStartsOn: true,
             notifyActions: true,
             notifyUpcoming: true,
+            breakfastStart: true,
+            breakfastEnd: true,
+            lunchStart: true,
+            lunchEnd: true,
+            dinnerStart: true,
+            dinnerEnd: true,
             createdAt: true,
             updatedAt: true,
           },

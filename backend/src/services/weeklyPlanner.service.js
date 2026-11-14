@@ -9,6 +9,11 @@ const {explain}=require('./aiFree.service');
 const {validDate}=require('./financeBills.service');
 const minute=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));
 const clock=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
+const MEALS=[
+ {title:'Café da manhã',startField:'breakfastStart',endField:'breakfastEnd',startTime:'07:00',endTime:'07:30'},
+ {title:'Almoço',startField:'lunchStart',endField:'lunchEnd',startTime:'12:00',endTime:'13:00'},
+ {title:'Jantar',startField:'dinnerStart',endField:'dinnerEnd',startTime:'19:00',endTime:'19:30'},
+];
 const day=z.string().refine(validDate,'Data inválida.');
 const requestSchema=z.object({date:day,unexpectedEventId:z.number().int().positive().optional(),message:z.string().trim().max(2000).default(''),startTime:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('07:00'),endTime:z.string().regex(/^(?:[01]\d|2[0-2]):[0-5]\d$|^23:00$/).default('23:00'),bufferMinutes:z.number().int().min(0).max(60).default(15),protectMeals:z.boolean().default(true),includeGoalSessions:z.boolean().default(true)}).refine(v=>minute(v.endTime)-minute(v.startTime)>=120,{message:'Reserve pelo menos duas horas para o período de planejamento.'});
 function fail(message,status=409){throw Object.assign(new Error(message),{status})}
@@ -16,7 +21,11 @@ function shift(key,n){const d=new Date(key+'T12:00:00Z');d.setUTCDate(d.getUTCDa
 function weekDates(key){return Array.from({length:7},(_,n)=>shift(key,n-new Date(key+'T12:00:00Z').getUTCDay()))}
 function normalize(text){return String(text).normalize('NFD').replace(/\p{M}/gu,'').toLowerCase()}
 async function context(userId,date,db=prisma){
- const dates=weekDates(date),days=await Promise.all([...dates,...dates.map(date=>shift(date,7))].map(date=>getDashboard({userId,date,db})));
+ const dates=weekDates(date),[days,profile]=await Promise.all([
+  Promise.all([...dates,...dates.map(date=>shift(date,7))].map(date=>getDashboard({userId,date,db}))),
+  db.profile.findUnique({where:{userId},select:{breakfastStart:true,breakfastEnd:true,lunchStart:true,lunchEnd:true,dinnerStart:true,dinnerEnd:true}}),
+ ]);
+ const meals=MEALS.map(meal=>({title:meal.title,startTime:profile?.[meal.startField]||meal.startTime,endTime:profile?.[meal.endField]||meal.endTime}));
  const timezone=days[0].timezone,now=localClock(new Date(),timezone),activities=[];
  for(const day of days){
   const status=(kind,id)=>day.activities.find(a=>a.kind===kind&&a.sourceId===id)?.status||'PENDING';
@@ -31,7 +40,7 @@ async function context(userId,date,db=prisma){
  const records=new Map();for(const day of days){for(const row of day.routines.scheduled)records.set('rotinas:'+row.id,{row,kind:'rotinas'});for(const work of day.work)records.set('trabalho:'+work.job.id,{row:work.job,kind:'trabalho'})}
  const commitments=timingSummary([...records.values()]);
  const unscheduled=await autoScheduleItems(userId,dates,db);
- return {weekStart:dates[0],weekEnd:dates[6],dates,timezone,now,activities,unscheduled,commitments,recoveryDates:dates.map(date=>shift(date,7)),fingerprint:createHash('sha256').update(JSON.stringify({timezone,activities,unscheduled,commitments})).digest('hex')};
+ return {weekStart:dates[0],weekEnd:dates[6],dates,timezone,now,activities,unscheduled,meals,commitments,recoveryDates:dates.map(date=>shift(date,7)),fingerprint:createHash('sha256').update(JSON.stringify({timezone,activities,unscheduled,meals,commitments})).digest('hex')};
 }
 // Items marked "Deixar a IA definir o horário" that still lack sessions for their weekly frequency.
 async function autoScheduleItems(userId,dates,db=prisma){
@@ -64,7 +73,7 @@ function planOptions(ctx,preferences){
    if(date<ctx.now.date)continue;
    const rows=ctx.activities.filter(a=>a.date===date),flex=rows.filter(a=>movable(a,ctx,preferences)),fixed=rows.filter(a=>!movable(a,ctx,preferences));
    const occupied=[...fixed];occupiedByDate.set(date,occupied);
-   if(preferences.protectMeals)for(const [startTime,endTime]of [['12:00','13:00'],['19:00','19:30']])occupied.push({startTime,endTime,title:'Pausa reservada',kind:'pause'});
+   if(preferences.protectMeals)for(const meal of ctx.meals)occupied.push({startTime:meal.startTime,endTime:meal.endTime,title:meal.title,kind:'pause'});
    for(let i=0;i<fixed.length;i++)for(let j=i+1;j<fixed.length;j++)if(fixed[i].kind!=='lembretes'&&fixed[j].kind!=='lembretes'&&overlaps(minute(fixed[i].startTime),minute(fixed[i].endTime),fixed[j],0,fixed[i]))unresolved.push(`${date}: ${fixed[i].title} coincide com ${fixed[j].title}; ambos são fixos (incluindo preparo e deslocamento).`);
    const order=[...flex].sort((a,b)=>{
     if(id==='focus')return Number(isStudy(b.title))-Number(isStudy(a.title))||a.startTime.localeCompare(b.startTime);
@@ -83,7 +92,7 @@ function planOptions(ctx,preferences){
   // Recover goal minutes on other days, including the following week.
   for(const date of ctx.recoveryDates||[]){
    const occupied=ctx.activities.filter(a=>a.date===date);occupiedByDate.set(date,[...occupied]);
-   if(preferences.protectMeals)for(const [startTime,endTime]of [['12:00','13:00'],['19:00','19:30']])occupiedByDate.get(date).push({startTime,endTime,kind:'pause'});
+   if(preferences.protectMeals)for(const meal of ctx.meals)occupiedByDate.get(date).push({startTime:meal.startTime,endTime:meal.endTime,title:meal.title,kind:'pause'});
   }
   for(const row of deferred){
    let remaining=minute(row.endTime)-minute(row.startTime);const parts=[];

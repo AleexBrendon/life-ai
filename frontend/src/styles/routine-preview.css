@@ -53,11 +53,13 @@ html[data-theme=dark] .routine-preview-dialog :is(.routine-timeline-event,.routi
 :is(.routine-preview-dialog,.routine-day-dialog) .lembretes{--routine-type:#b18716;--routine-type-bg:#fcf3d8;--routine-type-text:#796010}
 :is(.routine-preview-dialog,.routine-day-dialog) .imprevistos{--routine-type:#cc7040;--routine-type-bg:#fcebe1;--routine-type-text:#984a28}
 :is(.routine-preview-dialog,.routine-day-dialog) .fixo{--routine-type:#7e8c93;--routine-type-bg:#edf0f2;--routine-type-text:#53636c}
+:is(.routine-preview-dialog,.routine-day-dialog) .refeicoes{--routine-type:#658b56;--routine-type-bg:#eaf2e5;--routine-type-text:#46633b}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .rotinas{--routine-type:#9c9d9f;--routine-type-bg:#2f3032;--routine-type-text:#c1c2c4}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .metas{--routine-type:#bb95f0;--routine-type-bg:#392c4c;--routine-type-text:#ddc3ff}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .trabalho{--routine-type:#7eb7f2;--routine-type-bg:#23394f;--routine-type-text:#b5d8ff}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .lembretes{--routine-type:#e0bd55;--routine-type-bg:#423a21;--routine-type-text:#f2da8c}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .imprevistos{--routine-type:#edaa7a;--routine-type-bg:#483126;--routine-type-text:#ffd0ad}
+html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .refeicoes{--routine-type:#9fc58c;--routine-type-bg:#2b3828;--routine-type-text:#c6e4b7}
 html[data-theme=dark] :is(.routine-preview-dialog,.routine-day-dialog) .fixo{--routine-type:#94a4ae;--routine-type-bg:#2d363d;--routine-type-text:#c3cfd6}
 html[data-theme] .routine-preview-dialog :is(.routine-timeline-event,.routine-cell-event){background:var(--routine-type-bg);border-left:3px solid var(--routine-type);color:var(--routine-type-text) !important}
 html[data-theme] .routine-preview-dialog .routine-timeline-event{border-top-color:var(--routine-type);border-right-color:var(--routine-type);border-bottom-color:var(--routine-type)}

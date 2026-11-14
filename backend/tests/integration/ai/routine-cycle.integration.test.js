@@ -7,7 +7,7 @@ const providerKey=process.env.OPENROUTER_API_KEY;
 beforeAll(async()=>{
  delete process.env.OPENROUTER_API_KEY;
  vi.stubGlobal('fetch',vi.fn(async()=>{throw Error('No external calls in tests')}));
- for(let i=0;i<2;i++){const u=await prisma.user.create({data:{name:'Ciclo mensal teste',email:`routine-cycle-${Date.now()}-${i}@example.invalid`,passwordHash:'not-used',profile:{create:{timezone:'America/Sao_Paulo'}}}});users.push(u.id);tokens.push(jwt.sign({sub:String(u.id)},process.env.JWT_SECRET,{expiresIn:'10m'}))}
+ for(let i=0;i<2;i++){const u=await prisma.user.create({data:{name:'Ciclo mensal teste',email:`routine-cycle-${Date.now()}-${i}@example.invalid`,passwordHash:'not-used',profile:{create:{timezone:'America/Sao_Paulo',...(i===0?{breakfastStart:'07:15',breakfastEnd:'07:45',lunchStart:'12:30',lunchEnd:'13:15',dinnerStart:'19:30',dinnerEnd:'20:00'}:{})}}}});users.push(u.id);tokens.push(jwt.sign({sub:String(u.id)},process.env.JWT_SECRET,{expiresIn:'10m'}))}
  await prisma.job.create({data:{userId:users[0],name:'Trabalho CLT',schedules:{create:[1,2,3,4,5].map(dayOfWeek=>({dayOfWeek,startTime:'08:00',endTime:'18:00'}))}}});
  run=await prisma.routineItem.create({data:{userId:users[0],name:'Corrida',type:'Atividade física',isFlexible:true,schedules:{create:[{dayOfWeek:5,startTime:'19:00',endTime:'21:00'},{dayOfWeek:6,startTime:'18:00',endTime:'20:00'}]}},include:{schedules:true}});
  rest=await prisma.routineItem.create({data:{userId:users[0],name:'Pausa e descanso',type:'Saúde',isFlexible:true,schedules:{create:[{dayOfWeek:6,startTime:'18:00',endTime:'18:30'}]}},include:{schedules:true}});
@@ -19,14 +19,20 @@ afterAll(async()=>{vi.unstubAllGlobals();if(providerKey!==undefined)process.env.
 it('monta a rotina do mês com alternativas e só altera os cadastros após aprovação',async()=>{
  expect((await request(app).get('/api/ai/routine/cycle')).status).toBe(401);
  expect((await api('get','/routine/cycle')).body.data.cycle).toBeNull();
+ const auth={Authorization:`Bearer ${tokens[0]}`},mealSettings={breakfastStart:'07:15',breakfastEnd:'07:45',lunchStart:'12:30',lunchEnd:'13:15',dinnerStart:'19:30',dinnerEnd:'20:00'};
+ const saved=await request(app).put('/api/users/me').set(auth).send(mealSettings);expect(saved.status).toBe(200);expect(saved.body.data.user.profile).toMatchObject(mealSettings);
+ const profile=(await request(app).get('/api/users/me').set(auth)).body.data.user.profile;expect(profile).toMatchObject(mealSettings);
  const response=await api('post','/routine/preview',{message:'Quero cuidar da saúde'});expect(response.status).toBe(200);
  const proposal=response.body.data;expect(proposal.action).toBe('PLAN_MONTH_ROUTINE');expect(proposal.changes.recommended).toBe('health');
+ expect(proposal.changes.meals.map(meal=>[meal.mealType,meal.startTime,meal.endTime])).toEqual([['BREAKFAST','07:15','07:45'],['LUNCH','12:30','13:15'],['DINNER','19:30','20:00']]);
  expect(proposal.changes.before.issues.some(text=>text.includes('coincide com'))).toBe(true);
  const option=proposal.changes.options.find(o=>o.id==='health');expect(option.metrics.score).toBeGreaterThan(proposal.changes.before.score);
  expect(await prisma.routineSchedule.count({where:{routineItem:{userId:users[0]}}})).toBe(4);
  expect((await api('post',`/routine/${proposal.id}/apply`,{optionId:'health'},1)).status).toBe(404);
  const applied=await api('post',`/routine/${proposal.id}/apply`,{optionId:'health'});expect(applied.status,JSON.stringify(applied.body)).toBe(200);cycleId=applied.body.data.cycleId;
  const schedules=await prisma.routineSchedule.findMany({where:{routineItem:{userId:users[0]}},include:{routineItem:true}});
+ const mealSchedules=schedules.filter(s=>s.routineItem.mealType);expect(mealSchedules).toHaveLength(21);expect(new Set(mealSchedules.map(s=>s.routineItem.mealType))).toEqual(new Set(['BREAKFAST','LUNCH','DINNER']));
+ expect(mealSchedules.filter(s=>s.routineItem.mealType==='LUNCH').every(s=>s.startTime==='12:30'&&s.endTime==='13:15'&&s.routineItem.weeklyFrequency===7)).toBe(true);
  expect(schedules.filter(s=>s.routineItem.name==='Treino Flauta')).toHaveLength(2);
  expect(schedules.find(s=>s.routineItemId===culto.id)).toMatchObject({dayOfWeek:0,startTime:'18:30'});
  expect(schedules.find(s=>s.routineItemId===rest.id).dayOfWeek).toBe(6);
@@ -54,6 +60,7 @@ it('a próxima rotina usa a avaliação: com bons resultados recomenda manter e 
  const before=await prisma.routineSchedule.findMany({where:{routineItem:{userId:users[0]}},orderBy:{id:'asc'}});
  const applied=await api('post',`/routine/${response.body.data.id}/apply`,{optionId:'keep'});expect(applied.status,JSON.stringify(applied.body)).toBe(200);
  expect((await prisma.routineSchedule.findMany({where:{routineItem:{userId:users[0]}},orderBy:{id:'asc'}})).map(({id,dayOfWeek,startTime,endTime})=>({id,dayOfWeek,startTime,endTime}))).toEqual(before.map(({id,dayOfWeek,startTime,endTime})=>({id,dayOfWeek,startTime,endTime})));
+ expect(await prisma.routineItem.count({where:{userId:users[0],mealType:{not:null}}})).toBe(3);
  const old=await prisma.routineCycle.findUnique({where:{id:cycleId}});expect(old.status).toBe('COMPLETED');expect(old.performance).toBeTruthy();
  expect((await api('get','/routine/cycle')).body.data.cycle.id).toBe(applied.body.data.cycleId);
 });

@@ -11,7 +11,7 @@ export function previewBlocks(plan, option) {
  const changes = new Map(option.changes.map(change => [change.key, change]));
  const state = (key, slot) => { const change = changes.get(key); if (!change) return 'same'; if (!change.old) return 'new'; return change.old.dayOfWeek !== slot.dayOfWeek || change.old.startTime !== slot.startTime ? 'moved' : 'same'; };
  const blocks = [
-  ...(plan.fixed || []).map(row => ({ ...row, kind: ['rotinas','metas','trabalho','lembretes','imprevistos'].includes(row.kind) ? row.kind : 'fixo', state: 'fixed' })),
+  ...(plan.fixed || []).map(row => ({ ...row, kind: ['rotinas','metas','trabalho','lembretes','imprevistos','refeicoes'].includes(row.kind) ? row.kind : 'fixo', state: row.kind==='refeicoes'&&option.mealChanges?.some(meal=>meal.mealType===row.mealType)?'new':'fixed' })),
   ...option.template.routines.map(row => ({ ...row, kind: 'rotinas', state: state(row.key, row) })),
   ...option.template.goals.map(row => ({ ...row, kind: 'metas', state: state(row.key, row) })),
  ];
@@ -26,7 +26,7 @@ export function previewBlocks(plan, option) {
 }
 
 const fullDate = date => new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
-const kindLabel = {rotinas:'Rotina',metas:'Meta',trabalho:'Trabalho',fixo:'Preparo e deslocamento',lembretes:'Lembrete',imprevistos:'Imprevisto'};
+const kindLabel = {rotinas:'Rotina',metas:'Meta',trabalho:'Trabalho',fixo:'Preparo e deslocamento',lembretes:'Lembrete',imprevistos:'Imprevisto',refeicoes:'Refeição'};
 function DayDetails({title,rows,onClose}) {
  return <Dialog title={title} subtitle={rows.length+' atividades previstas nesta sugestão'} onClose={onClose} className="routine-day-dialog">
   <div className="studio-editor-body"><div className="routine-detail-list">{rows.map((row,i)=><article key={row.key+':'+i} className={'routine-detail-card '+row.kind}>
@@ -87,7 +87,7 @@ function MonthPreview({ blocks, period }) {
 }
 
 export function RoutineLegend() {
- return <ul className="routine-legend"><li><i className="trabalho" />Trabalho</li><li><i className="lembretes" />Lembretes</li><li><i className="imprevistos" />Imprevistos</li><li><i className="fixo" />Preparo e deslocamento</li><li><i className="rotinas" />Rotinas</li><li><i className="metas" />Metas</li><li><i className="new" />Novo ou com horário alterado</li><li><i className="old" />Posição anterior</li></ul>;
+ return <ul className="routine-legend"><li><i className="trabalho" />Trabalho</li><li><i className="lembretes" />Lembretes</li><li><i className="imprevistos" />Imprevistos</li><li><i className="fixo" />Preparo e deslocamento</li><li><i className="rotinas" />Rotinas</li><li><i className="refeicoes" />Refeições</li><li><i className="metas" />Metas</li><li><i className="new" />Novo ou com horário alterado</li><li><i className="old" />Posição anterior</li></ul>;
 }
 
 export default function RoutinePreview({ plan, option }) {

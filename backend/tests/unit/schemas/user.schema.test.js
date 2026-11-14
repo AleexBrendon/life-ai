@@ -89,6 +89,26 @@ describe("User Schema", () => {
             expect(result.success).toBe(true);
         });
 
+        it("deve aceitar horários completos para as refeições", () => {
+            const result = updateUserSchema.safeParse({
+                breakfastStart: "07:15",
+                breakfastEnd: "07:45",
+                lunchStart: "12:30",
+                lunchEnd: "13:15",
+                dinnerStart: "19:30",
+                dinnerEnd: "20:00",
+            });
+
+            expect(result.success).toBe(true);
+        });
+
+        it("deve rejeitar refeições sem intervalo válido", () => {
+            expect(updateUserSchema.safeParse({ lunchStart: "12:30" }).success).toBe(false);
+            expect(updateUserSchema.safeParse({ dinnerStart: "20:00", dinnerEnd: "19:30" }).success).toBe(false);
+            expect(updateUserSchema.safeParse({ breakfastStart: "24:00", breakfastEnd: "07:30" }).success).toBe(false);
+            expect(updateUserSchema.safeParse({ lunchStart: "07:00", lunchEnd: "12:00" }).success).toBe(false);
+        });
+
         it("deve rejeitar timezone vazio", () => {
             const result = updateUserSchema.safeParse({
                 timezone: "   ",

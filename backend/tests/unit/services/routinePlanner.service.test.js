@@ -16,6 +16,20 @@ it('divide metas entre mais dias e preserva o tempo total',()=>{
   const tampered=structuredClone(option);tampered.template.goals.pop();expect(()=>validateTemplate(context,tampered,preferences)).toThrow();
  }
 });
+it('inclui as refeições do perfil todos os dias e recusa horários adulterados',()=>{
+ const meals=[
+  {mealType:'BREAKFAST',title:'Café da manhã',startTime:'07:00',endTime:'07:30'},
+  {mealType:'LUNCH',title:'Almoço',startTime:'12:00',endTime:'13:00'},
+  {mealType:'DINNER',title:'Jantar',startTime:'19:00',endTime:'19:30'},
+ ];
+ const context={fixed:meals.flatMap(meal=>Array.from({length:7},(_,day)=>({key:`meal:${meal.mealType}:${day}`,kind:'refeicoes',sourceId:meal.mealType,title:meal.title,category:'meal',day,start:m(meal.startTime),end:m(meal.endTime)}))),sessions:[],demands:[],meals,mealRoutines:[]};
+ const option=buildOptions(context,prefs,fb).options[0];
+ expect(option.applicable).toBe(true);
+ expect(option.template.meals).toEqual(meals);
+ expect(()=>validateTemplate(context,option,prefs)).not.toThrow();
+ const tampered=structuredClone(option);tampered.template.meals[0].startTime='08:00';
+ expect(()=>validateTemplate(context,tampered,prefs)).toThrow();
+});
 const ctx={fixed:[1,2,3,4,5].map(day=>work(day,'08:00','18:00')),sessions:[...routine(7,'Corrida','exercise',[[5,'19:00','21:00'],[6,'18:00','20:00']]),...routine(8,'Pausa e descanso','rest',[[6,'18:00','18:30'],[1,'18:15','18:45']]),...routine(9,'Culto','spiritual',[[0,'18:30','20:30']])],demands:[{key:'g:4:0',kind:'metas',sourceId:4,sourceKey:'metas:4',title:'Estudar faculdade',category:'study',duration:45,frequency:2},{key:'g:4:1',kind:'metas',sourceId:4,sourceKey:'metas:4',title:'Estudar faculdade',category:'study',duration:45,frequency:2}]};
 it('classifica atividades e define ciclos mensais',()=>{
  expect(category('Treino Flauta','Organização')).toBe('skill');expect(category('Corrida','Atividade física')).toBe('exercise');expect(category('Culto','Pessoal')).toBe('spiritual');expect(category('Estudar faculdade EAD')).toBe('study');
