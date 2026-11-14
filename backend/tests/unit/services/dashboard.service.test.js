@@ -372,7 +372,6 @@ describe("Dashboard Service", () => {
             expect(
                 result.reminders.scheduled
             ).toHaveLength(1);
-
             expect(
                 result.reminders.scheduled[0].title
             ).toBe("Lembrete do dia");

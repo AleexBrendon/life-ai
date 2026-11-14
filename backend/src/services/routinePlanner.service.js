@@ -390,6 +390,29 @@ function validateTemplate(ctx,option,prefs){
  if([...sessions.keys()].some(key=>!seen.has(key)))invalid();
  for(const row of moved){if(row.start-(row.beforeMinutes||0)<minute(prefs.dayStart)||row.end+(row.afterMinutes||0)>minute(prefs.flexEnd))invalid();for(const other of state)if(other!==row&&(overlap(row,other)||other.day===row.day&&other.kind===row.kind&&other.sourceId===row.sourceId))invalid()}
 }
+async function ensureMealRoutines(tx,userId,meals,{preserveExistingSchedules=false}={}){
+ const result=new Map();
+ for(const meal of meals){
+  const duration=minute(meal.endTime)-minute(meal.startTime),existing=await tx.routineItem.findUnique({where:{userId_mealType:{userId,mealType:meal.mealType}},select:{id:true,isActive:true}});
+  if(existing&&!existing.isActive)fail(`Ative a rotina de ${meal.title.toLowerCase()} antes de reorganizá-la.`);
+  const routine=await tx.routineItem.upsert({
+   where:{userId_mealType:{userId,mealType:meal.mealType}},
+   create:{userId,mealType:meal.mealType,name:meal.title,type:'Alimentação',isActive:true,isFlexible:false,autoSchedule:false,weeklyFrequency:7,sessionMinutes:duration},
+   update:{name:meal.title,type:'Alimentação',isActive:true,isFlexible:false,autoSchedule:false,weeklyFrequency:7,sessionMinutes:duration,locationMode:null,preparationMinutes:null,outboundMinutes:null,returnMinutes:null,travelDuringBreak:false},
+   select:{id:true},
+  });
+  const schedules=await tx.routineSchedule.findMany({where:{routineItemId:routine.id},orderBy:{dayOfWeek:'asc'}});
+  if(schedules.some((row,index)=>index>0&&row.dayOfWeek===schedules[index-1].dayOfWeek))fail(`A rotina de ${meal.title.toLowerCase()} tem horários duplicados. Revise-a antes de aprovar.`);
+  const byDay=new Map();
+  for(let day=0;day<7;day++){
+   const current=schedules.find(row=>row.dayOfWeek===day);
+   const schedule=current?(preserveExistingSchedules?current:await tx.routineSchedule.update({where:{id:current.id},data:{startTime:meal.startTime,endTime:meal.endTime}})):await tx.routineSchedule.create({data:{routineItemId:routine.id,dayOfWeek:day,startTime:meal.startTime,endTime:meal.endTime}});
+   byDay.set(day,schedule);
+  }
+  result.set(meal.mealType,{routineId:routine.id,schedules:byDay});
+ }
+ return result;
+}
 async function applyMonth(userId,id,optionId){
  const proposal=await prisma.aiRecommendation.findFirst({where:{id,userId,action:'PLAN_MONTH_ROUTINE',status:'PENDING'}});if(!proposal)fail('Proposta pendente não encontrada.',404);
  const option=proposal.changes.options.find(row=>row.id===optionId);if(!option?.applicable)fail('Esta alternativa não pode ser aplicada.');
@@ -423,22 +446,7 @@ async function applyMonth(userId,id,optionId){
     const created=await tx.goalPlanSession.create({data:{goalId:row.goalId,date:day,startTime:row.startTime,endTime:row.endTime,status:'PENDING'}});goalSessionIds.push(created.id);
    }
   }
-  for(const meal of option.template.meals){
-   const duration=minute(meal.endTime)-minute(meal.startTime);
-   const routine=await tx.routineItem.upsert({
-    where:{userId_mealType:{userId,mealType:meal.mealType}},
-    create:{userId,mealType:meal.mealType,name:meal.title,type:'Alimentação',isActive:true,isFlexible:false,autoSchedule:false,weeklyFrequency:7,sessionMinutes:duration},
-    update:{name:meal.title,type:'Alimentação',isActive:true,isFlexible:false,autoSchedule:false,weeklyFrequency:7,sessionMinutes:duration,locationMode:null,preparationMinutes:null,outboundMinutes:null,returnMinutes:null,travelDuringBreak:false},
-    select:{id:true},
-   });
-   const schedules=await tx.routineSchedule.findMany({where:{routineItemId:routine.id},orderBy:{dayOfWeek:'asc'}});
-   if(schedules.some((row,index)=>index>0&&row.dayOfWeek===schedules[index-1].dayOfWeek))fail(`A rotina de ${meal.title.toLowerCase()} tem horários duplicados. Revise-a antes de aprovar.`);
-   for(let day=0;day<7;day++){
-    const existing=schedules.find(row=>row.dayOfWeek===day);
-    if(existing)await tx.routineSchedule.update({where:{id:existing.id},data:{startTime:meal.startTime,endTime:meal.endTime}});
-    else await tx.routineSchedule.create({data:{routineItemId:routine.id,dayOfWeek:day,startTime:meal.startTime,endTime:meal.endTime}});
-   }
-  }
+  await ensureMealRoutines(tx,userId,option.template.meals);
   const cycle=await tx.routineCycle.create({data:{userId,startDate:todayDate,endDate:new Date(end+'T00:00:00Z'),optionId,recommendationId:id,template:option.template,metrics:option.metrics,goalSessionIds}});
   await tx.aiRecommendation.update({where:{id},data:{executedAt:new Date(),result:{optionId,cycleId:cycle.id,changes:option.changes.length,goalSessions:goalSessionIds.length}}});
   return {cycleId:cycle.id,startDate:today,endDate:end,optionId,changes:option.changes.length,goalSessions:goalSessionIds.length,mealRoutines:option.template.meals.length};
@@ -463,4 +471,4 @@ function startCheckinNotifications(){
  const tick=async()=>{if(running)return;running=true;try{await sendCheckinNotifications()}catch(error){console.error('Falha nos avisos de avaliação da rotina:',error.code||error.name)}finally{running=false}};
  tick();const timer=setInterval(tick,10*60000);timer.unref();return timer;
 }
-module.exports={requestSchema,CHECKIN,category,cycleEnd,templateContext,planRequest,missingText,evaluate,buildOptions,recommend,feedbackFrom,checkinSteps,validateTemplate,cyclePerformance,cycleStatus,saveCheckin,proposeMonth,applyMonth,sendCheckinNotifications,startCheckinNotifications};
+module.exports={requestSchema,CHECKIN,category,cycleEnd,templateContext,planRequest,missingText,evaluate,buildOptions,recommend,feedbackFrom,checkinSteps,validateTemplate,cyclePerformance,cycleStatus,saveCheckin,proposeMonth,applyMonth,ensureMealRoutines,sendCheckinNotifications,startCheckinNotifications};

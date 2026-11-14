@@ -135,6 +135,54 @@ it('sugere horários para rotinas e metas definidas pela IA e só salva após ap
  expect(schedules).toHaveLength(2);expect(new Set(schedules.map(s=>s.dayOfWeek)).size).toBe(2);expect(sessions).toHaveLength(3);
  const next=await api('post','/week/preview',{date},1);expect(next.status).toBe(200);expect(next.body.data.changes.options.every(o=>!o.additions.length)).toBe(true);
 });
+it('reagenda rotina e lembrete sem alterar recorrências e mostra reposições no calendário',async()=>{
+ const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+ const routine=await prisma.routineItem.create({data:{userId:users[0],name:'Tarefa não fixa afetada',type:'Pessoal',isFlexible:false,schedules:{create:{dayOfWeek:weekday,startTime:'18:30',endTime:'22:30'}}},include:{schedules:true}});
+ const reminder=await prisma.reminder.create({data:{userId:users[0],title:'Enviar documento',reminderTime:'18:30',recurrence:'WEEKLY',dayOfWeek:weekday}});
+ const response=await api('post','/week/preview',{date,unexpectedEventId:event.id,bufferMinutes:0});
+ expect(response.status).toBe(200);
+ const proposal=response.body.data,option=proposal.changes.options.find(candidate=>candidate.applicable&&candidate.changes.some(change=>change.sourceId===routine.schedules[0].id&&change.rescheduledForRecovery)&&candidate.changes.some(change=>change.sourceId===reminder.id&&change.rescheduledForRecovery));
+ expect(option).toBeTruthy();
+ expect((await api('post',`/week/${proposal.id}/apply`,{optionId:option.id})).status).toBe(200);
+ const sourceDate=new Date(date+'T00:00:00Z');
+ const [routineSchedule,reminderRecord,sourceRoutine,sourceReminder]=await Promise.all([
+  prisma.routineSchedule.findUnique({where:{id:routine.schedules[0].id}}),
+  prisma.reminder.findUnique({where:{id:reminder.id}}),
+  prisma.routineExecution.findUnique({where:{userId_routineScheduleId_date:{userId:users[0],routineScheduleId:routine.schedules[0].id,date:sourceDate}}}),
+  prisma.reminderExecution.findUnique({where:{userId_reminderId_date:{userId:users[0],reminderId:reminder.id,date:sourceDate}}}),
+ ]);
+ expect(routineSchedule).toMatchObject({dayOfWeek:weekday,startTime:'18:30',endTime:'22:30'});
+ expect(reminderRecord).toMatchObject({recurrence:'WEEKLY',dayOfWeek:weekday});
+ expect(sourceRoutine.status).toBe('SKIPPED');expect(sourceReminder.status).toBe('SKIPPED');
+ const [routineRecovery,reminderRecovery]=await Promise.all([
+  prisma.routineExecution.findFirst({where:{userId:users[0],routineScheduleId:routine.schedules[0].id,date:{not:sourceDate},status:'PENDING'}}),
+  prisma.reminderExecution.findFirst({where:{userId:users[0],reminderId:reminder.id,date:{not:sourceDate},status:'PENDING'}}),
+ ]);
+ expect(routineRecovery).toBeTruthy();expect(reminderRecovery).toBeTruthy();
+ const dashboard=require('../../../src/services/dashboard.service');
+ expect((await dashboard.getDashboard({userId:users[0],date:routineRecovery.date.toISOString().slice(0,10)})).routines.scheduled.some(item=>item.schedules.some(schedule=>schedule.id===routine.schedules[0].id&&schedule.oneOffDate))).toBe(true);
+ expect((await dashboard.getDashboard({userId:users[0],date:reminderRecovery.date.toISOString().slice(0,10)})).reminders.scheduled).toContainEqual(expect.objectContaining({id:reminder.id,recurrence:'NONE',oneOffDate:reminderRecovery.date.toISOString().slice(0,10)}));
+});
+it('ajusta refeição só na ocorrência aprovada e preserva perfil e duração',async()=>{
+ const profileBefore=await prisma.profile.findUnique({where:{userId:users[1]},select:{lunchStart:true,lunchEnd:true}});
+ await prisma.unexpectedEvent.create({data:{userId:users[1],title:'Compromisso no almoço',date:new Date(date+'T00:00:00Z'),startTime:'12:00',endTime:'13:00',priority:'HIGH',status:'PENDING'}});
+ const response=await api('post','/week/preview',{date,protectMeals:true,bufferMinutes:0},1);
+ expect(response.status).toBe(200);
+ const proposal=response.body.data,option=proposal.changes.options.find(candidate=>candidate.applicable&&candidate.changes.some(change=>change.kind==='refeicoes'&&change.sourceId==='LUNCH'&&change.mealAdjustment));
+ expect(option).toBeTruthy();
+ const lunchChange=option.changes.find(change=>change.kind==='refeicoes'&&change.sourceId==='LUNCH');
+ expect(Number(lunchChange.newEndTime.slice(0,2))*60+Number(lunchChange.newEndTime.slice(3))-Number(lunchChange.newStartTime.slice(0,2))*60-Number(lunchChange.newStartTime.slice(3))).toBe(60);
+ expect((await api('post',`/week/${proposal.id}/apply`,{optionId:option.id},1)).status).toBe(200);
+ const [profileAfter,routine]=await Promise.all([
+  prisma.profile.findUnique({where:{userId:users[1]},select:{lunchStart:true,lunchEnd:true}}),
+  prisma.routineItem.findUnique({where:{userId_mealType:{userId:users[1],mealType:'LUNCH'}},include:{schedules:true}}),
+ ]);
+ expect(profileAfter).toEqual(profileBefore);
+ const daySchedule=routine.schedules.find(item=>item.dayOfWeek===new Date(date+'T12:00:00Z').getUTCDay());
+ const execution=await prisma.routineExecution.findUnique({where:{userId_routineScheduleId_date:{userId:users[1],routineScheduleId:daySchedule.id,date:new Date(date+'T00:00:00Z')}}});
+ expect(execution).toMatchObject({startTime:lunchChange.newStartTime,endTime:lunchChange.newEndTime,status:'PENDING'});
+ expect(daySchedule).toMatchObject({startTime:profileBefore.lunchStart,endTime:profileBefore.lunchEnd});
+});
 it('analisa finanças pelo chat consultando dados novos sem depender de resposta genérica',async()=>{
  await prisma.financeEntry.create({data:{userId:users[1],kind:'INCOME',title:'Salário do teste',amountCents:500000}});
  const first=await api('post','/chat',{message:'Analise minhas finanças'},1);

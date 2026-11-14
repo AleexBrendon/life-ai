@@ -19,7 +19,11 @@ export function scheduledEvents(resources,key,timezone='America/Sao_Paulo'){
   if(kind==='rotinas'||kind==='trabalho')for(const schedule of item.schedules||[])if(schedule.dayOfWeek===weekday&&recurrenceStarted(key,timezone,item,schedule)){const execution=kind==='rotinas'?item.routineExecutions?.find(row=>row.routineScheduleId===schedule.id&&row.date.slice(0,10)===key):null;add({...schedule,status:execution?.status||schedule.status},execution?.startTime||schedule.startTime,execution?.endTime||schedule.endTime);}
   if(kind==='rotinas')for(const execution of item.routineExecutions||[])if(execution.date.slice(0,10)===key){const schedule=item.schedules?.find(row=>row.id===execution.routineScheduleId);if(schedule&&schedule.dayOfWeek!==weekday&&recurrenceStarted(key,timezone,item,schedule))add({...schedule,dayOfWeek:weekday,status:execution.status,oneOffDate:key},execution.startTime,execution.endTime);}
   if(kind==='metas')for(const session of item.sessions||[])if(session.date.slice(0,10)===key)add(session,session.startTime,session.endTime);
-  if(kind==='lembretes'&&(item.recurrence==='NONE'||recurrenceStarted(key,timezone,item))&&(item.recurrence==='DAILY'||item.recurrence==='WEEKLY'&&item.dayOfWeek===weekday||item.recurrence==='NONE'&&item.date?.slice(0,10)===key))add(item,item.reminderTime);
+  if(kind==='lembretes'){
+   const execution=item.reminderExecutions?.find(row=>row.date.slice(0,10)===key),recurring=(item.recurrence==='NONE'||recurrenceStarted(key,timezone,item))&&(item.recurrence==='DAILY'||item.recurrence==='WEEKLY'&&item.dayOfWeek===weekday||item.recurrence==='NONE'&&item.date?.slice(0,10)===key);
+   if(recurring)add({...item,status:execution?.status||item.status},item.reminderTime);
+   else if(execution&&recurrenceStarted(key,timezone,item))add({...item,date:key,status:execution.status,oneOffDate:key},item.reminderTime);
+  }
   if(kind==='imprevistos'&&item.date.slice(0,10)===key)add(item,item.startTime,item.endTime);
  }
  return rows.sort((a,b)=>a.time.localeCompare(b.time));

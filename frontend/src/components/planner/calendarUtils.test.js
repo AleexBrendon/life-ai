@@ -58,3 +58,9 @@ test('sessão extra da IA aparece só na data escolhida, sem criar recorrência'
  assert.equal(scheduledEvents(resources,'2026-10-18')[0].time,'11:00');
  assert.equal(scheduledEvents(resources,'2026-10-24')[0].time,'09:00');
 });
+test('lembrete reposto aparece apenas na nova data e preserva a recorrência',()=>{
+ const resources={lembretes:[{id:8,title:'Enviar documento',reminderTime:'18:00',recurrence:'WEEKLY',dayOfWeek:6,reminderExecutions:[{date:'2026-10-18T00:00:00Z',status:'PENDING'}]}]};
+ assert.equal(scheduledEvents(resources,'2026-10-18')[0].time,'18:00');
+ assert.equal(scheduledEvents(resources,'2026-10-18')[0].sourceId,8);
+ assert.equal(scheduledEvents(resources,'2026-10-24').length,1);
+});

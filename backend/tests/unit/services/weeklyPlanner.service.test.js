@@ -58,6 +58,60 @@ it('mantém a redução de duração quando não há outro dia livre para repor 
  expect(option.notes.some(note=>note.includes('não havia espaço para repor'))).toBe(true);
  expect(()=>validateChanges(context,option,preferences)).not.toThrow();
 });
+it('reagenda uma rotina não flexível apenas como ocorrência pontual quando um imprevisto bloqueia o dia',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'23:00',bufferMinutes:0,protectMeals:false});
+ const routine=row('rotinas',15,'18:00','19:00',{routineItemId:55,isFlexible:false,title:'Consulta de estudos'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[routine,row('imprevistos',80,'07:00','23:00',{title:'Imprevisto'})],routineDates:[{routineItemId:55,date,scheduleId:15}]};
+ const options=planOptions(context,preferences),option=options.find(item=>item.applicable&&item.changes.some(change=>change.rescheduledForRecovery));
+ expect(option).toBeTruthy();
+ const change=option.changes.find(item=>item.rescheduledForRecovery);
+ expect(change).toMatchObject({kind:'rotinas',date,newDate:'2026-10-24',rescheduledForRecovery:true});
+ expect(m(change.newEndTime)-m(change.newStartTime)).toBe(60);
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+});
+it('reagenda lembrete semanal para outro dia sem alterar sua recorrência',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'23:00',bufferMinutes:0,protectMeals:false});
+ const reminder=row('lembretes',27,'18:00','18:05',{recurrence:'WEEKLY',title:'Enviar documento'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[reminder,row('imprevistos',80,'07:00','23:00',{title:'Imprevisto'})],reminderDates:[{reminderId:27,date}]};
+ const option=planOptions(context,preferences).find(item=>item.applicable&&item.changes.some(change=>change.rescheduledForRecovery));
+ expect(option).toBeTruthy();
+ const change=option.changes.find(item=>item.rescheduledForRecovery);
+ expect(change).toMatchObject({kind:'lembretes',date,newDate:'2026-10-24',rescheduledForRecovery:true,newStartTime:'18:00',newEndTime:'18:05'});
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+});
+it('ajusta o horário da refeição para liberar a prioridade informada sem reduzir a duração',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'23:00',bufferMinutes:0,protectMeals:true,message:'Priorizar almoço'});
+ const meal=row('refeicoes','LUNCH','12:00','13:00',{mealType:'LUNCH',isMeal:true,title:'Almoço'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[meal,row('imprevistos',80,'12:00','13:00',{title:'Imprevisto'})],meals:[{mealType:'LUNCH',title:'Almoço',startTime:'12:00',endTime:'13:00'}]};
+ const option=planOptions(context,preferences).find(item=>item.applicable&&item.changes.some(change=>change.mealAdjustment));
+ expect(option).toBeTruthy();
+ const change=option.changes.find(item=>item.mealAdjustment);
+ expect(change.newStartTime).not.toBe('12:00');
+ expect(m(change.newEndTime)-m(change.newStartTime)).toBe(60);
+ expect(context.meals[0]).toMatchObject({startTime:'12:00',endTime:'13:00'});
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+});
+it('prioriza as atividades mencionadas no pedido antes de reorganizar outras',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'11:00',bufferMinutes:0,protectMeals:false,message:'Priorizar flauta'});
+ const reading=row('rotinas',31,'09:00','10:00',{routineItemId:31,isFlexible:true,title:'Leitura',category:'Estudos'});
+ const flute=row('rotinas',32,'09:00','10:00',{routineItemId:32,isFlexible:true,title:'Tocar flauta',category:'Música'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[reading,flute]};
+ const option=planOptions(context,preferences).find(item=>item.applicable);
+ expect(option).toBeTruthy();
+ expect(option.changes.some(change=>change.key===reading.key)).toBe(true);
+ expect(option.changes.some(change=>change.key===flute.key)).toBe(false);
+});
+it('move a refeição para preservar a atividade indicada como prioridade',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'23:00',bufferMinutes:0,protectMeals:true,message:'Priorizar estudo'});
+ const study=row('rotinas',35,'10:00','11:00',{routineItemId:35,isFlexible:true,title:'Estudo de matemática',category:'Estudos'});
+ const lunch=row('refeicoes','LUNCH','10:00','11:00',{mealType:'LUNCH',isMeal:true,title:'Almoço'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[study,lunch],meals:[{mealType:'LUNCH',title:'Almoço',startTime:'10:00',endTime:'11:00'}]};
+ const option=planOptions(context,preferences).find(item=>item.id==='minimal');
+ expect(option.applicable).toBe(true);
+ expect(option.changes).toContainEqual(expect.objectContaining({key:lunch.key,mealAdjustment:true}));
+ expect(option.changes.some(change=>change.key===study.key)).toBe(false);
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+});
 it('sempre considera domingo a sábado, inclusive virada de ano',()=>{expect(weekDates('2027-01-01')).toEqual(['2026-12-27','2026-12-28','2026-12-29','2026-12-30','2026-12-31','2027-01-01','2027-01-02'])});
 it('reserva preparo, ida e volta ao redor de trabalho e culto',()=>{
  const current={...ctx,activities:[row('trabalho',1,'08:00','18:00',{beforeMinutes:75,afterMinutes:15}),row('rotinas',4,'19:30','21:00',{isFlexible:false,title:'Culto',beforeMinutes:75,afterMinutes:15}),row('rotinas',2,'18:15','18:45',{routineItemId:2,isFlexible:true,title:'Estudar'})]};

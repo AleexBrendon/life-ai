@@ -15,6 +15,7 @@ const { plannerQuerySchema, executionDateFilter } = require('../schemas/plannerQ
 const include = (config, query = {}) => {
  const relations = Object.fromEntries(Object.keys(config.children).map(key => [key, true]));
  if (config.model === "routineItem") relations.routineExecutions = { where: executionDateFilter(query), select: { date: true, routineScheduleId: true, startTime: true, endTime: true, status: true, skipReason: true } };
+ if (config.model === "reminder") relations.reminderExecutions = { where: executionDateFilter(query), select: { date: true, status: true } };
  return Object.keys(relations).length ? relations : undefined;
 };
 router.get('/:kind', async (req, res) => {

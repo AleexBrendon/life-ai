@@ -177,6 +177,11 @@ const getDashboard = async ({ userId, date, now = new Date(), db = require('../d
             routine.schedules.push({ ...schedule, dayOfWeek, oneOffDate: key });
         }
     }
+    for (const execution of reminderExecutions) {
+        const reminder = execution.reminder;
+        if (!reminder?.isActive || reminders.some(row => row.id === reminder.id) || !canOccurOn(key, timezone, reminder)) continue;
+        reminders.push({ ...reminder, recurrence: 'NONE', date: startOfDay, oneOffDate: key });
+    }
     workSchedules = workSchedules.filter(schedule => canOccurOn(key, timezone, schedule, schedule.job));
     reminders = reminders.filter(reminder => reminder.recurrence === 'NONE' ? key >= PROJECT_START : canOccurOn(key, timezone, reminder));
     if (key < PROJECT_START) { unexpectedEvents = []; goalSessions = []; }

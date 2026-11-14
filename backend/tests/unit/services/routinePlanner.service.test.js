@@ -1,10 +1,25 @@
 import {it,expect} from 'vitest';
-const {requestSchema,category,cycleEnd,evaluate,buildOptions,recommend,feedbackFrom,checkinSteps,validateTemplate}=require('../../../src/services/routinePlanner.service');
+const {requestSchema,category,cycleEnd,evaluate,buildOptions,recommend,feedbackFrom,checkinSteps,validateTemplate,ensureMealRoutines}=require('../../../src/services/routinePlanner.service');
 const prefs=requestSchema.parse({});
 const m=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));
 const work=(day,start,end)=>({key:`ws:${day}:0`,kind:'trabalho',sourceId:1,title:'Trabalho CLT',category:'work',day,start:m(start),end:m(end)});
 function routine(id,title,cat,slots,frequency=slots.length){const origStarts=Object.fromEntries(slots.map(([day,start])=>[day,m(start)]));return slots.map(([day,start,end],i)=>({key:`rs:${id}${i}`,kind:'rotinas',sourceId:id,sourceKey:`rotinas:${id}`,scheduleId:id*10+i,title,category:cat,day,start:m(start),end:m(end),duration:m(end)-m(start),frequency,orig:{day,start:m(start)},origStarts}))}
 const fb=feedbackFrom(null,[]);
+it('cria horários de refeições faltantes sem alterar os recorrentes quando precisa de exceção semanal',async()=>{
+ const updates=[],creates=[];const tx={
+  routineItem:{findUnique:async()=>({id:9,isActive:true}),upsert:async()=>({id:9})},
+  routineSchedule:{
+   findMany:async()=>[{id:90,dayOfWeek:0,startTime:'06:30',endTime:'07:00'}],
+   update:async(args)=>{updates.push(args);return{id:90,...args.data}},
+   create:async({data})=>{creates.push(data);return{id:90+creates.length,...data}},
+  },
+ };
+ const meals=[{mealType:'BREAKFAST',title:'Café da manhã',startTime:'07:00',endTime:'07:30'}];
+ const result=await ensureMealRoutines(tx,4,meals,{preserveExistingSchedules:true});
+ expect(updates).toHaveLength(0);
+ expect(creates).toHaveLength(6);
+ expect(result.get('BREAKFAST').schedules.get(0)).toMatchObject({startTime:'06:30',endTime:'07:00'});
+});
 it('divide metas entre mais dias e preserva o tempo total',()=>{
  const preferences=requestSchema.parse({dayStart:'08:00',flexEnd:'12:00',bufferMinutes:0,protectMeals:false});
  const context={fixed:Array.from({length:7},(_,day)=>work(day,'08:30','12:00')),sessions:[],demands:[{key:'g:17:0',kind:'metas',sourceId:17,sourceKey:'metas:17',title:'Curso',category:'study',duration:60,frequency:1}]};
