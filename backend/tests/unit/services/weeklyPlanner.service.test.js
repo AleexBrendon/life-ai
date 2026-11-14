@@ -1,6 +1,7 @@
 import {it,expect} from 'vitest';
 const {weekDates,planOptions,validateChanges,requestSchema}=require('../../../src/services/weeklyPlanner.service');
 const date='2026-10-23',preferences=requestSchema.parse({date,includeGoalSessions:true});
+const m=time=>Number(time.slice(0,2))*60+Number(time.slice(3,5));
 const row=(kind,id,startTime,endTime,extra={})=>({key:`${date}:${kind}:${id}`,kind,sourceId:id,date,title:`${kind} ${id}`,startTime,endTime,status:'PENDING',...extra});
 const ctx={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[row('trabalho',1,'08:00','18:00'),row('rotinas',2,'18:15','19:00',{routineItemId:2,isFlexible:true,title:'Estudar'}),row('imprevistos',3,'18:20','19:00'),row('rotinas',4,'19:30','21:00',{isFlexible:false,title:'Culto'})]};
 it('reduz sessão de meta e repõe os minutos na próxima semana',()=>{
@@ -28,6 +29,34 @@ it('divide novas sessões entre mais dias sem reduzir o total semanal',()=>{
   expect(option.additions).toHaveLength(2);
   expect(()=>validateChanges(context,option,preferences)).not.toThrow();
  }
+});
+it('encurta uma rotina flexível e repõe os minutos em outro dia somente nesta semana',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'09:00',bufferMinutes:0,protectMeals:false});
+ const routine=row('rotinas',9,'07:00','09:00',{routineItemId:55,isFlexible:true,title:'Estudos'});
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[routine,row('trabalho',3,'07:30','08:00')],routineDates:[{routineItemId:55,date:'2026-10-22',scheduleId:10}]};
+ const options=planOptions(context,preferences),option=options.find(candidate=>candidate.applicable&&candidate.additions.some(addition=>addition.oneOffRoutine));
+ expect(option).toBeTruthy();
+ const change=option.changes.find(item=>item.key===routine.key),extra=option.additions.find(item=>item.oneOffRoutine);
+ expect(change.durationReducedMinutes).toBe(60);
+ expect(m(change.newEndTime)-m(change.newStartTime)).toBe(60);
+ expect(extra).toMatchObject({kind:'rotinas',routineItemId:55,oneOffRoutine:true});
+ expect(extra.date).not.toBe('2026-10-22');
+ expect(new Set([change.date,extra.date]).size).toBe(2);
+ expect(m(change.newEndTime)-m(change.newStartTime)+m(extra.newEndTime)-m(extra.newStartTime)).toBe(120);
+ expect(option.notes.some(note=>note.includes('mantive o total semanal planejado'))).toBe(true);
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+});
+it('mantém a redução de duração quando não há outro dia livre para repor os minutos',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'09:00',bufferMinutes:0,protectMeals:false});
+ const routine=row('rotinas',9,'07:00','09:00',{routineItemId:55,isFlexible:true,title:'Estudos'});
+ const blocked=weekDates(date).filter(day=>day>='2026-10-21'&&day!==date).map((day,index)=>row('trabalho',20+index,'07:00','09:00',{date:day,key:`work:${day}`}));
+ const context={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[routine,row('trabalho',3,'07:30','08:00'),...blocked]};
+ const option=planOptions(context,preferences).find(candidate=>candidate.id==='minimal');
+ expect(option.applicable).toBe(true);
+ expect(option.changes.some(change=>change.durationReducedMinutes>0)).toBe(true);
+ expect(option.additions.some(addition=>addition.oneOffRoutine)).toBe(false);
+ expect(option.notes.some(note=>note.includes('não havia espaço para repor'))).toBe(true);
+ expect(()=>validateChanges(context,option,preferences)).not.toThrow();
 });
 it('sempre considera domingo a sábado, inclusive virada de ano',()=>{expect(weekDates('2027-01-01')).toEqual(['2026-12-27','2026-12-28','2026-12-29','2026-12-30','2026-12-31','2027-01-01','2027-01-02'])});
 it('reserva preparo, ida e volta ao redor de trabalho e culto',()=>{

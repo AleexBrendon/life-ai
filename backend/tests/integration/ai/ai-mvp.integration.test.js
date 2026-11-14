@@ -49,6 +49,27 @@ it('aplica um lote somente uma vez, sem mudar horários recorrentes nem compromi
  expect((await prisma.unexpectedEvent.findUnique({where:{id:event.id}})).startTime).toBe('18:20');
  const execution=await prisma.routineExecution.findFirst({where:{userId:users[0],routineScheduleId:schedule.id}});expect(execution.endTime<='23:00').toBe(true);expect(execution.startTime).not.toBe('18:15');
 });
+it('reparte a duração em uma sessão extra pontual e permite concluir essa ocorrência',async()=>{
+ const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+ const study=await prisma.routineItem.create({data:{userId:users[0],name:'Estudo flexível de 120 min',type:'Estudos',isFlexible:true,schedules:{create:{dayOfWeek:weekday,startTime:'07:00',endTime:'09:00'}}},include:{schedules:true}});
+ await prisma.routineItem.create({data:{userId:users[0],name:'Compromisso matinal fixo',type:'Pessoal',schedules:{create:{dayOfWeek:weekday,startTime:'07:30',endTime:'08:00'}}}});
+ const response=await api('post','/week/preview',{date,startTime:'07:00',endTime:'09:00',bufferMinutes:0,protectMeals:false});
+ expect(response.status).toBe(200);
+ const proposal=response.body.data,option=proposal.changes.options.find(candidate=>candidate.applicable&&candidate.additions.some(addition=>addition.oneOffRoutine));
+ expect(option).toBeTruthy();
+ const change=option.changes.find(row=>row.routineItemId===study.id),extra=option.additions.find(row=>row.oneOffRoutine);
+ expect(change.durationReducedMinutes).toBeGreaterThan(0);
+ expect(extra.routineItemId).toBe(study.id);
+ const scheduleCount=await prisma.routineSchedule.count({where:{routineItemId:study.id}});
+ expect((await api('post',`/week/${proposal.id}/apply`,{optionId:option.id})).status).toBe(200);
+ expect(await prisma.routineSchedule.count({where:{routineItemId:study.id}})).toBe(scheduleCount);
+ const dashboard=require('../../../src/services/dashboard.service');
+ const day=await dashboard.getDashboard({userId:users[0],date:extra.date});
+ expect(day.routines.scheduled.flatMap(row=>row.schedules).some(row=>row.id===study.schedules[0].id&&row.oneOffDate===extra.date)).toBe(true);
+ const completed=await request(app).post(`/api/routine-executions/schedule/${study.schedules[0].id}/complete`).set('Authorization',`Bearer ${tokens[0]}`).send({date:extra.date});
+ expect(completed.status).toBe(200);
+ expect((await dashboard.getDashboard({userId:users[0],date:extra.date})).activities.some(row=>row.kind==='rotinas'&&row.sourceId===study.schedules[0].id&&row.status==='COMPLETED')).toBe(true);
+});
 it('uma mudança na agenda invalida a proposta sem aplicar parcialmente',async()=>{
  const response=await api('post','/week/preview',{date});expect(response.status).toBe(200);const proposal=response.body.data,option=proposal.changes.options.find(o=>o.applicable);expect(option).toBeTruthy();
  await prisma.unexpectedEvent.update({where:{id:event.id},data:{endTime:'19:10'}});

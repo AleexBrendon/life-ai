@@ -24,9 +24,11 @@ router.post('/schedule/:routineScheduleId/skip', authMiddleware, async (req, res
     const data = await prisma.$transaction(async tx => {
       const schedule = await tx.routineSchedule.findFirst({ where: { id: scheduleId, routineItem: { userId: req.user.id, isActive: true } } });
       if (!schedule) throw Object.assign(new Error('Rotina não encontrada ou inativa.'), { status: 404 });
-      if (schedule.dayOfWeek !== date.getUTCDay()) throw Object.assign(new Error('A rotina não está programada para essa data.'), { status: 400 });
+      const uniqueKey = { userId_routineScheduleId_date: { userId: req.user.id, routineScheduleId: scheduleId, date } };
+      const existing = await tx.routineExecution.findUnique({ where: uniqueKey });
+      if (schedule.dayOfWeek !== date.getUTCDay() && !existing) throw Object.assign(new Error('A rotina não está programada para essa data.'), { status: 400 });
       const execution = await tx.routineExecution.upsert({
-        where: { userId_routineScheduleId_date: { userId: req.user.id, routineScheduleId: scheduleId, date } },
+        where: uniqueKey,
         create: { userId: req.user.id, routineItemId: schedule.routineItemId, routineScheduleId: scheduleId, date, startTime: schedule.startTime, endTime: schedule.endTime, status: 'SKIPPED', skipReason: skipReason.trim() || null },
         update: {},
       });

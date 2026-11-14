@@ -53,3 +53,8 @@ test('ajuste pontual da IA muda apenas a ocorrência da data correspondente',()=
  assert.equal(scheduledEvents(resources,'2026-10-17')[0].time,'11:00');
  assert.equal(scheduledEvents(resources,'2026-10-24')[0].time,'09:00');
 });
+test('sessão extra da IA aparece só na data escolhida, sem criar recorrência',()=>{
+ const resources={rotinas:[{id:1,name:'Estudo',schedules:[{id:4,dayOfWeek:6,startTime:'09:00',endTime:'10:00'}],routineExecutions:[{routineScheduleId:4,date:'2026-10-18T00:00:00Z',startTime:'11:00',endTime:'11:30',status:'PENDING'}]}]};
+ assert.equal(scheduledEvents(resources,'2026-10-18')[0].time,'11:00');
+ assert.equal(scheduledEvents(resources,'2026-10-24')[0].time,'09:00');
+});

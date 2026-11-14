@@ -165,6 +165,18 @@ const getDashboard = async ({ userId, date, now = new Date(), db = require('../d
 
     const key = targetDate.toISOString().slice(0,10);
     routines = routines.filter(routine => canOccurOn(key, timezone, routine)).map(routine => ({ ...routine, schedules: routine.schedules.filter(schedule => canOccurOn(key, timezone, schedule)) })).filter(routine => routine.schedules.length);
+    for (const execution of routineExecutions) {
+        const schedule = execution.routineSchedule;
+        if (!schedule || schedule.dayOfWeek === dayOfWeek || !execution.routineItem?.isActive || !canOccurOn(key, timezone, execution.routineItem)) continue;
+        let routine = routines.find(row => row.id === execution.routineItemId);
+        if (!routine) {
+            routine = { ...execution.routineItem, schedules: [] };
+            routines.push(routine);
+        }
+        if (!routine.schedules.some(row => row.id === schedule.id)) {
+            routine.schedules.push({ ...schedule, dayOfWeek, oneOffDate: key });
+        }
+    }
     workSchedules = workSchedules.filter(schedule => canOccurOn(key, timezone, schedule, schedule.job));
     reminders = reminders.filter(reminder => reminder.recurrence === 'NONE' ? key >= PROJECT_START : canOccurOn(key, timezone, reminder));
     if (key < PROJECT_START) { unexpectedEvents = []; goalSessions = []; }

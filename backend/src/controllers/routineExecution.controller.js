@@ -605,13 +605,6 @@ const completeScheduledRoutine = async (req, res) => {
       });
     }
 
-    if (schedule.dayOfWeek !== date.getUTCDay()) {
-      return res.status(400).json({
-        success: false,
-        message: "A rotina não está programada para essa data.",
-      });
-    }
-
     const uniqueKey = {
       userId_routineScheduleId_date: {
         userId,
@@ -623,6 +616,13 @@ const completeScheduledRoutine = async (req, res) => {
     let execution = await prisma.routineExecution.findUnique({
       where: uniqueKey,
     });
+
+    if (schedule.dayOfWeek !== date.getUTCDay() && !execution) {
+      return res.status(400).json({
+        success: false,
+        message: "A rotina não está programada para essa data.",
+      });
+    }
 
     if (execution?.status === "COMPLETED") {
       return res.status(200).json({
