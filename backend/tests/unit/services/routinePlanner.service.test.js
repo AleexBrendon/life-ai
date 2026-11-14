@@ -5,6 +5,17 @@ const m=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));
 const work=(day,start,end)=>({key:`ws:${day}:0`,kind:'trabalho',sourceId:1,title:'Trabalho CLT',category:'work',day,start:m(start),end:m(end)});
 function routine(id,title,cat,slots,frequency=slots.length){const origStarts=Object.fromEntries(slots.map(([day,start])=>[day,m(start)]));return slots.map(([day,start,end],i)=>({key:`rs:${id}${i}`,kind:'rotinas',sourceId:id,sourceKey:`rotinas:${id}`,scheduleId:id*10+i,title,category:cat,day,start:m(start),end:m(end),duration:m(end)-m(start),frequency,orig:{day,start:m(start)},origStarts}))}
 const fb=feedbackFrom(null,[]);
+it('divide metas entre mais dias e preserva o tempo total',()=>{
+ const preferences=requestSchema.parse({dayStart:'08:00',flexEnd:'12:00',bufferMinutes:0,protectMeals:false});
+ const context={fixed:Array.from({length:7},(_,day)=>work(day,'08:30','12:00')),sessions:[],demands:[{key:'g:17:0',kind:'metas',sourceId:17,sourceKey:'metas:17',title:'Curso',category:'study',duration:60,frequency:1}]};
+ for(const option of buildOptions(context,preferences,fb).options){
+  expect(option.template.goals).toHaveLength(2);
+  expect(new Set(option.template.goals.map(row=>row.dayOfWeek)).size).toBe(2);
+  expect(option.template.goals.reduce((sum,row)=>sum+m(row.endTime)-m(row.startTime),0)).toBe(60);
+  expect(()=>validateTemplate(context,option,preferences)).not.toThrow();
+  const tampered=structuredClone(option);tampered.template.goals.pop();expect(()=>validateTemplate(context,tampered,preferences)).toThrow();
+ }
+});
 const ctx={fixed:[1,2,3,4,5].map(day=>work(day,'08:00','18:00')),sessions:[...routine(7,'Corrida','exercise',[[5,'19:00','21:00'],[6,'18:00','20:00']]),...routine(8,'Pausa e descanso','rest',[[6,'18:00','18:30'],[1,'18:15','18:45']]),...routine(9,'Culto','spiritual',[[0,'18:30','20:30']])],demands:[{key:'g:4:0',kind:'metas',sourceId:4,sourceKey:'metas:4',title:'Estudar faculdade',category:'study',duration:45,frequency:2},{key:'g:4:1',kind:'metas',sourceId:4,sourceKey:'metas:4',title:'Estudar faculdade',category:'study',duration:45,frequency:2}]};
 it('classifica atividades e define ciclos mensais',()=>{
  expect(category('Treino Flauta','Organização')).toBe('skill');expect(category('Corrida','Atividade física')).toBe('exercise');expect(category('Culto','Pessoal')).toBe('spiritual');expect(category('Estudar faculdade EAD')).toBe('study');

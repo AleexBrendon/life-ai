@@ -132,12 +132,33 @@ function penalty(item,day,start,state,w,prefs,feedback){
  if(item.preferredWindow){const [a,b]=item.preferredWindow;p+=(start<a?a-start:end>b?end-b:0)*5}
  return p;
 }
+// Goals may be distributed over more days; routine durations remain unchanged.
+function splitGoal(item,state,prefs,w,feedback){
+ if(item.kind!=='metas')return null;
+ const trial=[...state],parts=[];let remaining=item.duration;
+ while(remaining>0){
+  let best=null;
+  for(let duration=remaining;duration>=Math.min(15,remaining);duration=duration>15?Math.max(15,duration-15):0){
+   const candidate={...item,duration};
+   for(let day=0;day<7;day++)for(let start=Math.ceil(minute(prefs.dayStart)/15)*15;start+duration<=minute(prefs.flexEnd);start+=15){
+    if(!fits(candidate,day,start,trial,prefs))continue;
+    const p=penalty(candidate,day,start,trial,w,prefs,feedback);
+    if(!best||p<best.p)best={...candidate,day,start,end:start+duration,p};
+   }
+   if(best)break;
+  }
+  if(!best)return null;
+  const entry={...best,key:parts.length?item.key+':part:'+parts.length:item.key,originalDuration:item.duration,flexible:true};
+  trial.push(entry);parts.push(entry);remaining-=entry.duration;
+ }
+ return parts;
+}
 function place(items,state,prefs,w,feedback){
  const placed=[],missing=[];
  for(const item of items){
   let best=null;
   for(let day=0;day<7;day++)for(let start=Math.ceil(minute(prefs.dayStart)/15)*15;start+item.duration<=minute(prefs.flexEnd);start+=15){if(!fits(item,day,start,state,prefs))continue;const p=penalty(item,day,start,state,w,prefs,feedback);if(!best||p<best.p)best={day,start,p}}
-  if(!best){missing.push(item);continue}
+  if(!best){const parts=splitGoal(item,state,prefs,w,feedback);if(parts){state.push(...parts);placed.push(...parts)}else missing.push(item);continue}
   const entry={...item,day:best.day,start:best.start,end:best.start+item.duration,flexible:true};state.push(entry);placed.push(entry);
  }
  return {placed,missing};
@@ -168,6 +189,7 @@ async function planRequest(userId,activities,input={}){
  });
  demands.sort((a,b)=>Number(!a.allowedDays)-Number(!b.allowedDays)||(a.allowedDays?.length||7)-(b.allowedDays?.length||7)||b.duration-a.duration);
  const {placed,missing}=place(demands,state,prefs,w,feedback);
+ for(const activity of activities){const rows=placed.filter(row=>row.title===activity.name&&row.originalDuration);if(rows.length)warnings.push(activity.name+': sessões divididas em mais dias, com durações menores e tempo total preservado. Confira os horários propostos.')}
  const fixedRows=state.slice(before).filter(row=>row.key.startsWith('fixo:'));
  const result=activities.map((activity,index)=>{
   const rows=[...fixedRows,...placed].filter(row=>row.activityIndex===index).sort((a,b)=>a.day-b.day||a.start-b.start);
@@ -224,7 +246,7 @@ function plan(ctx,prefs,strategy,feedback){
   let best=null;const consider=(day,start)=>{if(!fits(item,day,start,state,prefs))return;const p=penalty(item,day,start,state,w,prefs,feedback);if(!best||p<best.p||p===best.p&&item.orig&&day===item.orig.day&&start===item.orig.start)best={day,start,p}};
   if(item.orig)consider(item.orig.day,item.orig.start);
   for(let day=0;day<7;day++)for(let start=Math.ceil(minute(prefs.dayStart)/15)*15;start+item.duration<=minute(prefs.flexEnd);start+=15)consider(day,start);
-  if(!best){if(item.orig&&item.kind==='rotinas'){const entry={...item,day:item.orig.day,start:item.orig.start,end:item.orig.start+item.duration,flexible:true,stuck:true};state.push(entry);placed.push(entry)}else missing.push(item);continue}
+  if(!best){const parts=splitGoal(item,state,prefs,w,feedback);if(parts){state.push(...parts);placed.push(...parts);continue}if(item.orig&&item.kind==='rotinas'){const entry={...item,day:item.orig.day,start:item.orig.start,end:item.orig.start+item.duration,flexible:true,stuck:true};state.push(entry);placed.push(entry)}else missing.push(item);continue}
   const entry={...item,day:best.day,start:best.start,end:best.start+item.duration,flexible:true};state.push(entry);placed.push(entry);
  }
  const originals=new Map();for(const row of ctx.sessions){if(!originals.has(row.sourceKey))originals.set(row.sourceKey,[]);originals.get(row.sourceKey).push(row)}
@@ -238,6 +260,7 @@ function plan(ctx,prefs,strategy,feedback){
 const slot=row=>({dayOfWeek:row.day,startTime:clock(row.start),endTime:clock(row.end)});
 function reasonsFor(row,before,feedback){
  const reasons=[...(row.orig?before.flags[row.key]||[]:[])];
+ if(row.originalDuration)reasons.push('sessão de '+row.originalDuration+' min dividida em mais dias; este bloco tem '+row.duration+' min e o tempo total da meta foi preservado');
  const low=feedback.low.get(row.sourceKey);if(low!==undefined&&row.orig)reasons.push(`adesão de ${Math.round(low*100)}% no ciclo anterior`);
  if(!row.orig)reasons.push(row.kind==='metas'?'sessão semanal da meta em horário livre':'novo horário para atividade sem agendamento');
  if(!reasons.length)reasons.push(row.category==='study'||row.category==='skill'?'prioriza a janela de concentração da simulação':row.category==='exercise'?'distribui os treinos entre os dias disponíveis':row.category==='rest'?'pausa logo após o bloco anterior':'distribui melhor a carga da semana');
@@ -338,11 +361,16 @@ function validateTemplate(ctx,option,prefs){
  const sessions=new Map(ctx.sessions.map(row=>[row.key,row])),demands=new Map(ctx.demands.map(row=>[row.key,row])),state=ctx.fixed.map(row=>({...row,flexible:false})),moved=[];
  const seen=new Set();
  for(const row of [...option.template.routines,...option.template.goals]){
-  const source=sessions.get(row.key)||demands.get(row.key);if(!source||seen.has(row.key))invalid();seen.add(row.key);
+  const baseKey=row.key.replace(/:part:\d+$/,'');const source=sessions.get(row.key)||demands.get(baseKey);if(!source||seen.has(row.key))invalid();seen.add(row.key);
   const start=minute(row.startTime),end=minute(row.endTime),entry={...source,day:row.dayOfWeek,start,end,flexible:true};
-  if(!Number.isInteger(row.dayOfWeek)||row.dayOfWeek<0||row.dayOfWeek>6||end-start!==source.duration)invalid();
+  if((source.kind==='metas'?row.goalId!==source.sourceId:row.routineId!==source.sourceId)||!time.test(row.startTime)||!time.test(row.endTime))invalid();
+  if(!Number.isInteger(row.dayOfWeek)||row.dayOfWeek<0||row.dayOfWeek>6||(source.kind==='metas'?end-start<=0||end-start>source.duration:end-start!==source.duration))invalid();
   const unchanged=source.orig&&source.orig.day===row.dayOfWeek&&source.orig.start===start&&source.kind==='rotinas';
   if(!unchanged)moved.push(entry);state.push(entry);
+ }
+ for(const source of ctx.demands.filter(row=>row.kind==='metas')){
+  const rows=option.template.goals.filter(row=>row.key===source.key||row.key.startsWith(source.key+':part:'));
+  if(rows.length&&rows.reduce((sum,row)=>sum+minute(row.endTime)-minute(row.startTime),0)!==source.duration)invalid();
  }
  if([...sessions.keys()].some(key=>!seen.has(key)))invalid();
  for(const row of moved){if(row.start-(row.beforeMinutes||0)<minute(prefs.dayStart)||row.end+(row.afterMinutes||0)>minute(prefs.flexEnd))invalid();for(const other of state)if(other!==row&&(overlap(row,other)||other.day===row.day&&other.kind===row.kind&&other.sourceId===row.sourceId))invalid()}

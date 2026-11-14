@@ -3,6 +3,32 @@ const {weekDates,planOptions,validateChanges,requestSchema}=require('../../../sr
 const date='2026-10-23',preferences=requestSchema.parse({date,includeGoalSessions:true});
 const row=(kind,id,startTime,endTime,extra={})=>({key:`${date}:${kind}:${id}`,kind,sourceId:id,date,title:`${kind} ${id}`,startTime,endTime,status:'PENDING',...extra});
 const ctx={dates:weekDates(date),now:{date:'2026-10-21',minute:600},activities:[row('trabalho',1,'08:00','18:00'),row('rotinas',2,'18:15','19:00',{routineItemId:2,isFlexible:true,title:'Estudar'}),row('imprevistos',3,'18:20','19:00'),row('rotinas',4,'19:30','21:00',{isFlexible:false,title:'Culto'})]};
+it('reduz sessão de meta e repõe os minutos na próxima semana',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'09:00',bufferMinutes:0,protectMeals:false});
+ const context={dates:[date,'2026-10-24'],recoveryDates:['2026-10-25'],now:{date,minute:0},activities:[
+  row('metas',17,'07:00','08:00',{goalId:7,until:'2026-10-30'}),row('imprevistos',1,'07:30','09:00'),
+  row('trabalho',2,'07:00','09:00',{date:'2026-10-24',key:'work:saturday'}),
+  row('trabalho',3,'07:30','09:00',{date:'2026-10-25',key:'work:sunday'})
+ ]};
+ const options=planOptions(context,preferences);expect(options.some(o=>o.applicable)).toBe(true);
+ for(const option of options.filter(o=>o.applicable)){
+  expect(option.changes[0].newEndTime).toBe('07:30');
+  expect(option.additions[0]).toMatchObject({date:'2026-10-25',sourceId:7,newStartTime:'07:00',newEndTime:'07:30'});
+  expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+  const tampered=structuredClone(option);tampered.additions=[];expect(()=>validateChanges(context,tampered,preferences)).toThrow();
+  const wrongOwner=structuredClone(option);wrongOwner.additions[0].sourceId=99;expect(()=>validateChanges(context,wrongOwner,preferences)).toThrow();
+ }
+ const expired={...context,activities:context.activities.map(a=>a.kind==='metas'?{...a,until:date}:a)};
+ expect(planOptions(expired,preferences).every(o=>!o.applicable)).toBe(true);
+});
+it('divide novas sessões entre mais dias sem reduzir o total semanal',()=>{
+ const preferences=requestSchema.parse({date,startTime:'07:00',endTime:'09:00',bufferMinutes:0,protectMeals:false});
+ const context={dates:[date,'2026-10-24'],now:{date,minute:0},activities:[row('trabalho',1,'07:30','09:00'),row('trabalho',2,'07:30','09:00',{date:'2026-10-24',key:'work:saturday'})],unscheduled:[{key:'metas:7',kind:'metas',sourceId:7,title:'Curso',minutes:60,missing:1,takenDates:[],until:null}]};
+ for(const option of planOptions(context,preferences)){
+  expect(option.additions).toHaveLength(2);
+  expect(()=>validateChanges(context,option,preferences)).not.toThrow();
+ }
+});
 it('sempre considera domingo a sábado, inclusive virada de ano',()=>{expect(weekDates('2027-01-01')).toEqual(['2026-12-27','2026-12-28','2026-12-29','2026-12-30','2026-12-31','2027-01-01','2027-01-02'])});
 it('reserva preparo, ida e volta ao redor de trabalho e culto',()=>{
  const current={...ctx,activities:[row('trabalho',1,'08:00','18:00',{beforeMinutes:75,afterMinutes:15}),row('rotinas',4,'19:30','21:00',{isFlexible:false,title:'Culto',beforeMinutes:75,afterMinutes:15}),row('rotinas',2,'18:15','18:45',{routineItemId:2,isFlexible:true,title:'Estudar'})]};
